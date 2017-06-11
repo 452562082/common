@@ -2,52 +2,39 @@ package zk
 
 import (
 	"fmt"
-	"sync"
 	"time"
-
 	"strings"
-	"git.oschina.net/kuaishangtong/common/log"
+	
 	"github.com/samuel/go-zookeeper/zk"
+	"git.oschina.net/kuaishangtong/common/log"
 )
 
 type GozkClient struct {
-	path     string
-	conn     *zk.Conn
-	data     []byte
-	children []string
-
-	lock *sync.RWMutex
+	path string
+	conn *zk.Conn
+	data     chan []byte
+	children chan []string
 }
 
 func NewGozkClient(zkhosts []string, nodepath string) (*GozkClient, error) {
 	nodepath = strings.Trim(nodepath, "/")
 	nodepath = "/" + nodepath
-
+	
 	client := &GozkClient{
-		path: nodepath,
-		lock: &sync.RWMutex{},
+		path:     nodepath,
+		data:     make(chan []byte),
+		children: make(chan []string),
 	}
-
+	
 	c, _, err := zk.Connect(zkhosts, 2*time.Second)
-
+	if err != nil {
+		return nil, err
+	}
 	client.conn = c
-	data, _, err := c.Get(nodepath)
-	if err != nil {
-		return nil, err
-	}
-
-	client.data = data
-
-	children, _, err := c.Children(nodepath)
-	if err != nil {
-		return nil, err
-	}
-
-	client.children = children
-
+	
 	go client.watchNodeDataChanged()
 	go client.watchNodeChildrenChanged()
-
+	
 	return client, nil
 }
 
@@ -55,69 +42,77 @@ func (gzc *GozkClient) String() string {
 	return fmt.Sprintf("go-zookeeper Client sid[%d] path[%s]", gzc.conn.SessionID(), gzc.path)
 }
 
-func (gzc *GozkClient) GetData() []byte {
-	gzc.lock.RLock()
-	defer gzc.lock.RUnlock()
+func (gzc *GozkClient) GetData() <-chan []byte {
 	return gzc.data
 }
 
-func (gzc *GozkClient) GetChildren() []string {
-	gzc.lock.RLock()
-	defer gzc.lock.RUnlock()
+func (gzc *GozkClient) GetChildren() <-chan []string {
 	return gzc.children
 }
 
 func (gzc *GozkClient) watchNodeDataChanged() {
+	first := true
+	
 	for {
-		_, _, events, err := gzc.conn.GetW(gzc.path)
+		data, _, events, err := gzc.conn.GetW(gzc.path)
 		if err != nil {
 			log.Error(err)
 			continue
 		}
-
+		
+		if first {
+			gzc.data <- data
+			first = false
+			continue
+		}
+		
 		evt := <-events
 		if evt.Err != nil {
 			log.Error(evt.Err)
 			continue
 		}
-
+		
 		if evt.Type == zk.EventNodeDataChanged {
 			data, _, err := gzc.conn.Get(gzc.path)
 			if err != nil {
 				log.Error(err)
 				continue
 			}
-
-			gzc.lock.Lock()
-			gzc.data = data
-			gzc.lock.Unlock()
+			
+			gzc.data <- data
 		}
 	}
 }
 
 func (gzc *GozkClient) watchNodeChildrenChanged() {
+	first := true
 	for {
-		_, _, events, err := gzc.conn.ChildrenW(gzc.path)
+		children, _, events, err := gzc.conn.ChildrenW(gzc.path)
 		if err != nil {
 			log.Error(err)
 			continue
 		}
-
+		
+		if first {
+			gzc.children <- children
+			first = false
+			continue
+		}
+		
 		evt := <-events
 		if evt.Err != nil {
 			log.Error(evt.Err)
 			continue
 		}
-
+		
 		if evt.Type == zk.EventNodeChildrenChanged {
 			children, _, err := gzc.conn.Children(gzc.path)
 			if err != nil {
 				log.Error(err)
 				continue
 			}
-			gzc.lock.Lock()
-			gzc.children = children
-			gzc.lock.Unlock()
+
+			gzc.children <- children
 		}
 	}
 }

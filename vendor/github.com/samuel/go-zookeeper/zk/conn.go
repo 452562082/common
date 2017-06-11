@@ -304,6 +304,7 @@ func (c *Conn) connect() error {
 	for {
 		c.serverMu.Lock()
 		c.server, retryStart = c.hostProvider.Next()
+		log.Debugf("server:%s, retryStart:%v", c.server, retryStart)
 		c.serverMu.Unlock()
 		c.setState(StateConnecting)
 		if retryStart {
@@ -322,11 +323,11 @@ func (c *Conn) connect() error {
 		if err == nil {
 			c.conn = zkConn
 			c.setState(StateConnected)
-			log.Errorf("Connected to %s", c.Server())
+			log.Infof("Connected to %s", c.Server())
 			return nil
 		}
 		
-		log.Infof("Failed to connect to %s: %+v", c.Server(), err)
+		log.Errorf("Failed to connect to %s: %+v", c.Server(), err)
 	}
 }
 
@@ -392,7 +393,7 @@ func (c *Conn) sendRequest(
 func (c *Conn) loop() {
 	for {
 		if err := c.connect(); err != nil {
-			// c.Close() was called
+			log.Error(err)
 			return
 		}
 		
