@@ -1,4 +1,4 @@
-package gozk
+package zk
 
 import (
 	"sync"
@@ -35,10 +35,10 @@ func TestBasicCluster(t *testing.T) {
 
 	time.Sleep(time.Second * 5)
 
-	if _, err := zk1.Create("/zk-test", []byte("foo-cluster"), 0, WorldACL(PermAll)); err != nil {
+	if _, err := zk1.Create("/gozk-test", []byte("foo-cluster"), 0, WorldACL(PermAll)); err != nil {
 		t.Fatalf("Create failed on node 1: %+v", err)
 	}
-	if by, _, err := zk2.Get("/zk-test"); err != nil {
+	if by, _, err := zk2.Get("/gozk-test"); err != nil {
 		t.Fatalf("Get failed on node 2: %+v", err)
 	} else if string(by) != "foo-cluster" {
 		t.Fatal("Wrong data for node 2")
@@ -65,7 +65,7 @@ func TestClientClusterFailover(t *testing.T) {
 		t.Fatalf("Failed to connect and get session")
 	}
 
-	if _, err := zk.Create("/zk-test", []byte("foo-cluster"), 0, WorldACL(PermAll)); err != nil {
+	if _, err := zk.Create("/gozk-test", []byte("foo-cluster"), 0, WorldACL(PermAll)); err != nil {
 		t.Fatalf("Create failed on node 1: %+v", err)
 	}
 
@@ -80,7 +80,7 @@ func TestClientClusterFailover(t *testing.T) {
 		t.Fatalf("Failover failed")
 	}
 
-	if by, _, err := zk.Get("/zk-test"); err != nil {
+	if by, _, err := zk.Get("/gozk-test"); err != nil {
 		t.Fatalf("Get failed on node 2: %+v", err)
 	} else if string(by) != "foo-cluster" {
 		t.Fatal("Wrong data for node 2")
@@ -233,14 +233,14 @@ func TestBadSession(t *testing.T) {
 	}
 	defer zk.Close()
 
-	if err := zk.Delete("/zk-test", -1); err != nil && err != ErrNoNode {
+	if err := zk.Delete("/gozk-test", -1); err != nil && err != ErrNoNode {
 		t.Fatalf("Delete returned error: %+v", err)
 	}
 
 	zk.conn.Close()
 	time.Sleep(time.Millisecond * 100)
 
-	if err := zk.Delete("/zk-test", -1); err != nil && err != ErrNoNode {
+	if err := zk.Delete("/gozk-test", -1); err != nil && err != ErrNoNode {
 		t.Fatalf("Delete returned error: %+v", err)
 	}
 }

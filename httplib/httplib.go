@@ -18,11 +18,11 @@ import (
 	"strings"
 	"sync"
 	"time"
-	"tproxy/utils/log"
+	"git.oschina.net/liuxp/common.git/log"
 )
 
 var defaultSetting = HttpSettings{
-	UserAgent:        "T-Proxy",
+	UserAgent:        "KST",
 	ConnectTimeout:   60 * time.Second,
 	ReadWriteTimeout: 60 * time.Second,
 	Gzip:             true,
@@ -205,14 +205,14 @@ func (b *HttpRequest) SetProtocolVersion(vers string) *HttpRequest {
 	if len(vers) == 0 {
 		vers = "HTTP/1.1"
 	}
-
+	
 	major, minor, ok := http.ParseHTTPVersion(vers)
 	if ok {
 		b.req.Proto = vers
 		b.req.ProtoMajor = major
 		b.req.ProtoMinor = minor
 	}
-
+	
 	return b
 }
 
@@ -293,7 +293,7 @@ func (b *HttpRequest) buildUrl(paramBody string) {
 		}
 		return
 	}
-
+	
 	// build POST/PUT/PATCH url and body
 	if (b.req.Method == "POST" || b.req.Method == "PUT" || b.req.Method == "PATCH") && b.req.Body == nil {
 		// with files
@@ -327,7 +327,7 @@ func (b *HttpRequest) buildUrl(paramBody string) {
 			b.req.Body = ioutil.NopCloser(pr)
 			return
 		}
-
+		
 		// with params
 		if len(paramBody) > 0 {
 			b.Header("Content-Type", "application/x-www-form-urlencoded")
@@ -359,19 +359,19 @@ func (b *HttpRequest) SendOut() (*http.Response, error) {
 			buf.WriteByte('&')
 		}
 		paramBody = buf.String()
-		paramBody = paramBody[0 : len(paramBody)-1]
+		paramBody = paramBody[0: len(paramBody)-1]
 	}
-
+	
 	b.buildUrl(paramBody)
 	url, err := url.Parse(b.url)
 	if err != nil {
 		return nil, err
 	}
-
+	
 	b.req.URL = url
-
+	
 	trans := b.setting.Transport
-
+	
 	if trans == nil {
 		// create default transport
 		trans = &http.Transport{
@@ -393,7 +393,7 @@ func (b *HttpRequest) SendOut() (*http.Response, error) {
 			}
 		}
 	}
-
+	
 	var jar http.CookieJar = nil
 	if b.setting.EnableCookie {
 		if defaultCookieJar == nil {
@@ -401,16 +401,16 @@ func (b *HttpRequest) SendOut() (*http.Response, error) {
 		}
 		jar = defaultCookieJar
 	}
-
+	
 	client := &http.Client{
 		Transport: trans,
 		Jar:       jar,
 	}
-
+	
 	if b.setting.UserAgent != "" && b.req.Header.Get("User-Agent") == "" {
 		b.req.Header.Set("User-Agent", b.setting.UserAgent)
 	}
-
+	
 	if b.setting.ShowDebug {
 		dump, err := httputil.DumpRequest(b.req, b.setting.DumpBody)
 		if err != nil {
@@ -428,7 +428,7 @@ func (b *HttpRequest) String() (string, error) {
 	if err != nil {
 		return "", err
 	}
-
+	
 	return string(data), nil
 }
 
@@ -466,7 +466,7 @@ func (b *HttpRequest) ToFile(filename string) error {
 		return err
 	}
 	defer f.Close()
-
+	
 	resp, err := b.getResponse()
 	if err != nil {
 		return err

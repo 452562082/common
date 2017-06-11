@@ -1,4 +1,4 @@
-package gozk
+package zk
 
 import (
 	"fmt"
@@ -27,7 +27,7 @@ type TestCluster struct {
 }
 
 func StartTestCluster(size int, stdout, stderr io.Writer) (*TestCluster, error) {
-	tmpPath, err := ioutil.TempDir("", "zk")
+	tmpPath, err := ioutil.TempDir("", "gozk")
 	if err != nil {
 		return nil, err
 	}

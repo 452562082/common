@@ -6,13 +6,13 @@ import (
 	"time"
 
 	"strings"
-	"tproxy/utils/log"
-	"tproxy/zk/gozk"
+	"git.oschina.net/liuxp/common.git/log"
+	"github.com/samuel/go-zookeeper/zk"
 )
 
 type GozkClient struct {
 	path     string
-	conn     *gozk.Conn
+	conn     *zk.Conn
 	data     []byte
 	children []string
 
@@ -28,7 +28,7 @@ func NewGozkClient(zkhosts []string, nodepath string) (*GozkClient, error) {
 		lock: &sync.RWMutex{},
 	}
 
-	c, _, err := gozk.Connect(zkhosts, 2*time.Second)
+	c, _, err := zk.Connect(zkhosts, 2*time.Second)
 
 	client.conn = c
 	data, _, err := c.Get(nodepath)
@@ -81,7 +81,7 @@ func (gzc *GozkClient) watchNodeDataChanged() {
 			continue
 		}
 
-		if evt.Type == gozk.EventNodeDataChanged {
+		if evt.Type == zk.EventNodeDataChanged {
 			data, _, err := gzc.conn.Get(gzc.path)
 			if err != nil {
 				log.Error(err)
@@ -109,7 +109,7 @@ func (gzc *GozkClient) watchNodeChildrenChanged() {
 			continue
 		}
 
-		if evt.Type == gozk.EventNodeChildrenChanged {
+		if evt.Type == zk.EventNodeChildrenChanged {
 			children, _, err := gzc.conn.Children(gzc.path)
 			if err != nil {
 				log.Error(err)

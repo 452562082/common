@@ -1,4 +1,4 @@
-package gozk
+package zk
 
 import (
 	"crypto/rand"
@@ -70,7 +70,7 @@ func TestCreate(t *testing.T) {
 	}
 	defer zk.Close()
 
-	path := "/zk-test"
+	path := "/gozk-test"
 
 	if err := zk.Delete(path, -1); err != nil && err != ErrNoNode {
 		t.Fatalf("Delete returned error: %+v", err)
@@ -104,7 +104,7 @@ func TestMulti(t *testing.T) {
 	}
 	defer zk.Close()
 
-	path := "/zk-test"
+	path := "/gozk-test"
 
 	if err := zk.Delete(path, -1); err != nil && err != ErrNoNode {
 		t.Fatalf("Delete returned error: %+v", err)
@@ -183,8 +183,8 @@ func TestIfAuthdataSurvivesReconnect(t *testing.T) {
 func TestMultiFailures(t *testing.T) {
 	// This test case ensures that we return the errors associated with each
 	// opeThis in the event a call to Multi() fails.
-	const firstPath = "/zk-test-first"
-	const secondPath = "/zk-test-second"
+	const firstPath = "/gozk-test-first"
+	const secondPath = "/gozk-test-second"
 
 	ts, err := StartTestCluster(1, nil, logWriter{t: t, p: "[ZKERR] "})
 	if err != nil {
@@ -244,15 +244,15 @@ func TestGetSetACL(t *testing.T) {
 		t.Fatalf("AddAuth returned error %+v", err)
 	}
 
-	path := "/zk-test"
+	path := "/gozk-test"
 
 	if err := zk.Delete(path, -1); err != nil && err != ErrNoNode {
 		t.Fatalf("Delete returned error: %+v", err)
 	}
 	if path, err := zk.Create(path, []byte{1, 2, 3, 4}, 0, WorldACL(PermAll)); err != nil {
 		t.Fatalf("Create returned error: %+v", err)
-	} else if path != "/zk-test" {
-		t.Fatalf("Create returned different path '%s' != '/zk-test'", path)
+	} else if path != "/gozk-test" {
+		t.Fatalf("Create returned different path '%s' != '/gozk-test'", path)
 	}
 
 	expected := WorldACL(PermAll)
@@ -294,7 +294,7 @@ func TestAuth(t *testing.T) {
 	}
 	defer zk.Close()
 
-	path := "/zk-digest-test"
+	path := "/gozk-digest-test"
 	if err := zk.Delete(path, -1); err != nil && err != ErrNoNode {
 		t.Fatalf("Delete returned error: %+v", err)
 	}
@@ -350,17 +350,17 @@ func TestChildren(t *testing.T) {
 		}
 	}
 
-	deleteNode("/zk-test-big")
+	deleteNode("/gozk-test-big")
 
-	if path, err := zk.Create("/zk-test-big", []byte{1, 2, 3, 4}, 0, WorldACL(PermAll)); err != nil {
+	if path, err := zk.Create("/gozk-test-big", []byte{1, 2, 3, 4}, 0, WorldACL(PermAll)); err != nil {
 		t.Fatalf("Create returned error: %+v", err)
-	} else if path != "/zk-test-big" {
-		t.Fatalf("Create returned different path '%s' != '/zk-test-big'", path)
+	} else if path != "/gozk-test-big" {
+		t.Fatalf("Create returned different path '%s' != '/gozk-test-big'", path)
 	}
 
 	rb := make([]byte, 1000)
 	hb := make([]byte, 2000)
-	prefix := []byte("/zk-test-big/")
+	prefix := []byte("/gozk-test-big/")
 	for i := 0; i < 10000; i++ {
 		_, err := rand.Read(rb)
 		if err != nil {
@@ -377,7 +377,7 @@ func TestChildren(t *testing.T) {
 		defer deleteNode(string(expect))
 	}
 
-	children, _, err := zk.Children("/zk-test-big")
+	children, _, err := zk.Children("/gozk-test-big")
 	if err != nil {
 		t.Fatalf("Children returned error: %+v", err)
 	} else if len(children) != 10000 {
@@ -397,7 +397,7 @@ func TestChildWatch(t *testing.T) {
 	}
 	defer zk.Close()
 
-	if err := zk.Delete("/zk-test", -1); err != nil && err != ErrNoNode {
+	if err := zk.Delete("/gozk-test", -1); err != nil && err != ErrNoNode {
 		t.Fatalf("Delete returned error: %+v", err)
 	}
 
@@ -410,10 +410,10 @@ func TestChildWatch(t *testing.T) {
 		t.Fatal("Children should return at least 1 child")
 	}
 
-	if path, err := zk.Create("/zk-test", []byte{1, 2, 3, 4}, 0, WorldACL(PermAll)); err != nil {
+	if path, err := zk.Create("/gozk-test", []byte{1, 2, 3, 4}, 0, WorldACL(PermAll)); err != nil {
 		t.Fatalf("Create returned error: %+v", err)
-	} else if path != "/zk-test" {
-		t.Fatalf("Create returned different path '%s' != '/zk-test'", path)
+	} else if path != "/gozk-test" {
+		t.Fatalf("Create returned different path '%s' != '/gozk-test'", path)
 	}
 
 	select {
@@ -430,7 +430,7 @@ func TestChildWatch(t *testing.T) {
 
 	// Delete of the watched node should trigger the watch
 
-	children, stat, childCh, err = zk.ChildrenW("/zk-test")
+	children, stat, childCh, err = zk.ChildrenW("/gozk-test")
 	if err != nil {
 		t.Fatalf("Children returned error: %+v", err)
 	} else if stat == nil {
@@ -439,7 +439,7 @@ func TestChildWatch(t *testing.T) {
 		t.Fatal("Children should return 0 children")
 	}
 
-	if err := zk.Delete("/zk-test", -1); err != nil && err != ErrNoNode {
+	if err := zk.Delete("/gozk-test", -1); err != nil && err != ErrNoNode {
 		t.Fatalf("Delete returned error: %+v", err)
 	}
 
@@ -448,7 +448,7 @@ func TestChildWatch(t *testing.T) {
 		if ev.Err != nil {
 			t.Fatalf("Child watcher error %+v", ev.Err)
 		}
-		if ev.Path != "/zk-test" {
+		if ev.Path != "/gozk-test" {
 			t.Fatalf("Child watcher wrong path %s instead of %s", ev.Path, "/")
 		}
 	case _ = <-time.After(time.Second * 2):
@@ -476,11 +476,11 @@ func TestSetWatchers(t *testing.T) {
 	}
 	defer zk2.Close()
 
-	if err := zk.Delete("/zk-test", -1); err != nil && err != ErrNoNode {
+	if err := zk.Delete("/gozk-test", -1); err != nil && err != ErrNoNode {
 		t.Fatalf("Delete returned error: %+v", err)
 	}
 
-	testPath, err := zk.Create("/zk-test-2", []byte{}, 0, WorldACL(PermAll))
+	testPath, err := zk.Create("/gozk-test-2", []byte{}, 0, WorldACL(PermAll))
 	if err != nil {
 		t.Fatalf("Create returned: %+v", err)
 	}
@@ -507,10 +507,10 @@ func TestSetWatchers(t *testing.T) {
 	// Allow some time for the `zk` session to reconnect and set watches.
 	time.Sleep(time.Millisecond * 100)
 
-	if path, err := zk2.Create("/zk-test", []byte{1, 2, 3, 4}, 0, WorldACL(PermAll)); err != nil {
+	if path, err := zk2.Create("/gozk-test", []byte{1, 2, 3, 4}, 0, WorldACL(PermAll)); err != nil {
 		t.Fatalf("Create returned error: %+v", err)
-	} else if path != "/zk-test" {
-		t.Fatalf("Create returned different path '%s' != '/zk-test'", path)
+	} else if path != "/gozk-test" {
+		t.Fatalf("Create returned different path '%s' != '/gozk-test'", path)
 	}
 
 	select {
@@ -550,7 +550,7 @@ func TestExpiringWatch(t *testing.T) {
 	}
 	defer zk.Close()
 
-	if err := zk.Delete("/zk-test", -1); err != nil && err != ErrNoNode {
+	if err := zk.Delete("/gozk-test", -1); err != nil && err != ErrNoNode {
 		t.Fatalf("Delete returned error: %+v", err)
 	}
 
@@ -644,13 +644,13 @@ func TestSlowServer(t *testing.T) {
 
 	time.Sleep(time.Millisecond * 100)
 
-	if err := zk.Delete("/zk-test", -1); err == nil {
+	if err := zk.Delete("/gozk-test", -1); err == nil {
 		t.Fatal("Delete should have failed")
 	}
 
 	// The previous request should have timed out causing the server to be disconnected and reconnected
 
-	if _, err := zk.Create("/zk-test", []byte{1, 2, 3, 4}, 0, WorldACL(PermAll)); err != nil {
+	if _, err := zk.Create("/gozk-test", []byte{1, 2, 3, 4}, 0, WorldACL(PermAll)); err != nil {
 		t.Fatal(err)
 	}
 

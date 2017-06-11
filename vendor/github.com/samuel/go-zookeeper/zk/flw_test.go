@@ -1,4 +1,4 @@
-package gozk
+package zk
 
 import (
 	"net"

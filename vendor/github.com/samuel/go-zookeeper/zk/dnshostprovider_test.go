@@ -1,4 +1,4 @@
-package gozk
+package zk
 
 import (
 	"fmt"
@@ -31,7 +31,7 @@ func TestDNSHostProviderCreate(t *testing.T) {
 	}
 	defer zk.Close()
 
-	path := "/zk-test"
+	path := "/gozk-test"
 
 	if err := zk.Delete(path, -1); err != nil && err != ErrNoNode {
 		t.Fatalf("Delete returned error: %+v", err)
@@ -118,7 +118,7 @@ func TestDNSHostProviderReconnect(t *testing.T) {
 	}
 	defer zk.Close()
 
-	path := "/zk-test"
+	path := "/gozk-test"
 
 	// Initial operation to force connection.
 	if err := zk.Delete(path, -1); err != nil && err != ErrNoNode {

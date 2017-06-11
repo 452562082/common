@@ -8,21 +8,21 @@ import (
 	"sync"
 	"time"
 	"unsafe"
-
-	"tproxy/utils/log"
-	"tproxy/zk/gozk"
+	
+	"github.com/samuel/go-zookeeper/zk"
+	"git.oschina.net/liuxp/common.git/log"
 )
 
 var SessionTimeout int = 100
 
 type GozkServer struct {
-	conn *gozk.Conn
+	conn *zk.Conn
 
 	lock *sync.RWMutex
 }
 
 func NewGozkServer(zkhosts []string) (*GozkServer, error) {
-	conn, _, err := gozk.Connect(zkhosts, time.Duration(SessionTimeout)*time.Millisecond)
+	conn, _, err := zk.Connect(zkhosts, time.Duration(SessionTimeout)*time.Millisecond)
 	if err != nil {
 		return nil, err
 	}
@@ -48,7 +48,7 @@ func (gzs *GozkServer) ServiceConfig(servicepath string, data []byte, createFath
 		return err
 	}
 
-	_, err = gzs.conn.Create(servicepath, data, gozk.FlagPersistent, gozk.WorldACL(gozk.PermAll))
+	_, err = gzs.conn.Create(servicepath, data, zk.FlagPersistent, zk.WorldACL(zk.PermAll))
 	if err != nil {
 		return err
 	}
@@ -68,7 +68,7 @@ func (gzs *GozkServer) ServiceRegistry(rootPath, serviceHost string, data []byte
 		return err
 	}
 
-	_, err = gzs.conn.Create(abpath, data, gozk.FlagEphemeral, gozk.WorldACL(gozk.PermAll))
+	_, err = gzs.conn.Create(abpath, data, zk.FlagEphemeral, zk.WorldACL(zk.PermAll))
 	if err != nil {
 		return err
 	}
@@ -90,7 +90,7 @@ func (gzs *GozkServer) checkRoot(path string, createFatherNodePaths bool) error 
 				return fmt.Errorf("%s can not find father node %s", gzs, v)
 			}
 
-			_, err = gzs.conn.Create(v, s2b(v), gozk.FlagPersistent, gozk.WorldACL(gozk.PermAll))
+			_, err = gzs.conn.Create(v, s2b(v), zk.FlagPersistent, zk.WorldACL(zk.PermAll))
 			if err != nil {
 				return err
 			}
