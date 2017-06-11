@@ -18,7 +18,7 @@ import (
 	"strings"
 	"sync"
 	"time"
-	"git.oschina.net/liuxp/common.git/log"
+	"git.oschina.net/kuaishangtong/common/log"
 )
 
 var defaultSetting = HttpSettings{

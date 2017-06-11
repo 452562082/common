@@ -21,7 +21,7 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
-	"git.oschina.net/liuxp/common.git/log"
+	"git.oschina.net/kuaishangtong/common/log"
 )
 
 // ErrNoServer indicates that an operation cannot be completed

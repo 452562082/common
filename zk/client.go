@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"strings"
-	"git.oschina.net/liuxp/common.git/log"
+	"git.oschina.net/kuaishangtong/common/log"
 	"github.com/samuel/go-zookeeper/zk"
 )
 
