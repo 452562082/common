@@ -10,7 +10,7 @@ import (
 type KafkaConsumer struct {
 	consumer   sarama.Consumer
 	topic      string
-	patitions  []int32
+	patitions  []int32 // 数组个数等于1， 且数值为-1，表示监听所有的patition
 	closeFlags chan bool
 }
 
@@ -48,7 +48,7 @@ func NewKafkaConsumer(kafkahosts []string, topic string, patitions []int32) (*Ka
 			}
 		}
 		if !contains {
-			return nil, fmt.Errorf("patition %d is not exist in topic:%s", i, topic)
+			return nil, fmt.Errorf("patition %d is not exist in topic %s", i, topic)
 		}
 	next:
 	}

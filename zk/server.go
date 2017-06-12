@@ -62,7 +62,6 @@ func NewGozkServer(zkhosts []string) (*GozkServer, error) {
 		registryMap: make(map[string]*zknode),
 		lock:        &sync.RWMutex{},
 	}
-
 	go gzs.loop()
 
 	return gzs, nil
@@ -157,7 +156,7 @@ func (gzs *GozkServer) serviceConfig(servicepath string, data []byte, createFath
 
 	_, err = gzs.conn.Create(servicepath, data, zk.FlagPersistent, zk.WorldACL(zk.PermAll))
 	if err != nil {
-		if err == zk.ErrNodeExists {
+		if err == zk.ErrNodeExists { // 如果要创建的节点已经存在，直接修改该节点的数据
 			_, err = gzs.conn.Set(servicepath, data, -1)
 			if err != nil {
 				return err
