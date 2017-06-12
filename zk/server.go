@@ -13,7 +13,7 @@ import (
 	"github.com/samuel/go-zookeeper/zk"
 )
 
-var SessionTimeout int = 100
+var SessionTimeout int = 2000
 
 type createType int32
 
@@ -103,7 +103,7 @@ func (gzs *GozkServer) loop() {
 						}
 					}
 					gzs.lock.Unlock()
-					
+
 				case zk.StateDisconnected:
 					log.Warnf("zookeeper conn %s disconnect", gzs.conn.Server())
 					gzs.lock.Lock()
@@ -111,10 +111,10 @@ func (gzs *GozkServer) loop() {
 						node.active = false
 					}
 					gzs.lock.Unlock()
-					
+
 				case zk.StateConnected:
 					log.Infof("zookeeper conn %s connected", gzs.conn.Server())
-					
+
 				case zk.StateExpired:
 					log.Warnf("zookeeper conn %s expired", gzs.conn.Server())
 				}
@@ -157,7 +157,14 @@ func (gzs *GozkServer) serviceConfig(servicepath string, data []byte, createFath
 
 	_, err = gzs.conn.Create(servicepath, data, zk.FlagPersistent, zk.WorldACL(zk.PermAll))
 	if err != nil {
-		return err
+		if err == zk.ErrNodeExists {
+			_, err = gzs.conn.Set(servicepath, data, -1)
+			if err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
 	}
 	gzs.registryMap[servicepath].active = true
 
