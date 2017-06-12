@@ -80,6 +80,7 @@ func (gzs *GozkServer) loop() {
 				switch evt.State {
 				case zk.StateHasSession:
 					log.Infof("zookeeper conn %s has session", gzs.conn.Server())
+					gzs.lock.Lock()
 					for path, node := range gzs.registryMap {
 						if !node.active {
 							switch node.typ {
@@ -89,7 +90,7 @@ func (gzs *GozkServer) loop() {
 									log.Error(err)
 									continue
 								}
-								log.Infof("zookeeper conn %s recreate ZK_CREATE_NODE_DATA node in path %s", gzs.conn.Server(), path)
+								log.Infof("zookeeper conn %s recreate node in path %s", gzs.conn.Server(), path)
 							case _ZK_CREATE_NODE_CHILDREN:
 								parts := strings.Split(path, "/")
 								err := gzs.serviceRegistry(strings.Join(parts[:len(parts)-1], "/"), parts[len(parts)-1], node.data, true)
@@ -97,17 +98,23 @@ func (gzs *GozkServer) loop() {
 									log.Error(err)
 									continue
 								}
-								log.Infof("zookeeper conn %s recreate ZK_CREATE_NODE_CHILDREN node in path %s", gzs.conn.Server(), path)
+								log.Infof("zookeeper conn %s recreate node in path %s", gzs.conn.Server(), path)
 							}
 						}
 					}
+					gzs.lock.Unlock()
+					
 				case zk.StateDisconnected:
 					log.Warnf("zookeeper conn %s disconnect", gzs.conn.Server())
+					gzs.lock.Lock()
 					for _, node := range gzs.registryMap {
 						node.active = false
 					}
+					gzs.lock.Unlock()
+					
 				case zk.StateConnected:
 					log.Infof("zookeeper conn %s connected", gzs.conn.Server())
+					
 				case zk.StateExpired:
 					log.Warnf("zookeeper conn %s expired", gzs.conn.Server())
 				}
