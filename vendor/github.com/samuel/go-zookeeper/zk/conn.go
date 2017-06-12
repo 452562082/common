@@ -14,6 +14,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"git.oschina.net/kuaishangtong/common/log"
 	"io"
 	"net"
 	"strconv"
@@ -21,7 +22,6 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
-	"git.oschina.net/kuaishangtong/common/log"
 )
 
 // ErrNoServer indicates that an operation cannot be completed
@@ -45,7 +45,7 @@ const (
 type watchType int
 
 const (
-	watchTypeData  = iota
+	watchTypeData = iota
 	watchTypeExist
 	watchTypeChild
 )
@@ -74,7 +74,7 @@ type Conn struct {
 	xid              uint32
 	sessionTimeoutMs int32 // session timeout in milliseconds
 	passwd           []byte
-	
+
 	dialer         Dialer
 	hostProvider   HostProvider
 	serverMu       sync.Mutex // protects server
@@ -86,22 +86,22 @@ type Conn struct {
 	pingInterval   time.Duration
 	recvTimeout    time.Duration
 	connectTimeout time.Duration
-	
+
 	creds   []authCreds
 	credsMu sync.Mutex // protects server
-	
+
 	sendChan     chan *request
 	requests     map[int32]*request // Xid -> pending request
 	requestsLock sync.Mutex
 	watchers     map[watchPathType][]chan Event
 	watchersLock sync.Mutex
 	closeChan    chan struct{} // channel to tell send loop stop
-	
+
 	// Debug (used by unit tests)
 	reconnectDelay time.Duration
-	
+
 	logger Logger
-	
+
 	buf []byte
 }
 
@@ -114,7 +114,7 @@ type request struct {
 	pkt        interface{}
 	recvStruct interface{}
 	recvChan   chan response
-	
+
 	// Because sending and receiving happen in separate go routines, there's
 	// a possible race condition when creating watches from outside the read
 	// loop. We must ensure that a watcher gets added to the list synchronously
@@ -170,9 +170,9 @@ func Connect(servers []string, sessionTimeout time.Duration, options ...connOpti
 	if len(servers) == 0 {
 		return nil, nil, errors.New("zk: server list must not be empty")
 	}
-	
+
 	srvs := make([]string, len(servers))
-	
+
 	for i, addr := range servers {
 		if strings.Contains(addr, ":") {
 			srvs[i] = addr
@@ -180,10 +180,10 @@ func Connect(servers []string, sessionTimeout time.Duration, options ...connOpti
 			srvs[i] = addr + ":" + strconv.Itoa(DefaultPort)
 		}
 	}
-	
+
 	// Randomize the order of the servers to avoid creating hotspots
 	stringShuffle(srvs)
-	
+
 	ec := make(chan Event, eventChanSize)
 	conn := &Conn{
 		dialer:         net.DialTimeout,
@@ -199,22 +199,22 @@ func Connect(servers []string, sessionTimeout time.Duration, options ...connOpti
 		passwd:         emptyPassword,
 		logger:         DefaultLogger,
 		buf:            make([]byte, bufferSize),
-		
+
 		// Debug
 		reconnectDelay: 0,
 	}
-	
+
 	// Set provided options.
 	for _, option := range options {
 		option(conn)
 	}
-	
+
 	if err := conn.hostProvider.Init(srvs); err != nil {
 		return nil, nil, err
 	}
-	
+
 	conn.setTimeouts(int32(sessionTimeout / time.Millisecond))
-	
+
 	go func() {
 		conn.loop()
 		conn.flushRequests(ErrClosing)
@@ -252,7 +252,7 @@ func WithEventCallback(cb EventCallback) connOption {
 
 func (c *Conn) Close() {
 	close(c.shouldQuit)
-	
+
 	select {
 	case <-c.queueRequest(opClose, &closeRequest{}, &closeResponse{}, nil):
 	case <-time.After(time.Second):
@@ -291,7 +291,7 @@ func (c *Conn) sendEvent(evt Event) {
 	if c.eventCallback != nil {
 		c.eventCallback(evt)
 	}
-	
+
 	select {
 	case c.eventChan <- evt:
 	default:
@@ -304,7 +304,6 @@ func (c *Conn) connect() error {
 	for {
 		c.serverMu.Lock()
 		c.server, retryStart = c.hostProvider.Next()
-		log.Debugf("server:%s, retryStart:%v", c.server, retryStart)
 		c.serverMu.Unlock()
 		c.setState(StateConnecting)
 		if retryStart {
@@ -318,7 +317,7 @@ func (c *Conn) connect() error {
 				return ErrClosing
 			}
 		}
-		
+
 		zkConn, err := c.dialer("tcp", c.Server(), c.connectTimeout)
 		if err == nil {
 			c.conn = zkConn
@@ -326,7 +325,7 @@ func (c *Conn) connect() error {
 			log.Infof("Connected to %s", c.Server())
 			return nil
 		}
-		
+
 		log.Errorf("Failed to connect to %s: %+v", c.Server(), err)
 	}
 }
@@ -334,28 +333,27 @@ func (c *Conn) connect() error {
 func (c *Conn) resendZkAuth(reauthReadyChan chan struct{}) {
 	c.credsMu.Lock()
 	defer c.credsMu.Unlock()
-	
+
 	defer close(reauthReadyChan)
-	
-	log.Infof("Re-submitting `%d` credentials after reconnect",
-		len(c.creds))
-	
+
+	log.Infof("Re-submitting `%d` credentials after reconnect", len(c.creds))
+
 	for _, cred := range c.creds {
 		resChan, err := c.sendRequest(
 			opSetAuth,
 			&setAuthRequest{Type: 0,
-				Scheme:           cred.scheme,
-				Auth:             cred.auth,
+				Scheme: cred.scheme,
+				Auth:   cred.auth,
 			},
 			&setAuthResponse{},
 			nil)
-		
+
 		if err != nil {
 			log.Errorf("Call to sendRequest failed during credential resubmit: %s", err)
 			// FIXME(prozlach): lets ignore errors for now
 			continue
 		}
-		
+
 		res := <-resChan
 		if res.err != nil {
 			log.Errorf("Credential re-submit failed: %s", res.err)
@@ -382,11 +380,11 @@ func (c *Conn) sendRequest(
 		recvChan:   make(chan response, 1),
 		recvFunc:   recvFunc,
 	}
-	
+
 	if err := c.sendData(rq); err != nil {
 		return nil, err
 	}
-	
+
 	return rq.recvChan, nil
 }
 
@@ -396,8 +394,9 @@ func (c *Conn) loop() {
 			log.Error(err)
 			return
 		}
-		
+
 		err := c.authenticate()
+
 		switch {
 		case err == ErrSessionExpired:
 			log.Errorf("Authentication failed: %s", err)
@@ -410,7 +409,7 @@ func (c *Conn) loop() {
 			c.hostProvider.Connected()        // mark success
 			c.closeChan = make(chan struct{}) // channel to tell send loop stop
 			reauthChan := make(chan struct{}) // channel to tell send loop that authdata has been resubmitted
-			
+
 			var wg sync.WaitGroup
 			wg.Add(1)
 			go func() {
@@ -419,41 +418,41 @@ func (c *Conn) loop() {
 				if err != nil {
 					log.Errorf("Send loop terminated: err=%v", err)
 				}
+
 				c.conn.Close() // causes recv loop to EOF/exit
 				wg.Done()
 			}()
-			
+
 			wg.Add(1)
 			go func() {
 				err := c.recvLoop(c.conn)
-				log.Infof("Recv loop terminated: err=%v", err)
+				log.Errorf("Recv loop terminated err: %v", err)
 				if err == nil {
 					panic("zk: recvLoop should never return nil error")
 				}
 				close(c.closeChan) // tell send loop to exit
 				wg.Done()
 			}()
-			
+
 			c.resendZkAuth(reauthChan)
-			
 			c.sendSetWatches()
 			wg.Wait()
 		}
-		
+
 		c.setState(StateDisconnected)
-		
+
 		select {
 		case <-c.shouldQuit:
 			c.flushRequests(ErrClosing)
 			return
 		default:
 		}
-		
+
 		if err != ErrSessionExpired {
 			err = ErrConnectionClosed
 		}
 		c.flushRequests(err)
-		
+
 		if c.reconnectDelay > 0 {
 			select {
 			case <-c.shouldQuit:
@@ -489,7 +488,7 @@ func (c *Conn) flushRequests(err error) {
 func (c *Conn) invalidateWatches(err error) {
 	c.watchersLock.Lock()
 	defer c.watchersLock.Unlock()
-	
+
 	if len(c.watchers) >= 0 {
 		for pathType, watchers := range c.watchers {
 			ev := Event{Type: EventNotWatching, State: StateDisconnected, Path: pathType.path, Err: err}
@@ -505,11 +504,11 @@ func (c *Conn) invalidateWatches(err error) {
 func (c *Conn) sendSetWatches() {
 	c.watchersLock.Lock()
 	defer c.watchersLock.Unlock()
-	
+
 	if len(c.watchers) == 0 {
 		return
 	}
-	
+
 	req := &setWatchesRequest{
 		RelativeZxid: c.lastZxid,
 		DataWatches:  make([]string, 0),
@@ -534,7 +533,7 @@ func (c *Conn) sendSetWatches() {
 	if n == 0 {
 		return
 	}
-	
+
 	go func() {
 		res := &setWatchesResponse{}
 		_, err := c.request(opSetWatches, req, res, nil)
@@ -546,7 +545,7 @@ func (c *Conn) sendSetWatches() {
 
 func (c *Conn) authenticate() error {
 	buf := make([]byte, 256)
-	
+
 	// Encode and send a connect request.
 	n, err := encodePacket(buf[4:], &connectRequest{
 		ProtocolVersion: protocolVersion,
@@ -558,16 +557,16 @@ func (c *Conn) authenticate() error {
 	if err != nil {
 		return err
 	}
-	
+
 	binary.BigEndian.PutUint32(buf[:4], uint32(n))
-	
+
 	c.conn.SetWriteDeadline(time.Now().Add(c.recvTimeout * 10))
 	_, err = c.conn.Write(buf[:n+4])
 	c.conn.SetWriteDeadline(time.Time{})
 	if err != nil {
 		return err
 	}
-	
+
 	// Receive and decode a connect response.
 	c.conn.SetReadDeadline(time.Now().Add(c.recvTimeout * 10))
 	_, err = io.ReadFull(c.conn, buf[:4])
@@ -575,17 +574,17 @@ func (c *Conn) authenticate() error {
 	if err != nil {
 		return err
 	}
-	
+
 	blen := int(binary.BigEndian.Uint32(buf[:4]))
 	if cap(buf) < blen {
 		buf = make([]byte, blen)
 	}
-	
+
 	_, err = io.ReadFull(c.conn, buf[:blen])
 	if err != nil {
 		return err
 	}
-	
+
 	r := connectResponse{}
 	_, err = decodePacket(buf[:blen], &r)
 	if err != nil {
@@ -598,12 +597,12 @@ func (c *Conn) authenticate() error {
 		c.setState(StateExpired)
 		return ErrSessionExpired
 	}
-	
+
 	atomic.StoreInt64(&c.sessionID, r.SessionID)
 	c.setTimeouts(r.TimeOut)
 	c.passwd = r.Passwd
 	c.setState(StateHasSession)
-	
+
 	return nil
 }
 
@@ -614,17 +613,17 @@ func (c *Conn) sendData(req *request) error {
 		req.recvChan <- response{-1, err}
 		return nil
 	}
-	
+
 	n2, err := encodePacket(c.buf[4+n:], req.pkt)
 	if err != nil {
 		req.recvChan <- response{-1, err}
 		return nil
 	}
-	
+
 	n += n2
-	
+
 	binary.BigEndian.PutUint32(c.buf[:4], uint32(n))
-	
+
 	c.requestsLock.Lock()
 	select {
 	case <-c.closeChan:
@@ -635,7 +634,7 @@ func (c *Conn) sendData(req *request) error {
 	}
 	c.requests[req.xid] = req
 	c.requestsLock.Unlock()
-	
+
 	c.conn.SetWriteDeadline(time.Now().Add(c.recvTimeout))
 	_, err = c.conn.Write(c.buf[:n+4])
 	c.conn.SetWriteDeadline(time.Time{})
@@ -644,14 +643,14 @@ func (c *Conn) sendData(req *request) error {
 		c.conn.Close()
 		return err
 	}
-	
+
 	return nil
 }
 
 func (c *Conn) sendLoop() error {
 	pingTicker := time.NewTicker(c.pingInterval)
 	defer pingTicker.Stop()
-	
+
 	for {
 		select {
 		case req := <-c.sendChan:
@@ -663,9 +662,9 @@ func (c *Conn) sendLoop() error {
 			if err != nil {
 				panic("zk: opPing should never fail to serialize")
 			}
-			
+
 			binary.BigEndian.PutUint32(c.buf[:4], uint32(n))
-			
+
 			c.conn.SetWriteDeadline(time.Now().Add(c.recvTimeout))
 			_, err = c.conn.Write(c.buf[:n+4])
 			c.conn.SetWriteDeadline(time.Time{})
@@ -688,24 +687,24 @@ func (c *Conn) recvLoop(conn net.Conn) error {
 		if err != nil {
 			return err
 		}
-		
+
 		blen := int(binary.BigEndian.Uint32(buf[:4]))
 		if cap(buf) < blen {
 			buf = make([]byte, blen)
 		}
-		
+
 		_, err = io.ReadFull(conn, buf[:blen])
 		conn.SetReadDeadline(time.Time{})
 		if err != nil {
 			return err
 		}
-		
+
 		res := responseHeader{}
 		_, err = decodePacket(buf[:16], &res)
 		if err != nil {
 			return err
 		}
-		
+
 		if res.Xid == -1 {
 			res := &watcherEvent{}
 			_, err := decodePacket(buf[16:blen], res)
@@ -748,14 +747,14 @@ func (c *Conn) recvLoop(conn net.Conn) error {
 			if res.Zxid > 0 {
 				c.lastZxid = res.Zxid
 			}
-			
+
 			c.requestsLock.Lock()
 			req, ok := c.requests[res.Xid]
 			if ok {
 				delete(c.requests, res.Xid)
 			}
 			c.requestsLock.Unlock()
-			
+
 			if !ok {
 				log.Warnf("Response for unknown request with xid %d", res.Xid)
 			} else {
@@ -783,7 +782,7 @@ func (c *Conn) nextXid() int32 {
 func (c *Conn) addWatcher(path string, watchType watchType) <-chan Event {
 	c.watchersLock.Lock()
 	defer c.watchersLock.Unlock()
-	
+
 	ch := make(chan Event, 1)
 	wpt := watchPathType{path, watchType}
 	c.watchers[wpt] = append(c.watchers[wpt], ch)
@@ -810,11 +809,11 @@ func (c *Conn) request(opcode int32, req interface{}, res interface{}, recvFunc 
 
 func (c *Conn) AddAuth(scheme string, auth []byte) error {
 	_, err := c.request(opSetAuth, &setAuthRequest{Type: 0, Scheme: scheme, Auth: auth}, &setAuthResponse{}, nil)
-	
+
 	if err != nil {
 		return err
 	}
-	
+
 	// Remember authdata so that it can be re-submitted on reconnect
 	//
 	// FIXME(prozlach): For now we treat "userfoo:passbar" and "userfoo:passbar2"
@@ -826,11 +825,11 @@ func (c *Conn) AddAuth(scheme string, auth []byte) error {
 		scheme: scheme,
 		auth:   auth,
 	}
-	
+
 	c.credsMu.Lock()
 	c.creds = append(c.creds, obj)
 	c.credsMu.Unlock()
-	
+
 	return nil
 }
 
@@ -901,12 +900,12 @@ func (c *Conn) CreateProtectedEphemeralSequential(path string, data []byte, acl 
 		return "", err
 	}
 	guidStr := fmt.Sprintf("%x", guid)
-	
+
 	parts := strings.Split(path, "/")
 	parts[len(parts)-1] = fmt.Sprintf("%s%s-%s", protectedPrefix, guidStr, parts[len(parts)-1])
 	rootPath := strings.Join(parts[:len(parts)-1], "/")
 	protectedPath := strings.Join(parts, "/")
-	
+
 	var newPath string
 	for i := 0; i < 3; i++ {
 		newPath, err = c.Create(protectedPath, data, FlagEphemeral|FlagSequence, acl)
@@ -921,7 +920,7 @@ func (c *Conn) CreateProtectedEphemeralSequential(path string, data []byte, acl 
 			for _, p := range children {
 				parts := strings.Split(p, "/")
 				if pth := parts[len(parts)-1]; strings.HasPrefix(pth, protectedPrefix) {
-					if g := pth[len(protectedPrefix): len(protectedPrefix)+32]; g == guidStr {
+					if g := pth[len(protectedPrefix) : len(protectedPrefix)+32]; g == guidStr {
 						return rootPath + "/" + p, nil
 					}
 				}
