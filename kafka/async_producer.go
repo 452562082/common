@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"git.oschina.net/kuaishangtong/common/log"
-	"github.com/Shopify/sarama"
+	"git.oschina.net/kuaishangtong/common/thirdparty/github.com/Shopify/sarama"
 )
 
 var ProducerTimeout int = 5000
@@ -20,12 +20,12 @@ func init() {
 	}
 }
 
-type AsyncProducer struct {
+type KafkaAsyncProducer struct {
 	producer sarama.AsyncProducer
 	topic    string
 }
 
-func NewAsyncProducer(kahosts []string, topic string) (*AsyncProducer, error) {
+func NewKafkaAsyncProducer(kahosts []string, topic string) (*KafkaAsyncProducer, error) {
 	config := sarama.NewConfig()
 	config.Producer.Return.Successes = true //必须有这个选项
 	config.Producer.Timeout = time.Duration(ProducerTimeout) * time.Millisecond
@@ -34,7 +34,7 @@ func NewAsyncProducer(kahosts []string, topic string) (*AsyncProducer, error) {
 	if err != nil {
 		return nil, err
 	}
-	producer := &AsyncProducer{
+	producer := &KafkaAsyncProducer{
 		producer: p,
 		topic:    topic,
 	}
@@ -43,7 +43,7 @@ func NewAsyncProducer(kahosts []string, topic string) (*AsyncProducer, error) {
 	return producer, nil
 }
 
-func (asp *AsyncProducer) loop() {
+func (asp *KafkaAsyncProducer) loop() {
 	for {
 		select {
 		case err, ok := <-asp.producer.Errors():
@@ -55,11 +55,11 @@ func (asp *AsyncProducer) loop() {
 	}
 }
 
-func (asp *AsyncProducer) Close() error {
+func (asp *KafkaAsyncProducer) Close() error {
 	return asp.producer.Close()
 }
 
-func (asp *AsyncProducer) Producer(key, value []byte) {
+func (asp *KafkaAsyncProducer) Producer(key, value []byte) {
 	msg := producerMessagePool.Get().(*sarama.ProducerMessage)
 	defer producerMessagePool.Put(msg)
 

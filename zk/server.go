@@ -10,7 +10,7 @@ import (
 	"unsafe"
 
 	"git.oschina.net/kuaishangtong/common/log"
-	"github.com/samuel/go-zookeeper/zk"
+	"git.oschina.net/kuaishangtong/common/thirdparty/github.com/samuel/go-zookeeper/zk"
 )
 
 var SessionTimeout int = 2000

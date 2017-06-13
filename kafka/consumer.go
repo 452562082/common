@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"git.oschina.net/kuaishangtong/common/log"
-	"github.com/Shopify/sarama"
+	"git.oschina.net/kuaishangtong/common/thirdparty/github.com/Shopify/sarama"
 )
 
 type KafkaConsumer struct {

@@ -5,8 +5,8 @@ import (
 	"time"
 	"strings"
 	
-	"github.com/samuel/go-zookeeper/zk"
 	"git.oschina.net/kuaishangtong/common/log"
+	"git.oschina.net/kuaishangtong/common/thirdparty/github.com/samuel/go-zookeeper/zk"
 )
 
 type GozkClient struct {
