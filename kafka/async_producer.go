@@ -50,7 +50,8 @@ func (asp *KafkaAsyncProducer) loop() {
 			if ok && err != nil {
 				log.Error(err)
 			}
-		case <-asp.producer.Successes():
+		case  <-asp.producer.Successes():
+			//log.Warn(s.Key, s.Value, s.Offset, s.Metadata)
 		}
 	}
 }

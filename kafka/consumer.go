@@ -13,12 +13,12 @@ type KafkaConsumer struct {
 	topics []string
 }
 
-func NewKafkaConsumer(kafkaHosts, kafkaZKHosts, topics []string, group string) (*KafkaConsumer, error) {
+func NewKafkaConsumer(/*kafkaHosts,*/ kafkaZKHosts, topics []string, group string) (*KafkaConsumer, error) {
 	config := cg.NewConfig()
 	config.Offsets.Initial = sarama.OffsetNewest
 	config.Offsets.ProcessingTimeout = 10 * time.Second
 
-	cgroup, err := cg.JoinConsumerGroup(group, topics, kafkaZKHosts, kafkaHosts, config)
+	cgroup, err := cg.JoinConsumerGroup(group, topics, kafkaZKHosts, config)
 	if err != nil {
 		return nil, err
 	}
