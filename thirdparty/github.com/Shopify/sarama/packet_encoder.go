@@ -1,6 +1,6 @@
 package sarama
 
-import "github.com/rcrowley/go-metrics"
+import "git.oschina.net/kuaishangtong/common/thirdparty/github.com/rcrowley/go-metrics"
 
 // PacketEncoder is the interface providing helpers for writing with Kafka's encoding rules.
 // Types implementing Encoder only need to worry about calling methods like PutString,

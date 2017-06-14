@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/Shopify/sarama"
-	"github.com/rcrowley/go-metrics"
+	"git.oschina.net/kuaishangtong/common/thirdparty/github.com/rcrowley/go-metrics"
 )
 
 var (

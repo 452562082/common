@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/rcrowley/go-metrics"
+	"git.oschina.net/kuaishangtong/common/thirdparty/github.com/rcrowley/go-metrics"
 )
 
 // Use exponentially decaying reservoir for sampling histograms with the same defaults as the Java library:

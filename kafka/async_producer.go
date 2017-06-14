@@ -59,7 +59,7 @@ func (asp *KafkaAsyncProducer) Close() error {
 	return asp.producer.Close()
 }
 
-func (asp *KafkaAsyncProducer) Producer(key, value []byte) {
+func (asp *KafkaAsyncProducer) SendMessage(key, value []byte) {
 	msg := producerMessagePool.Get().(*sarama.ProducerMessage)
 	defer producerMessagePool.Put(msg)
 

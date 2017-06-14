@@ -7,8 +7,8 @@ import (
 	"io/ioutil"
 	"time"
 
-	"github.com/eapache/go-xerial-snappy"
-	"github.com/pierrec/lz4"
+	"git.oschina.net/kuaishangtong/common/thirdparty/github.com/eapache/go-xerial-snappy"
+	"git.oschina.net/kuaishangtong/common/thirdparty/github.com/pierrec/lz4"
 )
 
 // CompressionCodec represents the various compression codecs recognized by Kafka in messages.
