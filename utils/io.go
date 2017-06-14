@@ -3,7 +3,9 @@ package utils
 import (
 	"bytes"
 	"io"
+	"reflect"
 	"sync"
+	"unsafe"
 )
 
 var bufferPool sync.Pool
@@ -42,4 +44,18 @@ func ReadAllToByteBuffer(r io.Reader, buf *bytes.Buffer) (b []byte, err error) {
 	}()
 	_, err = buf.ReadFrom(r)
 	return buf.Bytes(), err
+}
+
+func S2B(s string) []byte {
+	sh := (*reflect.StringHeader)(unsafe.Pointer(&s))
+	bh := reflect.SliceHeader{
+		Data: sh.Data,
+		Len:  sh.Len,
+		Cap:  sh.Len,
+	}
+	return *(*[]byte)(unsafe.Pointer(&bh))
+}
+
+func B2S(b []byte) string {
+	return *(*string)(unsafe.Pointer(&b))
 }

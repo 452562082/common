@@ -3,14 +3,13 @@ package zk
 import (
 	"fmt"
 	"path"
-	"reflect"
 	"strings"
 	"sync"
 	"time"
-	"unsafe"
 
 	"git.oschina.net/kuaishangtong/common/log"
 	"git.oschina.net/kuaishangtong/common/thirdparty/github.com/samuel/go-zookeeper/zk"
+	"git.oschina.net/kuaishangtong/common/utils"
 )
 
 var SessionTimeout int = 2000
@@ -228,7 +227,7 @@ func (gzs *GozkServer) checkRoot(path string, createFatherNodePaths bool) error 
 			}
 
 			log.Debug("create father:", v)
-			_, err = gzs.conn.Create(v, s2b(v), zk.FlagPersistent, zk.WorldACL(zk.PermAll))
+			_, err = gzs.conn.Create(v, utils.S2B(v), zk.FlagPersistent, zk.WorldACL(zk.PermAll))
 			if err != nil {
 				return err
 			}
@@ -253,12 +252,3 @@ func getFatherNodePaths(path string) []string {
 	return ab_paths[1 : count-1]
 }
 
-func s2b(s string) []byte {
-	sh := (*reflect.StringHeader)(unsafe.Pointer(&s))
-	bh := reflect.SliceHeader{
-		Data: sh.Data,
-		Len:  sh.Len,
-		Cap:  sh.Len,
-	}
-	return *(*[]byte)(unsafe.Pointer(&bh))
-}
