@@ -21,8 +21,8 @@ func init() {
 }
 
 type KafkaAsyncProducer struct {
-	producer sarama.AsyncProducer
-	topic    string
+	producer  sarama.AsyncProducer
+	topic     string
 }
 
 func NewKafkaAsyncProducer(kahosts []string, topic string) (*KafkaAsyncProducer, error) {
@@ -38,9 +38,18 @@ func NewKafkaAsyncProducer(kahosts []string, topic string) (*KafkaAsyncProducer,
 		producer: p,
 		topic:    topic,
 	}
-	go producer.loop()
+
+	//go producer.loop()
 
 	return producer, nil
+}
+
+func (asp *KafkaAsyncProducer)Successes()<-chan *sarama.ProducerMessage{
+	return asp.producer.Successes()
+}
+
+func (asp *KafkaAsyncProducer)Errors()<-chan *sarama.ProducerError{
+	return asp.producer.Errors()
 }
 
 func (asp *KafkaAsyncProducer) loop() {
@@ -50,7 +59,7 @@ func (asp *KafkaAsyncProducer) loop() {
 			if ok && err != nil {
 				log.Error(err)
 			}
-		case  <-asp.producer.Successes():
+		case <-asp.producer.Successes():
 			//log.Warn(s.Key, s.Value, s.Offset, s.Metadata)
 		}
 	}
