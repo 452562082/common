@@ -33,7 +33,7 @@ func (asp *KafkaSyncProducer) Close() error {
 	return asp.producer.Close()
 }
 
-func (asp *KafkaSyncProducer) Producer(key, value []byte) error {
+func (asp *KafkaSyncProducer) SendMessage(key, value []byte) error {
 	msg := producerMessagePool.Get().(*sarama.ProducerMessage)
 	defer producerMessagePool.Put(msg)
 	
