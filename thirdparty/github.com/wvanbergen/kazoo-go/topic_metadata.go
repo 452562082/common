@@ -71,7 +71,7 @@ func (t *Topic) Exists() (bool, error) {
 // Partitions returns a list of all partitions for the topic.
 func (t *Topic) Partitions() (PartitionList, error) {
 	node := fmt.Sprintf("%s/brokers/topics/%s", t.kz.conf.Chroot, t.Name)
-	fmt.Println(node)
+	//fmt.Println(node)
 	value, _, err := t.kz.conn.Get(node)
 	if err != nil {
 		return nil, err

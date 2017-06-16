@@ -2,7 +2,7 @@ package log
 
 func init() {
 	logger = NewLogger(100000)
-	logger.SetLogFuncCallWithDepth(true, 3)
+	//logger.SetLogFuncCallWithDepth(true, 3)
 	logger.SetLogger("console", `{"color":true}`)
 	logger.SetLevel(LevelDebug)
 }
@@ -28,8 +28,9 @@ func SetLogFuncCall(b bool) {
 	logger.SetLogFuncCall(b)
 }
 
-func SetLogFile(logFile string, level int, isRotateDaily, drawColor bool, rotateMaxDays int) {
+func SetLogFile(logFile string, level int, isRotateDaily, drawColor, showLines bool, rotateMaxDays int) {
 	logger.SetColor(drawColor)
+	logger.SetLogFuncCall(showLines)
 	logger.SetLogFile(logFile, level, isRotateDaily, rotateMaxDays)
 }
 
