@@ -3,8 +3,8 @@ package kafka
 import (
 	"time"
 
-	"git.oschina.net/kuaishangtong/common/thirdparty/github.com/Shopify/sarama"
-	cg "git.oschina.net/kuaishangtong/common/thirdparty/github.com/wvanbergen/kafka/consumergroup"
+	"github.com/Shopify/sarama"
+	cg "github.com/wvanbergen/kafka/consumergroup"
 )
 
 type KafkaConsumer struct {

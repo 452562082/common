@@ -53,7 +53,7 @@ func ExampleUnmarshal() {
 	// [{Name:Platypus Order:Monotremata} {Name:Quoll Order:Dasyuromorphia}]
 }
 
-// This example uses a Decoder to decode a stream of distinct JSON values.
+// This test4tproxy uses a Decoder to decode a stream of distinct JSON values.
 func ExampleDecoder() {
 	const jsonStream = `
 		{"Name": "Ed", "Text": "Knock knock."}
@@ -83,7 +83,7 @@ func ExampleDecoder() {
 	// Ed: Go fmt yourself!
 }
 
-// This example uses RawMessage to delay parsing part of a JSON message.
+// This test4tproxy uses RawMessage to delay parsing part of a JSON message.
 func ExampleRawMessage() {
 	type Color struct {
 		Space string

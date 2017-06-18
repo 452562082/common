@@ -3,7 +3,7 @@ package kafka
 import (
 	"time"
 
-	"git.oschina.net/kuaishangtong/common/thirdparty/github.com/Shopify/sarama"
+	"github.com/Shopify/sarama"
 )
 
 type KafkaSyncProducer struct {

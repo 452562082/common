@@ -6,7 +6,7 @@ import (
 	"strings"
 	
 	"git.oschina.net/kuaishangtong/common/log"
-	"git.oschina.net/kuaishangtong/common/thirdparty/github.com/samuel/go-zookeeper/zk"
+	"github.com/samuel/go-zookeeper/zk"
 )
 
 type GozkClient struct {

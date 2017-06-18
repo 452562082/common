@@ -6,6 +6,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"encoding/xml"
+	"git.oschina.net/kuaishangtong/common/log"
 	"io"
 	"io/ioutil"
 	"mime/multipart"
@@ -18,7 +19,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-	"git.oschina.net/kuaishangtong/common/log"
 )
 
 var defaultSetting = HttpSettings{
@@ -205,14 +205,14 @@ func (b *HttpRequest) SetProtocolVersion(vers string) *HttpRequest {
 	if len(vers) == 0 {
 		vers = "HTTP/1.1"
 	}
-	
+
 	major, minor, ok := http.ParseHTTPVersion(vers)
 	if ok {
 		b.req.Proto = vers
 		b.req.ProtoMajor = major
 		b.req.ProtoMinor = minor
 	}
-	
+
 	return b
 }
 
@@ -229,7 +229,7 @@ func (b *HttpRequest) SetTransport(transport http.RoundTripper) *HttpRequest {
 }
 
 // Set http proxy
-// example:
+// test4tproxy:
 //
 //	func(req *http.Request) (*url.URL, error) {
 // 		u, _ := url.ParseRequestURI("http://127.0.0.1:8118")
@@ -276,6 +276,7 @@ func (b *HttpRequest) JsonBody(obj interface{}) (*HttpRequest, error) {
 		if err := enc.Encode(obj); err != nil {
 			return b, err
 		}
+		
 		b.req.Body = ioutil.NopCloser(buf)
 		b.req.ContentLength = int64(buf.Len())
 		b.req.Header.Set("Content-Type", "application/json")
@@ -293,7 +294,7 @@ func (b *HttpRequest) buildUrl(paramBody string) {
 		}
 		return
 	}
-	
+
 	// build POST/PUT/PATCH url and body
 	if (b.req.Method == "POST" || b.req.Method == "PUT" || b.req.Method == "PATCH") && b.req.Body == nil {
 		// with files
@@ -327,7 +328,7 @@ func (b *HttpRequest) buildUrl(paramBody string) {
 			b.req.Body = ioutil.NopCloser(pr)
 			return
 		}
-		
+
 		// with params
 		if len(paramBody) > 0 {
 			b.Header("Content-Type", "application/x-www-form-urlencoded")
@@ -359,19 +360,19 @@ func (b *HttpRequest) SendOut() (*http.Response, error) {
 			buf.WriteByte('&')
 		}
 		paramBody = buf.String()
-		paramBody = paramBody[0: len(paramBody)-1]
+		paramBody = paramBody[0 : len(paramBody)-1]
 	}
-	
+
 	b.buildUrl(paramBody)
 	url, err := url.Parse(b.url)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	b.req.URL = url
-	
+
 	trans := b.setting.Transport
-	
+
 	if trans == nil {
 		// create default transport
 		trans = &http.Transport{
@@ -393,7 +394,7 @@ func (b *HttpRequest) SendOut() (*http.Response, error) {
 			}
 		}
 	}
-	
+
 	var jar http.CookieJar = nil
 	if b.setting.EnableCookie {
 		if defaultCookieJar == nil {
@@ -401,16 +402,16 @@ func (b *HttpRequest) SendOut() (*http.Response, error) {
 		}
 		jar = defaultCookieJar
 	}
-	
+
 	client := &http.Client{
 		Transport: trans,
 		Jar:       jar,
 	}
-	
+
 	if b.setting.UserAgent != "" && b.req.Header.Get("User-Agent") == "" {
 		b.req.Header.Set("User-Agent", b.setting.UserAgent)
 	}
-	
+
 	if b.setting.ShowDebug {
 		dump, err := httputil.DumpRequest(b.req, b.setting.DumpBody)
 		if err != nil {
@@ -428,7 +429,7 @@ func (b *HttpRequest) String() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	
+
 	return string(data), nil
 }
 
@@ -466,7 +467,7 @@ func (b *HttpRequest) ToFile(filename string) error {
 		return err
 	}
 	defer f.Close()
-	
+
 	resp, err := b.getResponse()
 	if err != nil {
 		return err

@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"git.oschina.net/kuaishangtong/common/log"
-	"git.oschina.net/kuaishangtong/common/thirdparty/github.com/Shopify/sarama"
+	"github.com/Shopify/sarama"
 )
 
 var ProducerTimeout int = 5000
@@ -29,8 +29,6 @@ func NewKafkaAsyncProducer(kahosts []string, topic string) (*KafkaAsyncProducer,
 	config := sarama.NewConfig()
 	config.Producer.Return.Successes = true //必须有这个选项
 	config.Producer.Timeout = time.Duration(ProducerTimeout) * time.Millisecond
-	//config.Producer.RequiredAcks = sarama.WaitForLocal       // Only wait for the leader to ack
-	//config.Producer.Compression = sarama.CompressionSnappy   // Compress messages
 	config.Producer.Flush.Frequency = 500 * time.Millisecond // Flush batches every 500ms
 	
 	

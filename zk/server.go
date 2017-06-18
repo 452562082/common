@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"git.oschina.net/kuaishangtong/common/log"
-	"git.oschina.net/kuaishangtong/common/thirdparty/github.com/samuel/go-zookeeper/zk"
+	"github.com/samuel/go-zookeeper/zk"
 	"git.oschina.net/kuaishangtong/common/utils"
 )
 

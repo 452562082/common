@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 	"git.oschina.net/kuaishangtong/common/log"
-	"git.oschina.net/kuaishangtong/common/thirdparty/github.com/Shopify/sarama"
+	"github.com/Shopify/sarama"
 )
 
 func TestKafkaSyncProducer(t *testing.T) {

@@ -57,8 +57,8 @@ func TestKafkaAsyncProducer(t *testing.T) {
 	}()
 
 	for {
-		timea := time.Now().String()
-		log.Debug("send", timea)
+		timea := fmt.Sprintf("%d", time.Now().UnixNano())
+		log.Debug("send new task", timea)
 		//msg := &sarama.ProducerMessage{}
 		//msg.Topic = "test1"
 		//msg.Key = sarama.ByteEncoder([]byte(timea))
