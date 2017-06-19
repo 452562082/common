@@ -96,12 +96,14 @@ func monitor() {
 		logPath = os.Args[0] + ".monitor"
 	}
 	mlog := log.NewLogger(100000)
-	mlog.SetLogFuncCall(true)
+	mlog.SetLogFuncCallWithDepth(true, 4)
 	mlog.SetColor(false)
 	err := mlog.SetLogFile(logPath, log.LevelInfo, true, 15)
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	mlog.Infof("monitor start. log file in %s", logPath)
 
 	var cmd *exec.Cmd
 	sigChan := make(chan os.Signal, 4)
