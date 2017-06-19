@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"git.oschina.net/kuaishangtong/common/log"
-	"github.com/samuel/go-zookeeper/zk"
 	"git.oschina.net/kuaishangtong/common/utils"
+	"github.com/samuel/go-zookeeper/zk"
 )
 
 var SessionTimeout int = 2000
@@ -153,7 +153,7 @@ func (gzs *GozkServer) serviceConfig(servicepath string, data []byte, createFath
 		gzs.registryMap[servicepath] = node
 	}
 
-	_, err = gzs.conn.Create(servicepath, data, zk.FlagPersistent, zk.WorldACL(zk.PermAll))
+	_, err = gzs.conn.Create(servicepath, data, 0, zk.WorldACL(zk.PermAll))
 	if err != nil {
 		if err == zk.ErrNodeExists { // 如果要创建的节点已经存在，直接修改该节点的数据
 			_, err = gzs.conn.Set(servicepath, data, -1)
@@ -227,7 +227,7 @@ func (gzs *GozkServer) checkRoot(path string, createFatherNodePaths bool) error 
 			}
 
 			log.Debug("create father:", v)
-			_, err = gzs.conn.Create(v, utils.S2B(v), zk.FlagPersistent, zk.WorldACL(zk.PermAll))
+			_, err = gzs.conn.Create(v, utils.S2B(v), 0, zk.WorldACL(zk.PermAll))
 			if err != nil {
 				return err
 			}
@@ -251,4 +251,3 @@ func getFatherNodePaths(path string) []string {
 
 	return ab_paths[1 : count-1]
 }
-
