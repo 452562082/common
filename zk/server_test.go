@@ -1,4 +1,4 @@
-package zookeeper
+package zk
 
 import (
 	"testing"

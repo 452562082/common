@@ -1,4 +1,4 @@
-package zookeeper
+package zk
 
 import (
 	"fmt"
@@ -39,7 +39,7 @@ func NewGozkClient(zkhosts []string, nodepath string) (*GozkClient, error) {
 }
 
 func (gzc *GozkClient) String() string {
-	return fmt.Sprintf("go-zookeeper Client sid[%d] path[%s]", gzc.conn.SessionID(), gzc.path)
+	return fmt.Sprintf("go-zk Client sid[%d] path[%s]", gzc.conn.SessionID(), gzc.path)
 }
 
 func (gzc *GozkClient) GetData() <-chan []byte {

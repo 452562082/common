@@ -1,4 +1,4 @@
-package zookeeper
+package zk
 
 import (
 	"fmt"
@@ -67,7 +67,7 @@ func NewGozkServer(zkhosts []string) (*GozkServer, error) {
 }
 
 func (gzs *GozkServer) String() string {
-	return fmt.Sprintf("go-zookeeper Server sid[%d]", gzs.conn.SessionID())
+	return fmt.Sprintf("go-zk Server sid[%d]", gzs.conn.SessionID())
 }
 
 func (gzs *GozkServer) loop() {
@@ -77,7 +77,7 @@ func (gzs *GozkServer) loop() {
 			if ok && evt.Type == zk.EventSession {
 				switch evt.State {
 				case zk.StateHasSession:
-					log.Infof("zookeeper conn %s has session", gzs.conn.Server())
+					log.Infof("zk conn %s has session", gzs.conn.Server())
 					gzs.lock.Lock()
 					for path, node := range gzs.registryMap {
 						if !node.active {
@@ -88,7 +88,7 @@ func (gzs *GozkServer) loop() {
 									log.Error(err)
 									continue
 								}
-								log.Infof("zookeeper conn %s recreate node in path %s", gzs.conn.Server(), path)
+								log.Infof("zk conn %s recreate node in path %s", gzs.conn.Server(), path)
 							case _ZK_CREATE_NODE_CHILDREN:
 								parts := strings.Split(path, "/")
 								err := gzs.serviceRegistry(strings.Join(parts[:len(parts)-1], "/"), parts[len(parts)-1], node.data, true)
@@ -96,14 +96,14 @@ func (gzs *GozkServer) loop() {
 									log.Error(err)
 									continue
 								}
-								log.Infof("zookeeper conn %s recreate node in path %s", gzs.conn.Server(), path)
+								log.Infof("zk conn %s recreate node in path %s", gzs.conn.Server(), path)
 							}
 						}
 					}
 					gzs.lock.Unlock()
 
 				case zk.StateDisconnected:
-					log.Warnf("zookeeper conn %s disconnect", gzs.conn.Server())
+					log.Warnf("zk conn %s disconnect", gzs.conn.Server())
 					gzs.lock.Lock()
 					for _, node := range gzs.registryMap {
 						node.active = false
@@ -111,10 +111,10 @@ func (gzs *GozkServer) loop() {
 					gzs.lock.Unlock()
 
 				case zk.StateConnected:
-					log.Infof("zookeeper conn %s connected", gzs.conn.Server())
+					log.Infof("zk conn %s connected", gzs.conn.Server())
 
 				case zk.StateExpired:
-					log.Warnf("zookeeper conn %s expired", gzs.conn.Server())
+					log.Warnf("zk conn %s expired", gzs.conn.Server())
 				}
 			}
 		}
