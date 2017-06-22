@@ -11,14 +11,14 @@ type KafkaClusterConsumer struct {
 	topics []string
 }
 
-func NewKafkaClusterConsumer( /*kafkaHosts,*/ kafkaZKHosts, topics []string, group string) (*KafkaClusterConsumer, error) {
+func NewKafkaClusterConsumer(kafkaHosts, topics []string, group string) (*KafkaClusterConsumer, error) {
 	config := cluster.NewConfig()
 	config.Group.Session.Timeout = 15 * time.Second
 	config.Group.Heartbeat.Interval = 2 * time.Second
 	config.Consumer.Return.Errors = true
 	config.Group.Return.Notifications = true
 
-	c, err := cluster.NewConsumer(kafkaZKHosts, group, topics, config)
+	c, err := cluster.NewConsumer(kafkaHosts, group, topics, config)
 	if err != nil {
 		return nil, err
 	}
