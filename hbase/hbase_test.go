@@ -4,11 +4,12 @@ import (
 	"git.apache.org/thrift.git/lib/go/thrift"
 	"git.oschina.net/kuaishangtong/common/utils/log"
 	"testing"
+	"time"
 )
 
 var (
 	host   string = "39.108.128.51"
-	port   string = "9090"
+	port   string = "9095"
 	table  string = "asv_log_info"
 	rowkey string = "row_214718asjdk812"
 )
@@ -16,11 +17,13 @@ var (
 func TestNewTHBaseServiceClientFactory(t *testing.T) {
 
 	protocolFactory := thrift.NewTBinaryProtocolFactoryDefault()
-	transport, err := thrift.NewTSocket(host + ":" + port)
+	transport, err := thrift.NewTSocketTimeout(host+":"+port, 10*time.Second)
 	if err != nil {
 		log.Error(err)
 		t.Fatal(err)
 	}
+
+	log.Debug(transport.Conn())
 
 	client := NewTHBaseServiceClientFactory(transport, protocolFactory)
 	if err := transport.Open(); err != nil {
