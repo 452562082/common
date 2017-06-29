@@ -8,8 +8,8 @@ import (
 )
 
 var (
-	host   string = "39.108.128.51"
-	port   string = "9095"
+	host   string = "127.0.0.1"
+	port   string = "9090"
 	table  string = "asv_log_info"
 	rowkey string = "row_214718asjdk812"
 )
