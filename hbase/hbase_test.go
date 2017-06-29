@@ -35,5 +35,4 @@ func TestNewTHBaseServiceClientFactory(t *testing.T) {
 	}
 
 	log.Infof("rowkey{%s} in table{%s} Exists:%t\n", rowkey, table, isexists)
-
 }
