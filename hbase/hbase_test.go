@@ -2,6 +2,7 @@ package hbase
 
 import (
 	"encoding/binary"
+	"fmt"
 	"git.apache.org/thrift.git/lib/go/thrift"
 	"git.oschina.net/kuaishangtong/common/utils/log"
 	"testing"
@@ -9,7 +10,7 @@ import (
 )
 
 var (
-	host   string = "127.0.0.1"
+	host   string = "39.108.128.51"
 	port   string = "9090"
 	table  string = "asv_log_info"
 	rowkey string = "rowkey1111"
@@ -18,7 +19,7 @@ var (
 func TestNewTHBaseServiceExists(t *testing.T) {
 
 	protocolFactory := thrift.NewTBinaryProtocolFactoryDefault()
-	transport, err := thrift.NewTSocketTimeout(host+":"+port, 10*time.Second)
+	transport, err := thrift.NewTSocketTimeout(fmt.Sprintf("%s:%s", host, port), 10*time.Second)
 	if err != nil {
 		log.Error(err)
 		t.Fatal(err)
