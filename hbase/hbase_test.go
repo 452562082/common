@@ -24,8 +24,6 @@ func TestNewTHBaseServiceExists(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	log.Debug(transport.Conn())
-
 	client := NewTHBaseServiceClientFactory(transport, protocolFactory)
 	if err := transport.Open(); err != nil {
 		log.Error(err)
@@ -38,7 +36,7 @@ func TestNewTHBaseServiceExists(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	log.Infof("rowkey{%s} in table{%s} Exists:%t\n", rowkey, table, isexists)
+	log.Infof("rowkey{%s} in table{%s} Exists: %t\n", rowkey, table, isexists)
 }
 
 func TestNewTHBaseServiceGet(t *testing.T) {
@@ -49,8 +47,6 @@ func TestNewTHBaseServiceGet(t *testing.T) {
 		log.Error(err)
 		t.Fatal(err)
 	}
-
-	log.Debug(transport.Conn())
 
 	client := NewTHBaseServiceClientFactory(transport, protocolFactory)
 	if err := transport.Open(); err != nil {
@@ -64,9 +60,10 @@ func TestNewTHBaseServiceGet(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	log.Infof("rowkey{%s} in table{%s} value :%s", rowkey, table, value.String())
+	log.Infof("rowkey{%s} in table{%s} Get: %s", rowkey, table, value.String())
 }
-func TestNewTHBaseServiceScan(t *testing.T) {
+
+func TestNewTHBaseServicePut(t *testing.T) {
 
 	protocolFactory := thrift.NewTBinaryProtocolFactoryDefault()
 	transport, err := thrift.NewTSocketTimeout(host+":"+port, 10*time.Second)
@@ -75,7 +72,40 @@ func TestNewTHBaseServiceScan(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	log.Debug(transport.Conn())
+	client := NewTHBaseServiceClientFactory(transport, protocolFactory)
+	if err := transport.Open(); err != nil {
+		log.Error(err)
+		t.Fatal(err)
+	}
+
+	cvarr := []*TColumnValue{
+		{
+			Family:    []byte("log_taskid"),
+			Qualifier: []byte("hbase_go_test"),
+			Value:     []byte("54321"),
+		},
+	}
+
+	rowkey2 := "rowkey222"
+	temptput := TPut{Row: []byte(rowkey2), ColumnValues: cvarr}
+
+	err = client.Put([]byte(table), &temptput)
+	if err != nil {
+		log.Error(err)
+		t.Fatal(err)
+	}
+
+	log.Infof("rowkey{%s} in table{%s} Put", rowkey2, table)
+}
+
+func TestNewTHBaseServiceScan(t *testing.T) {
+
+	protocolFactory := thrift.NewTBinaryProtocolFactoryDefault()
+	transport, err := thrift.NewTSocketTimeout(host+":"+port, 10*time.Second)
+	if err != nil {
+		log.Error(err)
+		t.Fatal(err)
+	}
 
 	client := NewTHBaseServiceClientFactory(transport, protocolFactory)
 	if err := transport.Open(); err != nil {
