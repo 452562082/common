@@ -20,6 +20,12 @@ func init() {
 	}
 }
 
+func init() {
+	sarama.PanicHandler = func(x interface{}) {
+		log.Alertf("PanicHandler recover: %v", x)
+	}
+}
+
 type KafkaAsyncProducer struct {
 	producer sarama.AsyncProducer
 	topic    string
@@ -30,8 +36,7 @@ func NewKafkaAsyncProducer(kahosts []string, topic string) (*KafkaAsyncProducer,
 	config.Producer.Return.Successes = true //必须有这个选项
 	config.Producer.Timeout = time.Duration(ProducerTimeout) * time.Millisecond
 	config.Producer.Flush.Frequency = 500 * time.Millisecond // Flush batches every 500ms
-	
-	
+
 	p, err := sarama.NewAsyncProducer(kahosts, config)
 	if err != nil {
 		return nil, err
@@ -78,20 +83,20 @@ func (asp *KafkaAsyncProducer) Close() error {
 func (asp *KafkaAsyncProducer) SendMessage(msg *sarama.ProducerMessage) {
 	//msg := producerMessagePool.Get().(*sarama.ProducerMessage)
 	defer producerMessagePool.Put(msg)
-	
+
 	//msg.Topic = t.attachQueue.proxy.gkProducer.Topic()
 	//msg.Key = sarama.ByteEncoder(key)
 	//msg.Value = sarama.ByteEncoder(value)
 	asp.producer.Input() <- msg
 }
 
-func (asp *KafkaAsyncProducer) SendByteMessage(key, value []byte)  {
+func (asp *KafkaAsyncProducer) SendByteMessage(key, value []byte) {
 	msg := producerMessagePool.Get().(*sarama.ProducerMessage)
 	defer producerMessagePool.Put(msg)
-	
+
 	msg.Topic = asp.topic
 	msg.Key = sarama.ByteEncoder(key)
 	msg.Value = sarama.ByteEncoder(value)
-	
+
 	asp.producer.Input() <- msg
 }

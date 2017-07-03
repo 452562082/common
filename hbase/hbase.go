@@ -668,7 +668,7 @@ func (p *TColumn) String() string {
 //  - Qualifier
 //  - Value
 //  - Timestamp
-//  - Tags
+//  - Tags·
 type TColumnValue struct {
 	Family    []byte `thrift:"family,1,required" db:"family" json:"family"`
 	Qualifier []byte `thrift:"qualifier,2,required" db:"qualifier" json:"qualifier"`
