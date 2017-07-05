@@ -47,17 +47,19 @@ func (asp *KafkaSyncProducer) SendMessage(msg *sarama.ProducerMessage) error {
 	return nil
 }
 
-func (asp *KafkaSyncProducer) SendMessageByte(key, value []byte) error {
+func (asp *KafkaSyncProducer) SendByteMessage(key, value []byte) error {
 	msg := producerMessagePool.Get().(*sarama.ProducerMessage)
-	defer producerMessagePool.Put(msg)
+	//defer producerMessagePool.Put(msg)
 
 	msg.Topic = asp.topic
 	msg.Key = sarama.ByteEncoder(key)
 	msg.Value = sarama.ByteEncoder(value)
 
 	if _, _, err := asp.producer.SendMessage(msg); err != nil {
+		producerMessagePool.Put(msg)
 		return err
 	}
 
+	producerMessagePool.Put(msg)
 	return nil
 }
