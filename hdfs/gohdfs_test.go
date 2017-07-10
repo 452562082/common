@@ -16,7 +16,7 @@ func TestHdfs(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	fw, err := client.Stat("test.txt")
+	fw, err := client.Stat("12.txt")
 	if err != nil {
 		t.Fatal(err)
 	}
