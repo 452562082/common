@@ -11,7 +11,7 @@ func TestHdfs(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	client, err := hdfs.NewForUser("127.0.0.1:9000", usrname)
+	client, err := hdfs.NewForUser("hdfs://localhost:9000", usrname)
 	if err != nil {
 		t.Fatal(err)
 	}
