@@ -11,15 +11,15 @@ func TestHdfs(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	fw, err := client.Create(".test.txt")
+	err = client.CreateEmptyFile(".test.txt")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	_, err = fw.Write([]byte("hello world"))
-	if err != nil {
-		t.Fatal(err)
-	}
+	//_, err = fw.Write([]byte("hello world"))
+	//if err != nil {
+	//	t.Fatal(err)
+	//}
 
-	fw.Close()
+	//fw.Close()
 }
