@@ -6,12 +6,7 @@ import (
 )
 
 func TestHdfs(t *testing.T) {
-	usrname, err := hdfs.Username()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	client, err := hdfs.NewForUser("hdfs://localhost:9000", usrname)
+	client, err := hdfs.New("")
 	if err != nil {
 		t.Fatal(err)
 	}
