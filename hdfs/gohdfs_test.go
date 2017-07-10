@@ -11,19 +11,19 @@ func TestHdfs(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	fw, err := client.Create("/test.txt")
-	if err != nil {
-		t.Fatal(err)
-	}
+	//fw, err := client.Create("/test.txt")
+	//if err != nil {
+	//	t.Fatal(err)
+	//}
+	//
+	//_, err = fw.Write([]byte("hello world"))
+	//if err != nil {
+	//	t.Fatal(err)
+	//}
+	//
+	//fw.Close()
 
-	_, err = fw.Write([]byte("hello world"))
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	fw.Close()
-
-	data, err := client.ReadFile("/test.txt")
+	data, err := client.ReadFile("/12.txt")
 	if err != nil {
 		t.Fatal(err)
 	}
