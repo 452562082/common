@@ -6,10 +6,17 @@ import (
 )
 
 func TestHdfs(t *testing.T) {
-	client, err := hdfs.New("127.0.0.1:9000")
+	client, err := hdfs.New("izwz9jay6aqdkr9udoehckz:9000")
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	usrname, err := hdfs.Username()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Log(usrname)
 
 	fw, err := client.Create("test.txt")
 	if err != nil {
