@@ -81,12 +81,7 @@ func (asp *KafkaAsyncProducer) Close() error {
 }
 
 func (asp *KafkaAsyncProducer) SendMessage(msg *sarama.ProducerMessage) {
-	//msg := producerMessagePool.Get().(*sarama.ProducerMessage)
 	defer producerMessagePool.Put(msg)
-
-	//msg.Topic = t.attachQueue.proxy.gkProducer.Topic()
-	//msg.Key = sarama.ByteEncoder(key)
-	//msg.Value = sarama.ByteEncoder(value)
 	asp.producer.Input() <- msg
 }
 
