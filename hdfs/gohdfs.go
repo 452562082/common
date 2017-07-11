@@ -75,7 +75,6 @@ func (hc *HdfsClient) ReadFile(filename string) ([]byte, error) {
 }
 
 func (hc *HdfsClient) CopyAllFilesToLocal(hdfsdir, localdir string) error {
-
 	fInfos, err := hc.client.ReadDir(hdfsdir)
 	if err != nil {
 		return err
