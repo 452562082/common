@@ -5,7 +5,7 @@ import (
 )
 
 func TestHdfs(t *testing.T) {
-	client, err := NewHdfsClient("39.108.128.51:9000")
+	client, err := NewHdfsClient("localhost:9000")
 	if err != nil {
 		t.Fatal(err)
 	}
