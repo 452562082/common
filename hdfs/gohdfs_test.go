@@ -14,7 +14,7 @@ func TestHdfs(t *testing.T) {
 	err = client.client.MkdirAll("/models/", 0777)
 
 	for i := 0; i < 100; i++ {
-		err = client.WriteFile(fmt.Sprintf("/models/m_%5d.ark", i), []byte("test test test"))
+		err = client.WriteFile(fmt.Sprintf("/models/m_%05d.ark", i), []byte("test test test"))
 		if err != nil {
 			t.Fatal(err)
 		}
