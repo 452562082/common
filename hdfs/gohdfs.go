@@ -10,6 +10,16 @@ type HdfsClient struct {
 	client *hdfs.Client
 }
 
+var defaultHdfsClient *HdfsClient
+
+func Init(address string) error {
+	defaultHdfsClient, err := NewHdfsClient(address)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func NewHdfsClient(address string) (*HdfsClient, error) {
 	client, err := hdfs.New(address)
 	if err != nil {
@@ -37,6 +47,10 @@ func (hc *HdfsClient) WriteFile(filename string, data []byte) error {
 	}
 
 	return nil
+}
+
+func GetWaveFromHDFS(hdfsfile string) ([]byte, error) {
+	return defaultHdfsClient.ReadFile(filename)
 }
 
 func (hc *HdfsClient) ReadFile(filename string) ([]byte, error) {
