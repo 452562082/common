@@ -1,29 +1,21 @@
 package hdfs
 
 import (
-	"github.com/colinmarc/hdfs"
 	"testing"
 )
 
 func TestHdfs(t *testing.T) {
-	client, err := hdfs.New("localhost:9000")
+	client, err := NewHdfsClient("39.108.128.51:9000")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	//fw, err := client.Create("/test.txt")
-	//if err != nil {
-	//	t.Fatal(err)
-	//}
-	//
-	//_, err = fw.Write([]byte("hello world"))
-	//if err != nil {
-	//	t.Fatal(err)
-	//}
-	//
-	//fw.Close()
+	err = client.WriteFile("/mytest.txt", []byte("test test test"))
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	data, err := client.ReadFile("/12.txt")
+	data, err := client.ReadFile("/mytest.txt")
 	if err != nil {
 		t.Fatal(err)
 	}
