@@ -33,3 +33,16 @@ func TestHdfsCopyAllToLocal(t *testing.T) {
 	}
 
 }
+
+func TestHdfsCopyAllToRemote(t *testing.T) {
+	client, err := NewHdfsClient("localhost:9000")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = client.CopyAllFilesToRemote("/usr/local/gowork/src/git.oschina.net/kuaishangtong/common/hdfs/wave", "/wave")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+}

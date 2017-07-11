@@ -3,6 +3,9 @@ package hdfs
 import (
 	"fmt"
 	"github.com/colinmarc/hdfs"
+	"io/ioutil"
+	"os"
+	"path"
 	"strings"
 )
 
@@ -33,8 +36,12 @@ func NewHdfsClient(address string) (*HdfsClient, error) {
 }
 
 func (hc *HdfsClient) WriteFile(filename string, data []byte) error {
-
 	err := checkPath(filename)
+	if err != nil {
+		return err
+	}
+
+	err = hc.MkdirAll(path.Dir(filename), 0755)
 	if err != nil {
 		return err
 	}
@@ -51,6 +58,10 @@ func (hc *HdfsClient) WriteFile(filename string, data []byte) error {
 	}
 
 	return nil
+}
+
+func (hc *HdfsClient) MkdirAll(dir string, perm os.FileMode) error {
+	return hc.client.MkdirAll(dir, perm)
 }
 
 func GetWaveFromHDFS(hdfsfile string) ([]byte, error) {
@@ -75,13 +86,51 @@ func (hc *HdfsClient) ReadFile(filename string) ([]byte, error) {
 }
 
 func (hc *HdfsClient) CopyAllFilesToLocal(hdfsdir, localdir string) error {
+
+	if localdir[len(localdir)-1] != '/' {
+		localdir += "/"
+	}
+
+	if hdfsdir[len(hdfsdir)-1] != '/' {
+		hdfsdir += "/"
+	}
+
 	fInfos, err := hc.client.ReadDir(hdfsdir)
 	if err != nil {
 		return err
 	}
 
 	for _, fi := range fInfos {
-		err = hc.client.CopyToLocal(hdfsdir+"/"+fi.Name(), localdir+"/"+fi.Name())
+		err = hc.client.CopyToLocal(hdfsdir+fi.Name(), localdir+fi.Name())
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+func (hc *HdfsClient) CopyAllFilesToRemote(localdir, hdfsdir string) error {
+
+	if localdir[len(localdir)-1] != '/' {
+		localdir += "/"
+	}
+
+	if hdfsdir[len(hdfsdir)-1] != '/' {
+		hdfsdir += "/"
+	}
+
+	fInfos, err := ioutil.ReadDir(localdir)
+	if err != nil {
+		return err
+	}
+
+	err = hc.MkdirAll(hdfsdir, 0755)
+	if err != nil {
+		return err
+	}
+
+	for _, fi := range fInfos {
+		err = hc.client.CopyToRemote(localdir+fi.Name(), hdfsdir+fi.Name())
 		if err != nil {
 			return err
 		}
