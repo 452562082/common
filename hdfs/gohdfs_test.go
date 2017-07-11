@@ -20,3 +20,17 @@ func TestHdfs(t *testing.T) {
 		}
 	}
 }
+
+func TestHdfsCopyAllToLocal(t *testing.T) {
+	client, err := NewHdfsClient("localhost:9000")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = client.CopyAllFilesToLocal("/models/", "models/")
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+}
