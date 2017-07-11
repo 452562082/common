@@ -4,8 +4,8 @@ import (
 	"testing"
 )
 
-func TestHdfs(t *testing.T) {
-	client, err := NewHdfsClient("localhost:9000")
+func TestHdfsStat(t *testing.T) {
+	client, err := NewHdfsClient("127.0.0.1:9000")
 	if err != nil {
 		t.Fatal(err)
 	}
