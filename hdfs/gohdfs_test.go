@@ -27,7 +27,7 @@ func TestHdfsCopyAllToLocal(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err = client.CopyAllFilesToLocal("/models/", "./models/")
+	err = client.CopyAllFilesToLocal("/models/", "/tmp")
 	if err != nil {
 		t.Fatal(err)
 	}
