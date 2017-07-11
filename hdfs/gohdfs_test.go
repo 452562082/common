@@ -1,6 +1,7 @@
 package hdfs
 
 import (
+	"fmt"
 	"testing"
 )
 
@@ -10,15 +11,12 @@ func TestHdfs(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err = client.WriteFile("/mytest.txt", []byte("test test test"))
-	if err != nil {
-		t.Fatal(err)
-	}
+	err = client.client.MkdirAll("/models/", 0777)
 
-	data, err := client.ReadFile("/mytest.txt")
-	if err != nil {
-		t.Fatal(err)
+	for i := 0; i < 100; i++ {
+		err = client.WriteFile(fmt.Sprintf("/models/m_%5d.ark", i), []byte("test test test"))
+		if err != nil {
+			t.Fatal(err)
+		}
 	}
-
-	t.Log(string(data))
 }
