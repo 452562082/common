@@ -62,6 +62,20 @@ func (hc *HdfsClient) WriteFile(filename string, data []byte) error {
 	return nil
 }
 
+func (hc *HdfsClient) CopyFileToRemote(local_file_path, hdfs_file_path string) error {
+	err := checkPath(hdfs_file_path)
+	if err != nil {
+		return err
+	}
+
+	err = hc.MkdirAll(path.Dir(hdfs_file_path), 0755)
+	if err != nil {
+		return err
+	}
+
+	return hc.client.CopyToRemote(local_file_path, hdfs_file_path)
+}
+
 func (hc *HdfsClient) MkdirAll(dir string, perm os.FileMode) error {
 	return hc.client.MkdirAll(dir, perm)
 }
@@ -87,8 +101,21 @@ func (hc *HdfsClient) ReadFile(filename string) ([]byte, error) {
 	return hc.client.ReadFile(filename)
 }
 
-func (hc *HdfsClient) CopyAllFilesToLocal(hdfsdir, localdir string) error {
+func (hc *HdfsClient) CopyFileToLocal(hdfs_file_path, local_file_path string) error {
+	err := checkPath(hdfs_file_path)
+	if err != nil {
+		return err
+	}
 
+	err = os.MkdirAll(path.Dir(local_file_path), 0755)
+	if err != nil {
+		return err
+	}
+
+	return hc.client.CopyToLocal(hdfs_file_path, local_file_path)
+}
+
+func (hc *HdfsClient) CopyAllFilesToLocal(hdfsdir, localdir string) error {
 	if localdir[len(localdir)-1] != '/' {
 		localdir += "/"
 	}

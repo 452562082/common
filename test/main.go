@@ -11,10 +11,10 @@ func main() {
 		log.Fatal(err)
 	}
 
-	err = client.CopyAllFilesToRemote("/root/asvserver/ivfiles", "/ivfiles")
-	if err != nil {
-		log.Fatal(err)
-	}
+	//err = client.CopyAllFilesToRemote("/root/asvserver/ivfiles", "/ivfiles")
+	//if err != nil {
+	//	log.Fatal(err)
+	//}
 
 	err = client.CopyAllFilesToLocal("/ivfiles", "/root/asvserver/ivfiles_tmp")
 	if err != nil {
