@@ -102,12 +102,33 @@ func (hc *HdfsClient) CopyAllFilesToLocal(hdfsdir, localdir string) error {
 		return err
 	}
 
+	exit := make(chan bool)
+
+	index := 0
+	go func() {
+		ticker := time.NewTicker(5 * time.Second)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ticker.C:
+				log.Infof("downloading count: %d", index)
+			case <-exit:
+				log.Infof("download done total: %d", index)
+				return
+			}
+		}
+	}()
+
 	for _, fi := range fInfos {
 		err = hc.client.CopyToLocal(hdfsdir+fi.Name(), localdir+fi.Name())
 		if err != nil {
 			return err
 		}
+		index++
 	}
+
+	close(exit)
+	time.Sleep(1 * time.Second)
 
 	return nil
 }
@@ -158,6 +179,7 @@ func (hc *HdfsClient) CopyAllFilesToRemote(localdir, hdfsdir string) error {
 	}
 
 	close(exit)
+	time.Sleep(1 * time.Second)
 
 	return nil
 }
