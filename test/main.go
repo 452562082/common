@@ -57,23 +57,23 @@ func TestModelSyncer() {
 		time.Sleep(3 * time.Second)
 		err = mSyncer1.UploadNewModel("/root/asvserver/ivfiles/195e4d3d6a025e60.ark")
 		if err != nil {
-			log.Fatal(err)
+			log.Error(err)
 		}
-		log.Debug("mSyncer1 SetUpdateKey")
+		log.Infof("mSyncer1 SetUpdateKey")
 
 		time.Sleep(3 * time.Second)
 		err = mSyncer2.UploadNewModel("/root/asvserver/ivfiles/195ee45733cdca30.ark")
 		if err != nil {
-			log.Fatal(err)
+			log.Error(err)
 		}
-		log.Debug("mSyncer2 SetUpdateKey")
+		log.Infof("mSyncer2 SetUpdateKey")
 
 		time.Sleep(3 * time.Second)
 		err = mSyncer3.UploadNewModel("/root/asvserver/ivfiles/195fb6e963b07420.ark")
 		if err != nil {
-			log.Fatal(err)
+			log.Error(err)
 		}
-		log.Debug("mSyncer3 SetUpdateKey")
+		log.Infof("mSyncer3 SetUpdateKey")
 
 		time.Sleep(60 * time.Second)
 		time.Sleep(3 * time.Second)
@@ -81,21 +81,21 @@ func TestModelSyncer() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		log.Debug("mSyncer1 SetDeleteKey")
+		log.Infof("mSyncer1 SetDeleteKey")
 
 		time.Sleep(3 * time.Second)
 		err = mSyncer2.DeteleRemoteModel("/root/asvserver/ivfiles/195ee45733cdca30.ark")
 		if err != nil {
 			log.Fatal(err)
 		}
-		log.Debug("mSyncer2 SetDeleteKey")
+		log.Infof("mSyncer2 SetDeleteKey")
 
 		time.Sleep(3 * time.Second)
 		err = mSyncer3.DeteleRemoteModel("/root/asvserver/ivfiles/195fb6e963b07420.ark")
 		if err != nil {
 			log.Fatal(err)
 		}
-		log.Debug("mSyncer3 SetDeleteKey")
+		log.Infof("mSyncer3 SetDeleteKey")
 
 	}
 }
