@@ -10,10 +10,10 @@ import (
 )
 
 type ModelSyncer struct {
-	hdfsClient          *hdfs.HdfsClient
+	hdfsClient *hdfs.HdfsClient
 
-	kafka_sync_topic    string
-	kafka_sync_group    string
+	kafka_sync_topic string
+	kafka_sync_group string
 
 	kafka_sync_producer *kafka.KafkaSyncProducer
 	kafka_sync_consumer *kafka.KafkaClusterConsumer
@@ -75,7 +75,9 @@ func (ms *ModelSyncer) loop() {
 						case "del":
 							err := ms.DeteleLocalModel(string(msg.Value))
 							if err != nil {
-								log.Errorf("ModelSyncer %s delete model %s failed: %v", ms.kafka_sync_group, err)
+								log.Errorf("ModelSyncer %s delete model failed: %v", ms.kafka_sync_group, err)
+							} else {
+								log.Debugf("modelsyncer %s delete local model %s success", ms.kafka_sync_group, string(msg.Value))
 							}
 						}
 					}

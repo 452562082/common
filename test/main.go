@@ -5,6 +5,7 @@ import (
 	"git.oschina.net/kuaishangtong/common/msync"
 	"git.oschina.net/kuaishangtong/common/utils/log"
 	"time"
+	"os"
 )
 
 var kafkaHosts []string = []string{"103.27.5.136:9092"}
