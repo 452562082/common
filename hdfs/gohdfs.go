@@ -129,6 +129,11 @@ func (hc *HdfsClient) CopyAllFilesToLocal(hdfsdir, localdir string) error {
 		return err
 	}
 
+	err = os.MkdirAll(path.Dir(localdir), 0755)
+	if err != nil {
+		return err
+	}
+
 	exit := make(chan bool)
 
 	index := 0
