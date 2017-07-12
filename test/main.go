@@ -2,7 +2,7 @@ package main
 
 import (
 	"git.oschina.net/kuaishangtong/common/hdfs"
-	"goal/log"
+	"git.oschina.net/kuaishangtong/common/utils/log"
 )
 
 func main() {
