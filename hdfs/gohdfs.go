@@ -2,11 +2,13 @@ package hdfs
 
 import (
 	"fmt"
+	"git.oschina.net/kuaishangtong/common/utils/log"
 	"github.com/colinmarc/hdfs"
 	"io/ioutil"
 	"os"
 	"path"
 	"strings"
+	"time"
 )
 
 type HdfsClient struct {
@@ -129,12 +131,33 @@ func (hc *HdfsClient) CopyAllFilesToRemote(localdir, hdfsdir string) error {
 		return err
 	}
 
+	exit := make(chan bool)
+
+	index := 0
+	go func() {
+		ticker := time.NewTicker(5 * time.Second)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ticker.C:
+				log.Infof("uploading count: %d", index)
+			case <-exit:
+				log.Infof("upload done total: %d", index)
+				return
+			}
+		}
+	}()
+
 	for _, fi := range fInfos {
 		err = hc.client.CopyToRemote(localdir+fi.Name(), hdfsdir+fi.Name())
 		if err != nil {
 			return err
 		}
+
+		index++
 	}
+
+	close(exit)
 
 	return nil
 }
