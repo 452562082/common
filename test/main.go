@@ -1,8 +1,8 @@
 package main
 
 import (
-	"asvserver/msync"
 	//"git.oschina.net/kuaishangtong/common/hdfs"
+	"git.oschina.net/kuaishangtong/common/msync"
 	"git.oschina.net/kuaishangtong/common/utils/log"
 	"time"
 )
@@ -74,7 +74,6 @@ func TestModelSyncer() {
 			log.Fatal(err)
 		}
 		log.Debug("mSyncer3 SetUpdateKey")
-
 
 		time.Sleep(60 * time.Second)
 		time.Sleep(3 * time.Second)
