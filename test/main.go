@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-var kafkaHosts []string = []string{"103.27.5.136:9092"}
+var kafkaHosts []string = []string{"localhost:9092"}
 var hdfsHosts string = "192.168.1.185:9000"
 
 func main() {

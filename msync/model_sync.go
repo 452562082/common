@@ -17,6 +17,8 @@ type ModelSyncer struct {
 
 	kafka_sync_producer *kafka.KafkaSyncProducer
 	kafka_sync_consumer *kafka.KafkaClusterConsumer
+
+	addModelToMemoryfunc func(path string) error
 }
 
 func NewModelSyncer(hdfsaddr string, kahosts []string, sync_topic, sync_group string) (*ModelSyncer, error) {
