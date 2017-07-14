@@ -2,12 +2,14 @@ package main
 
 import (
 	//"git.oschina.net/kuaishangtong/common/hdfs"
+	"git.oschina.net/kuaishangtong/common/hdfs"
 	"git.oschina.net/kuaishangtong/common/msync"
 	"git.oschina.net/kuaishangtong/common/utils/log"
+	"io/ioutil"
 	"time"
 )
 
-var kafkaHosts []string = []string{"localhost:9092"}
+var kafkaHosts []string = []string{"103.27.5.136:9092"}
 var hdfsHosts string = "192.168.1.185:9000"
 
 func main() {
@@ -15,7 +17,7 @@ func main() {
 	//if err != nil {
 	//	log.Fatal(err)
 	//}
-
+	//
 	//err = client.CopyAllFilesToRemote("/root/asvserver/ivfiles", "/ivfiles")
 	//if err != nil {
 	//	log.Fatal(err)
@@ -26,7 +28,65 @@ func main() {
 	//	log.Fatal(err)
 	//}
 
-	TestModelSyncer()
+	//TestModelSyncer()
+	TestInitSyncModel()
+}
+
+func TestInitSyncModel() {
+	hdfspath := "/ivfiles"
+	localpath := "/root/asvserver/ivfiles"
+
+	hdfsClient, err := hdfs.NewHdfsClient("192.168.1.185:9000")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var localmap, hdfsmap map[string]struct{} = make(map[string]struct{}), make(map[string]struct{})
+
+	local_file_infos, err := ioutil.ReadDir(localpath)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for i, v := range local_file_infos {
+		if i < 10 {
+			log.Debug(localpath + "/" + v.Name())
+		}
+		localmap[localpath+"/"+v.Name()] = struct{}{}
+	}
+
+	log.Infof("catch local ivfiles, count: %d", len(local_file_infos))
+
+	hdfs_file_infos, err := hdfsClient.ReadDir(hdfspath)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for i, v := range hdfs_file_infos {
+		if i < 10 {
+			log.Debug(hdfspath + "/" + v.Name())
+		}
+		hdfsmap[hdfspath+"/"+v.Name()] = struct{}{}
+	}
+
+	log.Infof("catch hdfs ivfiles, count: %d", len(hdfs_file_infos))
+
+	for k, _ := range hdfsmap {
+
+		if _, ok := localmap[k]; ok {
+			delete(localmap, k)
+		}
+
+		delete(hdfsmap, k)
+	}
+
+	download := len(hdfsmap)
+
+	log.Infof("%d need to download to local", download)
+
+	delete := len(localmap)
+
+	log.Infof("%d need to delete", delete)
 }
 
 func TestModelSyncer() {

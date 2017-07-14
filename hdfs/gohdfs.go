@@ -84,6 +84,10 @@ func GetWaveFromHDFS(hdfsfile string) ([]byte, error) {
 	return defaultHdfsClient.ReadFile(hdfsfile)
 }
 
+func CopyModelFromHDFS(hdfsfile string) error {
+	return defaultHdfsClient.CopyFileToLocal(hdfsfile, hdfsfile)
+}
+
 func GetWaveFromHDFS2(hdfsaddr, hdfsfile string) ([]byte, error) {
 	client, err := NewHdfsClient(hdfsaddr)
 	if err != nil {
@@ -99,6 +103,14 @@ func (hc *HdfsClient) ReadFile(filename string) ([]byte, error) {
 		return nil, err
 	}
 	return hc.client.ReadFile(filename)
+}
+
+func (hc *HdfsClient) ReadDir(filename string) ([]os.FileInfo, error) {
+	err := checkPath(filename)
+	if err != nil {
+		return nil, err
+	}
+	return hc.client.ReadDir(filename)
 }
 
 func (hc *HdfsClient) CopyFileToLocal(hdfs_file_path, local_file_path string) error {
