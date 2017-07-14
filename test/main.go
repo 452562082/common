@@ -6,6 +6,7 @@ import (
 	"git.oschina.net/kuaishangtong/common/msync"
 	"git.oschina.net/kuaishangtong/common/utils/log"
 	"io/ioutil"
+	"os"
 	"time"
 )
 
@@ -29,44 +30,45 @@ func main() {
 	//}
 
 	//TestModelSyncer()
-	TestInitSyncModel()
+	TestInitSyncModel(hdfsHosts, "/root/asvserver/ivfiles")
 }
 
-func TestInitSyncModel() {
-	hdfspath := "/root/asvserver/ivfiles"
-	localpath := "/root/asvserver/ivfiles"
+func TestInitSyncModel(hdfsaddr, modeldir string) {
 
-	hdfsClient, err := hdfs.NewHdfsClient("192.168.1.185:9000")
+	if modeldir[len(modeldir)-1] != '/' {
+		modeldir += "/"
+	}
+	hdfsClient, err := hdfs.NewHdfsClient(hdfsaddr)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	var localmap, hdfsmap map[string]struct{} = make(map[string]struct{}), make(map[string]struct{})
 
-	local_file_infos, err := ioutil.ReadDir(localpath)
+	local_file_infos, err := ioutil.ReadDir(modeldir)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	for i, v := range local_file_infos {
 		if i < 10 {
-			log.Debug(localpath + "/" + v.Name())
+			log.Debug(modeldir + v.Name())
 		}
-		localmap[localpath+"/"+v.Name()] = struct{}{}
+		localmap[modeldir+v.Name()] = struct{}{}
 	}
 
 	log.Infof("catch local ivfiles, count: %d", len(local_file_infos))
 
-	hdfs_file_infos, err := hdfsClient.ReadDir(hdfspath)
+	hdfs_file_infos, err := hdfsClient.ReadDir(modeldir)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	for i, v := range hdfs_file_infos {
 		if i < 10 {
-			log.Debug(hdfspath + "/" + v.Name())
+			log.Debug(modeldir + v.Name())
 		}
-		hdfsmap[hdfspath+"/"+v.Name()] = struct{}{}
+		hdfsmap[modeldir+v.Name()] = struct{}{}
 	}
 
 	log.Infof("catch hdfs ivfiles, count: %d", len(hdfs_file_infos))
@@ -87,6 +89,23 @@ func TestInitSyncModel() {
 	delete := len(localmap)
 
 	log.Infof("%d need to delete", delete)
+
+	for k, _ := range localmap {
+		err := os.Remove(k)
+		if err != nil {
+			log.Error(err)
+		}
+		log.Debugf("remove %s", k)
+	}
+
+	for k, _ := range hdfsmap {
+		err := hdfsClient.CopyFileToLocal(k, k)
+		if err != nil {
+			log.Error(err)
+		}
+
+		log.Debugf("download %s", k)
+	}
 }
 
 func TestModelSyncer() {
