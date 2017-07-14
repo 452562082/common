@@ -33,7 +33,7 @@ func main() {
 }
 
 func TestInitSyncModel() {
-	hdfspath := "/ivfiles"
+	hdfspath := "/root/asvserver/ivfiles"
 	localpath := "/root/asvserver/ivfiles"
 
 	hdfsClient, err := hdfs.NewHdfsClient("192.168.1.185:9000")
