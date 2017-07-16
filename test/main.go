@@ -40,6 +40,8 @@ func main() {
 		log.Fatal(err)
 	}
 
+	log.Infof("ResetHDFSConnection to %s", "izwz9jay6aqdkr9udoehckz:9000")
+
 	TestModelSyncer()
 }
 
