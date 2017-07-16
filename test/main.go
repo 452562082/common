@@ -5,13 +5,12 @@ import (
 	"git.oschina.net/kuaishangtong/common/hdfs"
 	"git.oschina.net/kuaishangtong/common/msync"
 	"git.oschina.net/kuaishangtong/common/utils/log"
-	"io/ioutil"
-	"os"
 	"time"
 )
 
 var kafkaHosts []string = []string{"103.27.5.136:9092"}
-var hdfsHosts string = "192.168.1.185:9000"
+var hdfsHosts []string = []string{"192.168.1.185:9000"}
+var hdfsWebHosts []string = []string{"192.168.1.185:50070"}
 
 func main() {
 	//client, err := hdfs.NewHdfsClient("192.168.1.185:9000")
@@ -30,82 +29,11 @@ func main() {
 	//}
 
 	//TestModelSyncer()
-	TestInitSyncModel(hdfsHosts, "/root/asvserver/ivfiles")
+	TestInitSyncModel(hdfsHosts, hdfsWebHosts, "/root/asvserver/ivfiles")
 }
 
-func TestInitSyncModel(hdfsaddr, modeldir string) {
-
-	if modeldir[len(modeldir)-1] != '/' {
-		modeldir += "/"
-	}
-	hdfsClient, err := hdfs.NewHdfsClient(hdfsaddr)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	var localmap, hdfsmap map[string]struct{} = make(map[string]struct{}), make(map[string]struct{})
-
-	local_file_infos, err := ioutil.ReadDir(modeldir)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	for i, v := range local_file_infos {
-		if i < 10 {
-			log.Debug(modeldir + v.Name())
-		}
-		localmap[modeldir+v.Name()] = struct{}{}
-	}
-
-	log.Infof("catch local ivfiles, count: %d", len(local_file_infos))
-
-	hdfs_file_infos, err := hdfsClient.ReadDir(modeldir)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	for i, v := range hdfs_file_infos {
-		if i < 10 {
-			log.Debug(modeldir + v.Name())
-		}
-		hdfsmap[modeldir+v.Name()] = struct{}{}
-	}
-
-	log.Infof("catch hdfs ivfiles, count: %d", len(hdfs_file_infos))
-
-	for k, _ := range hdfsmap {
-
-		if _, ok := localmap[k]; ok {
-			delete(localmap, k)
-		}
-
-		delete(hdfsmap, k)
-	}
-
-	download := len(hdfsmap)
-
-	log.Infof("%d need to download to local", download)
-
-	delete := len(localmap)
-
-	log.Infof("%d need to delete", delete)
-
-	for k, _ := range localmap {
-		err := os.Remove(k)
-		if err != nil {
-			log.Error(err)
-		}
-		log.Debugf("remove %s", k)
-	}
-
-	for k, _ := range hdfsmap {
-		err := hdfsClient.CopyFileToLocal(k, k)
-		if err != nil {
-			log.Error(err)
-		}
-
-		log.Debugf("download %s", k)
-	}
+func TestInitSyncModel(hdfs_addrs, hdfs_http_addrs []string, modeldir string) {
+	hdfs.InitAndSyncModel(hdfs_addrs, hdfs_http_addrs, modeldir)
 }
 
 func TestModelSyncer() {

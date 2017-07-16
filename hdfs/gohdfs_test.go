@@ -9,7 +9,7 @@ func TestHdfsStat(t *testing.T) {
 	log.SetLogFuncCall(true)
 	client, err := NewHdfsClient(
 		[]string{"192.168.1.185:9000", "localhost:9000"},
-		[]string{"192.168.1.185:50070", "localhost:50070"})
+		[]string{"192.168.1.185:50070", "localhost:50070"}, 3)
 	if err != nil {
 		t.Fatal(err)
 	}

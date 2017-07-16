@@ -15,8 +15,10 @@ import (
 type HdfsClient struct {
 	conn_hdfs_addr string
 	client         *hdfs.Client
-	host_web_map   map[string]string
-	web_host_map   map[string]string
+	host2WebMap    map[string]string
+	web2HostMap    map[string]string
+
+	closed bool
 }
 
 var defaultHdfsClient *HdfsClient
@@ -30,7 +32,7 @@ type NameNodeStatus struct {
 func Init(hdfs_addr, hdfs_http_addr []string) error {
 	var err error
 
-	defaultHdfsClient, err = NewHdfsClient(hdfs_addr, hdfs_http_addr)
+	defaultHdfsClient, err = NewHdfsClient(hdfs_addr, hdfs_http_addr, 5)
 	if err != nil {
 		return err
 
@@ -54,7 +56,7 @@ func CheckHDFSAlive(hdfs_web_host string) (bool, error) {
 	return state == "active", nil
 }
 
-func NewHdfsClient(hdfs_addrs, hdfs_http_addrs []string) (*HdfsClient, error) {
+func NewHdfsClient(hdfs_addrs, hdfs_http_addrs []string, check_interval int) (*HdfsClient, error) {
 
 	if len(hdfs_addrs) == 0 {
 		return nil, fmt.Errorf("hdfs host array length can not be 0")
@@ -64,20 +66,20 @@ func NewHdfsClient(hdfs_addrs, hdfs_http_addrs []string) (*HdfsClient, error) {
 		return nil, fmt.Errorf("hdfs host array length must be equal to hdfs http address array lentgh")
 	}
 
-	var host_web_map map[string]string = make(map[string]string)
-	var web_host_map map[string]string = make(map[string]string)
+	var host2WebMap map[string]string = make(map[string]string)
+	var web2HostMap map[string]string = make(map[string]string)
 
 	for _, http_addr := range hdfs_http_addrs {
 		for _, addr := range hdfs_addrs {
 			if strings.Split(http_addr, ":")[0] == strings.Split(addr, ":")[0] {
-				host_web_map[addr] = http_addr
-				web_host_map[http_addr] = addr
+				host2WebMap[addr] = http_addr
+				web2HostMap[http_addr] = addr
 			}
 		}
 	}
 
-	log.Info("host_web_map:", host_web_map)
-	log.Info("web_host_map:", web_host_map)
+	log.Info("host2WebMap:", host2WebMap)
+	log.Info("web2HostMap:", web2HostMap)
 
 	var err error
 	var client *hdfs.Client
@@ -100,29 +102,30 @@ END:
 	hclient := &HdfsClient{
 		conn_hdfs_addr: addr,
 		client:         client,
-		host_web_map:   host_web_map,
-		web_host_map:   web_host_map,
+		host2WebMap:    host2WebMap,
+		web2HostMap:    web2HostMap,
+		closed:         false,
 	}
 
-	go hclient.checkLoop(hdfs_http_addrs)
+	go hclient.checkLoop(check_interval, hdfs_http_addrs)
 
 	return hclient, nil
 }
 
-func (hc *HdfsClient) checkLoop(hdfs_addrs []string) {
+func (hc *HdfsClient) checkLoop(interval int, hdfs_addrs []string) {
 	var alive map[string]struct{} = make(map[string]struct{})
 
-	ticker := time.NewTicker(5 * time.Second)
+	ticker := time.NewTicker(time.Duration(interval * time.Second))
 	defer ticker.Stop()
 
-	for {
+	for !hc.closed {
 		select {
 		case <-ticker.C:
 			for _, v := range hdfs_addrs {
 				active, err := CheckHDFSAlive(v)
 				if err != nil {
 					log.Error(err)
-					goto NEXT
+					goto NEXT1
 				}
 
 				if active {
@@ -133,18 +136,19 @@ func (hc *HdfsClient) checkLoop(hdfs_addrs []string) {
 					delete(alive, v)
 				}
 
-			NEXT:
+			NEXT1:
 			}
 
-			if _, ok := alive[hc.host_web_map[hc.conn_hdfs_addr]]; !ok && len(alive) > 0 {
+			if _, ok := alive[hc.host2WebMap[hc.conn_hdfs_addr]]; !ok && len(alive) > 0 {
 				for http_addr, _ := range alive {
-					err := hc.ResetHDFSConnection(hc.web_host_map[http_addr])
+					err := hc.ResetHDFSConnection(hc.web2HostMap[http_addr])
 					if err != nil {
 						log.Error(err)
-						continue
+						goto NEXT2
 					}
-					log.Infof("Reconnect to HDFS %s success", hc.web_host_map[http_addr])
+					log.Infof("Reconnect to HDFS %s success", hc.web2HostMap[http_addr])
 					goto END
+				NEXT2:
 				}
 			}
 		END:
@@ -376,6 +380,7 @@ func (hc *HdfsClient) Remove(filename string) error {
 }
 
 func (hc *HdfsClient) Close() error {
+	hc.closed = true
 	return hc.client.Close()
 }
 
@@ -386,15 +391,22 @@ func checkPath(path string) error {
 	return nil
 }
 
-func InitSyncModel(hdfs_addr, hdfs_http_addr []string, modeldir string) error {
+func InitAndSyncModel(hdfs_addr, hdfs_http_addr []string, modeldir string) error {
 
 	if modeldir[len(modeldir)-1] != '/' {
 		modeldir += "/"
 	}
-	hdfsClient, err := NewHdfsClient(hdfs_addr, hdfs_http_addr)
+
+	err := Init(hdfs_addr, hdfs_http_addr)
+	//defaultHdfsClient, err = NewHdfsClient(hdfs_addr, hdfs_http_addr, 5)
 	if err != nil {
 		return err
 	}
+
+	//hdfsClient, err := NewHdfsClient(hdfs_addr, hdfs_http_addr, 5)
+	//if err != nil {
+	//	return err
+	//}
 
 	var localmap, hdfsmap map[string]struct{} = make(map[string]struct{}), make(map[string]struct{})
 
@@ -412,7 +424,7 @@ func InitSyncModel(hdfs_addr, hdfs_http_addr []string, modeldir string) error {
 
 	log.Infof("catch local ivfiles, count: %d", len(local_file_infos))
 
-	hdfs_file_infos, err := hdfsClient.ReadDir(modeldir)
+	hdfs_file_infos, err := defaultHdfsClient.ReadDir(modeldir)
 	if err != nil {
 		return err
 	}
@@ -452,7 +464,7 @@ func InitSyncModel(hdfs_addr, hdfs_http_addr []string, modeldir string) error {
 	}
 
 	for k, _ := range hdfsmap {
-		err := hdfsClient.CopyFileToLocal(k, k)
+		err := defaultHdfsClient.CopyFileToLocal(k, k)
 		if err != nil {
 			log.Error(err)
 		}
@@ -460,10 +472,10 @@ func InitSyncModel(hdfs_addr, hdfs_http_addr []string, modeldir string) error {
 		log.Debugf("download %s", k)
 	}
 
-	err = hdfsClient.Close()
-	if err != nil {
-		return err
-	}
+	//err = defaultHdfsClient.Close()
+	//if err != nil {
+	//	return err
+	//}
 
 	return nil
 }
