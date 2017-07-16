@@ -1,10 +1,12 @@
 package hdfs
 
 import (
+	"git.oschina.net/kuaishangtong/common/utils/log"
 	"testing"
 )
 
 func TestHdfsStat(t *testing.T) {
+	log.SetLogFuncCall(true)
 	client, err := NewHdfsClient([]string{"192.168.1.185:9000"}, []string{"192.168.1.185:50070"})
 	if err != nil {
 		t.Fatal(err)
