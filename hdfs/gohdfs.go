@@ -391,7 +391,7 @@ func checkPath(path string) error {
 	return nil
 }
 
-func SyncModel( modeldir string) error {
+func SyncModel(modeldir string) error {
 
 	if modeldir[len(modeldir)-1] != '/' {
 		modeldir += "/"
@@ -440,9 +440,8 @@ func SyncModel( modeldir string) error {
 
 		if _, ok := localmap[k]; ok {
 			delete(localmap, k)
+			delete(hdfsmap, k)
 		}
-
-		delete(hdfsmap, k)
 	}
 
 	download := len(hdfsmap)
