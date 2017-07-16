@@ -35,7 +35,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	err = hdfs.DefaultHdfsClient.ResetHDFSConnection("localhost:9000")
+	err = hdfs.DefaultHdfsClient.ResetHDFSConnection("izwz9jay6aqdkr9udoehckz:9000")
 	if err != nil {
 		log.Fatal(err)
 	}
