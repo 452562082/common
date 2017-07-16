@@ -50,7 +50,7 @@ func TestModelSyncer() {
 	log.Debug("new mdoel syncer mSyncer1")
 
 	cb := func(path string) error {
-		log.Warnf("add model %s to memory")
+		log.Warnf("add model %s to memory", path)
 		return nil
 	}
 	mSyncer1, err := msync.NewModelSyncer( /*hdfsHosts, */ kafkaHosts, "SYNC_MODELS", "Model_Syncer_1", cb)
