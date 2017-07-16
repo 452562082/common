@@ -34,6 +34,12 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	err = hdfs.DefaultHdfsClient.ResetHDFSConnection("localhost:9000")
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	TestModelSyncer()
 }
 

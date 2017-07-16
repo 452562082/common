@@ -166,6 +166,7 @@ func (hc *HdfsClient) ResetHDFSConnection(hdfsaddr string) error {
 		return err
 	}
 
+
 	return nil
 }
 
@@ -392,7 +393,6 @@ func checkPath(path string) error {
 }
 
 func SyncModel(modeldir string) error {
-
 	if modeldir[len(modeldir)-1] != '/' {
 		modeldir += "/"
 	}
@@ -401,11 +401,6 @@ func SyncModel(modeldir string) error {
 		return fmt.Errorf("does not init hdfs")
 	}
 
-	//hdfsClient, err := NewHdfsClient(hdfs_addr, hdfs_http_addr, 5)
-	//if err != nil {
-	//	return err
-	//}
-
 	var localmap, hdfsmap map[string]struct{} = make(map[string]struct{}), make(map[string]struct{})
 
 	local_file_infos, err := ioutil.ReadDir(modeldir)
@@ -413,10 +408,10 @@ func SyncModel(modeldir string) error {
 		return err
 	}
 
-	for i, v := range local_file_infos {
-		if i < 5 {
-			log.Debug(modeldir + v.Name())
-		}
+	for _, v := range local_file_infos {
+		//if i < 5 {
+		//	log.Debug(modeldir + v.Name())
+		//}
 		localmap[modeldir+v.Name()] = struct{}{}
 	}
 
@@ -427,17 +422,16 @@ func SyncModel(modeldir string) error {
 		return err
 	}
 
-	for i, v := range hdfs_file_infos {
-		if i < 5 {
-			log.Debug(modeldir + v.Name())
-		}
+	for _, v := range hdfs_file_infos {
+		//if i < 5 {
+		//	log.Debug(modeldir + v.Name())
+		//}
 		hdfsmap[modeldir+v.Name()] = struct{}{}
 	}
 
 	log.Infof("catch hdfs ivfiles, count: %d", len(hdfs_file_infos))
 
 	for k, _ := range hdfsmap {
-
 		if _, ok := localmap[k]; ok {
 			delete(localmap, k)
 			delete(hdfsmap, k)
@@ -457,7 +451,7 @@ func SyncModel(modeldir string) error {
 		if err != nil {
 			log.Error(err)
 		}
-		log.Debugf("remove %s", k)
+		log.Infof("remove local model %s", k)
 	}
 
 	for k, _ := range hdfsmap {
@@ -465,14 +459,8 @@ func SyncModel(modeldir string) error {
 		if err != nil {
 			log.Error(err)
 		}
-
-		log.Debugf("download %s", k)
+		log.Debugf("download hdfs model to local: %s", k)
 	}
-
-	//err = DefaultHdfsClient.Close()
-	//if err != nil {
-	//	return err
-	//}
 
 	return nil
 }
