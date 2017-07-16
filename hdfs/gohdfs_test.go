@@ -4,8 +4,8 @@ import (
 	"testing"
 )
 
-func TestHdfsStat(t *testing.T) {
-	client, err := NewHdfsClient([]string("192.168.1.185:9000"), []string("192.168.1.185:50070"))
+	func TestHdfsStat(t *testing.T) {
+	client, err := NewHdfsClient([]string{"192.168.1.185:9000"}, []string{"192.168.1.185:50070"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -25,7 +25,7 @@ func TestHdfsStat(t *testing.T) {
 //}
 //
 //func TestHdfsCopyAllToLocal(t *testing.T) {
-//	client, err := NewHdfsClient([]string("192.168.1.185:9000"), []string("192.168.1.185:50070"))
+//	client, err := NewHdfsClient([]string{"192.168.1.185:9000"}, []string{"192.168.1.185:50070"})
 //	if err != nil {
 //		t.Fatal(err)
 //	}
@@ -38,7 +38,7 @@ func TestHdfsStat(t *testing.T) {
 //}
 //
 //func TestHdfsCopyAllToRemote(t *testing.T) {
-//	client, err := NewHdfsClient([]string("192.168.1.185:9000"), []string("192.168.1.185:50070"))
+//	client, err := NewHdfsClient([]string{"192.168.1.185:9000"}, []string{"192.168.1.185:50070"})
 //	if err != nil {
 //		t.Fatal(err)
 //	}
