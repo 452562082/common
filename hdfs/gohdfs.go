@@ -115,7 +115,7 @@ END:
 func (hc *HdfsClient) checkLoop(interval int, hdfs_addrs []string) {
 	var alive map[string]struct{} = make(map[string]struct{})
 
-	ticker := time.NewTicker(time.Duration(interval * time.Second))
+	ticker := time.NewTicker(time.Duration(interval) * time.Second)
 	defer ticker.Stop()
 
 	for !hc.closed {
