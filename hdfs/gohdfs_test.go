@@ -4,7 +4,7 @@ import (
 	"testing"
 )
 
-	func TestHdfsStat(t *testing.T) {
+func TestHdfsStat(t *testing.T) {
 	client, err := NewHdfsClient([]string{"192.168.1.185:9000"}, []string{"192.168.1.185:50070"})
 	if err != nil {
 		t.Fatal(err)
@@ -12,6 +12,8 @@ import (
 
 	fi, err := client.client.Stat("/models")
 	t.Log(fi.Name())
+
+	select {}
 }
 
 //func TestHdfsAlive(t *testing.T) {

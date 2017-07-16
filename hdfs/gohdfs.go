@@ -76,7 +76,8 @@ func NewHdfsClient(hdfs_addrs, hdfs_http_addrs []string) (*HdfsClient, error) {
 		}
 	}
 
-	log.Info(host_web_map)
+	log.Info("host_web_map:", host_web_map)
+	log.Info("web_host_map:", web_host_map)
 
 	var err error
 	var client *hdfs.Client
@@ -111,7 +112,7 @@ END:
 func (hc *HdfsClient) checkLoop(hdfs_addrs []string) {
 	var alive map[string]struct{} = make(map[string]struct{})
 
-	ticker := time.NewTicker(3 * time.Second)
+	ticker := time.NewTicker(5 * time.Second)
 	defer ticker.Stop()
 
 	for {
@@ -126,6 +127,8 @@ func (hc *HdfsClient) checkLoop(hdfs_addrs []string) {
 
 				if active {
 					alive[v] = struct{}{}
+					log.Infof("check hdfs %s State: active", v)
+					log.Debug("alive:", alive)
 				} else {
 					delete(alive, v)
 				}
