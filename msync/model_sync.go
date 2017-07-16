@@ -124,5 +124,7 @@ func (ms *ModelSyncer) DeteleRemoteModel(path string) error {
 }
 
 func (ms *ModelSyncer) DeteleLocalModel(path string) error {
+	log.Debugf("modelsSyncer %s DeteleLocalModel %s", ms.kafka_sync_group, path)
+	return nil
 	return os.Remove(path)
 }

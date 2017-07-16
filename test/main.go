@@ -65,27 +65,29 @@ func TestModelSyncer() {
 		log.Fatal(err)
 	}
 
-	//  /root/asvserver/ivfiles/195e4d3d6a025e60.ark
-	//  /root/asvserver/ivfiles/195ee45733cdca30.ark
-	//  /root/asvserver/ivfiles/195fb6e963b07420.ark
+	//  /root/asvserver/ivfiles/1967e4a6b9fcc570.ark
+	//  /root/asvserver/ivfiles/19a299a450379850.ark
+	//  /root/asvserver/ivfiles/19de4fb195f59050.ark
+
+
 
 	for {
 		time.Sleep(3 * time.Second)
-		err = mSyncer1.UploadNewModel("/root/asvserver/ivfiles/195e4d3d6a025e60.ark")
+		err = mSyncer1.UploadNewModel("/root/asvserver/ivfiles/1967e4a6b9fcc570.ark")
 		if err != nil {
 			log.Error(err)
 		}
 		log.Infof("mSyncer1 SetUpdateKey")
 
 		time.Sleep(3 * time.Second)
-		err = mSyncer2.UploadNewModel("/root/asvserver/ivfiles/195ee45733cdca30.ark")
+		err = mSyncer2.UploadNewModel("/root/asvserver/ivfiles/19a299a450379850.ark")
 		if err != nil {
 			log.Error(err)
 		}
 		log.Infof("mSyncer2 SetUpdateKey")
 
 		time.Sleep(3 * time.Second)
-		err = mSyncer3.UploadNewModel("/root/asvserver/ivfiles/195fb6e963b07420.ark")
+		err = mSyncer3.UploadNewModel("/root/asvserver/ivfiles/19de4fb195f59050.ark")
 		if err != nil {
 			log.Error(err)
 		}
@@ -93,21 +95,21 @@ func TestModelSyncer() {
 
 		time.Sleep(60 * time.Second)
 		time.Sleep(3 * time.Second)
-		err = mSyncer1.DeteleRemoteModel("/root/asvserver/ivfiles/195e4d3d6a025e60.ark")
+		err = mSyncer1.DeteleRemoteModel("/root/asvserver/ivfiles/1967e4a6b9fcc570.ark")
 		if err != nil {
 			log.Fatal(err)
 		}
 		log.Infof("mSyncer1 SetDeleteKey")
 
 		time.Sleep(3 * time.Second)
-		err = mSyncer2.DeteleRemoteModel("/root/asvserver/ivfiles/195ee45733cdca30.ark")
+		err = mSyncer2.DeteleRemoteModel("/root/asvserver/ivfiles/19a299a450379850.ark")
 		if err != nil {
 			log.Fatal(err)
 		}
 		log.Infof("mSyncer2 SetDeleteKey")
 
 		time.Sleep(3 * time.Second)
-		err = mSyncer3.DeteleRemoteModel("/root/asvserver/ivfiles/195fb6e963b07420.ark")
+		err = mSyncer3.DeteleRemoteModel("/root/asvserver/ivfiles/19de4fb195f59050.ark")
 		if err != nil {
 			log.Fatal(err)
 		}
