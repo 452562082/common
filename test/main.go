@@ -28,30 +28,39 @@ func main() {
 	//	log.Fatal(err)
 	//}
 
-	//TestModelSyncer()
-	TestInitSyncModel(hdfsHosts, hdfsWebHosts, "/root/asvserver/ivfiles")
+	log.SetLogFuncCall(true)
+
+	err := TestInitSyncModel(hdfsHosts, hdfsWebHosts, "/root/asvserver/ivfiles")
+	if err != nil {
+		log.Fatal(err)
+	}
+	TestModelSyncer()
 }
 
-func TestInitSyncModel(hdfs_addrs, hdfs_http_addrs []string, modeldir string) {
-	hdfs.InitAndSyncModel(hdfs_addrs, hdfs_http_addrs, modeldir)
+func TestInitSyncModel(hdfs_addrs, hdfs_http_addrs []string, modeldir string) error {
+	err := hdfs.InitHDFS(hdfs_addrs, hdfs_http_addrs)
+	if err != nil {
+		return err
+	}
+	return hdfs.SyncModel(modeldir)
 }
 
 func TestModelSyncer() {
 	log.SetLogFuncCall(true)
 	log.Debug("new mdoel syncer mSyncer1")
-	mSyncer1, err := msync.NewModelSyncer(hdfsHosts, kafkaHosts, "SYNC_MODELS", "Model_Syncer_1")
+	mSyncer1, err := msync.NewModelSyncer( /*hdfsHosts, */ kafkaHosts, "SYNC_MODELS", "Model_Syncer_1")
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	log.Debug("new mdoel syncer mSyncer2")
-	mSyncer2, err := msync.NewModelSyncer(hdfsHosts, kafkaHosts, "SYNC_MODELS", "Model_Syncer_2")
+	mSyncer2, err := msync.NewModelSyncer( /*hdfsHosts, */ kafkaHosts, "SYNC_MODELS", "Model_Syncer_2")
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	log.Debug("new mdoel syncer mSyncer3")
-	mSyncer3, err := msync.NewModelSyncer(hdfsHosts, kafkaHosts, "SYNC_MODELS", "Model_Syncer_3")
+	mSyncer3, err := msync.NewModelSyncer( /*hdfsHosts, */ kafkaHosts, "SYNC_MODELS", "Model_Syncer_3")
 	if err != nil {
 		log.Fatal(err)
 	}

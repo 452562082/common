@@ -21,11 +21,11 @@ type ModelSyncer struct {
 	addModelToMemoryfunc func(path string) error
 }
 
-func NewModelSyncer(hdfsaddr string, kahosts []string, sync_topic, sync_group string) (*ModelSyncer, error) {
-	client, err := hdfs.NewHdfsClient(hdfsaddr)
-	if err != nil {
-		return nil, err
-	}
+func NewModelSyncer( /*hdfs_addrs, hdfs_http_addrs []string,*/ kahosts []string, sync_topic, sync_group string) (*ModelSyncer, error) {
+	//client, err := hdfs.DefaultHdfsClient(hdfs_addrs, hdfs_http_addrs, 5)
+	//if err != nil {
+	//	return nil, err
+	//}
 
 	producer, err := kafka.NewKafkaSyncProducer(kahosts, sync_topic)
 	if err != nil {
@@ -38,7 +38,7 @@ func NewModelSyncer(hdfsaddr string, kahosts []string, sync_topic, sync_group st
 	}
 
 	msyncer := &ModelSyncer{
-		hdfsClient:          client,
+		hdfsClient:          hdfs.DefaultHdfsClient,
 		kafka_sync_topic:    sync_topic,
 		kafka_sync_group:    sync_group,
 		kafka_sync_producer: producer,

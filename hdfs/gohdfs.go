@@ -21,7 +21,7 @@ type HdfsClient struct {
 	closed bool
 }
 
-var defaultHdfsClient *HdfsClient
+var DefaultHdfsClient *HdfsClient
 
 type NameNodeStatus struct {
 	Beans []struct {
@@ -29,10 +29,10 @@ type NameNodeStatus struct {
 	} `json:"beans"`
 }
 
-func Init(hdfs_addr, hdfs_http_addr []string) error {
+func InitHDFS(hdfs_addr, hdfs_http_addr []string) error {
 	var err error
 
-	defaultHdfsClient, err = NewHdfsClient(hdfs_addr, hdfs_http_addr, 5)
+	DefaultHdfsClient, err = NewHdfsClient(hdfs_addr, hdfs_http_addr, 5)
 	if err != nil {
 		return err
 
@@ -213,11 +213,11 @@ func (hc *HdfsClient) MkdirAll(dir string, perm os.FileMode) error {
 }
 
 func GetWaveFromHDFS(hdfsfile string) ([]byte, error) {
-	return defaultHdfsClient.ReadFile(hdfsfile)
+	return DefaultHdfsClient.ReadFile(hdfsfile)
 }
 
 func CopyModelFromHDFS(hdfsfile string) error {
-	return defaultHdfsClient.CopyFileToLocal(hdfsfile, hdfsfile)
+	return DefaultHdfsClient.CopyFileToLocal(hdfsfile, hdfsfile)
 }
 
 func (hc *HdfsClient) ReadFile(filename string) ([]byte, error) {
@@ -391,16 +391,14 @@ func checkPath(path string) error {
 	return nil
 }
 
-func InitAndSyncModel(hdfs_addr, hdfs_http_addr []string, modeldir string) error {
+func SyncModel( modeldir string) error {
 
 	if modeldir[len(modeldir)-1] != '/' {
 		modeldir += "/"
 	}
 
-	err := Init(hdfs_addr, hdfs_http_addr)
-	//defaultHdfsClient, err = NewHdfsClient(hdfs_addr, hdfs_http_addr, 5)
-	if err != nil {
-		return err
+	if DefaultHdfsClient == nil {
+		return fmt.Errorf("does not init hdfs")
 	}
 
 	//hdfsClient, err := NewHdfsClient(hdfs_addr, hdfs_http_addr, 5)
@@ -424,7 +422,7 @@ func InitAndSyncModel(hdfs_addr, hdfs_http_addr []string, modeldir string) error
 
 	log.Infof("catch local ivfiles, count: %d", len(local_file_infos))
 
-	hdfs_file_infos, err := defaultHdfsClient.ReadDir(modeldir)
+	hdfs_file_infos, err := DefaultHdfsClient.ReadDir(modeldir)
 	if err != nil {
 		return err
 	}
@@ -464,7 +462,7 @@ func InitAndSyncModel(hdfs_addr, hdfs_http_addr []string, modeldir string) error
 	}
 
 	for k, _ := range hdfsmap {
-		err := defaultHdfsClient.CopyFileToLocal(k, k)
+		err := DefaultHdfsClient.CopyFileToLocal(k, k)
 		if err != nil {
 			log.Error(err)
 		}
@@ -472,7 +470,7 @@ func InitAndSyncModel(hdfs_addr, hdfs_http_addr []string, modeldir string) error
 		log.Debugf("download %s", k)
 	}
 
-	//err = defaultHdfsClient.Close()
+	//err = DefaultHdfsClient.Close()
 	//if err != nil {
 	//	return err
 	//}
