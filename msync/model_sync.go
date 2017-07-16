@@ -109,6 +109,7 @@ func (ms *ModelSyncer) DownloadAndSaveNewModel(path string) error {
 		return err
 	}
 
+	log.Warnf("ModelSyncer %s add model %s to memory", ms.kafka_sync_group, path)
 	return ms.addModelToMemoryfunc(path)
 }
 
