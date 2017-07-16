@@ -7,13 +7,15 @@ import (
 
 func TestHdfsStat(t *testing.T) {
 	log.SetLogFuncCall(true)
-	client, err := NewHdfsClient([]string{"192.168.1.185:9000"}, []string{"192.168.1.185:50070"})
+	client, err := NewHdfsClient(
+		[]string{"192.168.1.185:9000", "localhost:9000"},
+		[]string{"192.168.1.185:50070", "localhost:50070"})
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	fi, err := client.client.Stat("/models")
-	t.Log(fi.Name())
+	log.Info(fi.Name())
 
 	select {}
 }
