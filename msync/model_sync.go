@@ -21,7 +21,7 @@ type ModelSyncer struct {
 	addModelToMemoryfunc func(path string) error
 }
 
-func NewModelSyncer( /*hdfs_addrs, hdfs_http_addrs []string,*/ kahosts []string, sync_topic, sync_group string) (*ModelSyncer, error) {
+func NewModelSyncer(kahosts []string, sync_topic, sync_group string, addModelToMemoryfunc func(path string) error) (*ModelSyncer, error) {
 	//client, err := hdfs.DefaultHdfsClient(hdfs_addrs, hdfs_http_addrs, 5)
 	//if err != nil {
 	//	return nil, err
@@ -38,11 +38,12 @@ func NewModelSyncer( /*hdfs_addrs, hdfs_http_addrs []string,*/ kahosts []string,
 	}
 
 	msyncer := &ModelSyncer{
-		hdfsClient:          hdfs.DefaultHdfsClient,
-		kafka_sync_topic:    sync_topic,
-		kafka_sync_group:    sync_group,
-		kafka_sync_producer: producer,
-		kafka_sync_consumer: consumer,
+		hdfsClient:           hdfs.DefaultHdfsClient,
+		kafka_sync_topic:     sync_topic,
+		kafka_sync_group:     sync_group,
+		kafka_sync_producer:  producer,
+		kafka_sync_consumer:  consumer,
+		addModelToMemoryfunc: addModelToMemoryfunc,
 	}
 
 	go msyncer.loop()
@@ -103,7 +104,12 @@ func (ms *ModelSyncer) loop() {
 // 从HDFS下载增量模型并同步到内存
 func (ms *ModelSyncer) DownloadAndSaveNewModel(path string) error {
 	log.Debugf("modelsyncer %s download and save model %s", ms.kafka_sync_group, path)
-	return ms.hdfsClient.CopyFileToLocal(path, path)
+	err := ms.hdfsClient.CopyFileToLocal(path, path)
+	if err != nil {
+		return err
+	}
+
+	return ms.addModelToMemoryfunc(path)
 }
 
 // 上传语音文件到HDFS
