@@ -2,7 +2,7 @@ package msync
 
 import (
 	"fmt"
-	"git.oschina.net/kuaishangtong/common/hdfs"
+	"asvserver/hdfs"
 	"git.oschina.net/kuaishangtong/common/kafka"
 	"git.oschina.net/kuaishangtong/common/utils/log"
 	"os"
