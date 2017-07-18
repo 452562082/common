@@ -2,7 +2,7 @@ package log
 
 func init() {
 	logger = NewLogger(100000)
-	//logger.SetLogFuncCallWithDepth(true, 3)
+	logger.SetLogFuncCallWithDepth(true, 3)
 	logger.SetLogger("console", `{"color":true}`)
 	logger.SetLevel(LevelDebug)
 }

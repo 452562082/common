@@ -43,7 +43,7 @@ func main() {
 	log.Infof("ResetHDFSConnection to %s", "izwz9jay6aqdkr9udoehckz:9000")
 
 	TestModelSyncer()
-	
+
 }
 
 func TestInitSyncModel(hdfs_addrs, hdfs_http_addrs []string, modeldir string) error {

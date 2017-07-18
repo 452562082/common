@@ -27,7 +27,6 @@ func NewHBaseHelper(host string, port int) (*HBaseHelper, error) {
 	return &HBaseHelper{
 		THBaseServiceClient: client,
 	}, nil
-
 }
 
 func (this *HBaseHelper) HBExists(table, rowkey string) (bool, error) {
@@ -120,4 +119,8 @@ func (this *HBaseHelper) HBDeleteMultiple(table string, rowkeys []string) ([]*hb
 	}
 
 	return this.DeleteMultiple(utils.S2B(table), tdels)
+}
+
+func (this *HBaseHelper) Close() error {
+	return this.THBaseServiceClient.Transport.Close()
 }
