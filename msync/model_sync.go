@@ -18,14 +18,13 @@ type ModelSyncer struct {
 	kafka_sync_producer *kafka.KafkaSyncProducer
 	kafka_sync_consumer *kafka.KafkaClusterConsumer
 
-	addModelToMemoryfunc func(path string) error
+	addModelToMemoryfunc   func(path string) error
+	delModelFromMemoryfunc func(spkid string) error
 }
 
-func NewModelSyncer(kahosts []string, sync_topic, sync_group string, addModelToMemoryfunc func(path string) error) (*ModelSyncer, error) {
-	//client, err := hdfs.DefaultHdfsClient(hdfs_addrs, hdfs_http_addrs, 5)
-	//if err != nil {
-	//	return nil, err
-	//}
+func NewModelSyncer(kahosts []string, sync_topic, sync_group string,
+	addModelToMemoryfunc func(path string) error,
+	delModelFromMemoryfunc func(spkid string) error) (*ModelSyncer, error) {
 
 	producer, err := kafka.NewKafkaSyncProducer(kahosts, sync_topic)
 	if err != nil {
@@ -38,12 +37,13 @@ func NewModelSyncer(kahosts []string, sync_topic, sync_group string, addModelToM
 	}
 
 	msyncer := &ModelSyncer{
-		hdfsClient:           hdfs.DefaultHdfsClient,
-		kafka_sync_topic:     sync_topic,
-		kafka_sync_group:     sync_group,
-		kafka_sync_producer:  producer,
-		kafka_sync_consumer:  consumer,
-		addModelToMemoryfunc: addModelToMemoryfunc,
+		hdfsClient:             hdfs.DefaultHdfsClient,
+		kafka_sync_topic:       sync_topic,
+		kafka_sync_group:       sync_group,
+		kafka_sync_producer:    producer,
+		kafka_sync_consumer:    consumer,
+		addModelToMemoryfunc:   addModelToMemoryfunc,
+		delModelFromMemoryfunc: delModelFromMemoryfunc,
 	}
 
 	go msyncer.loop()
@@ -103,7 +103,7 @@ func (ms *ModelSyncer) loop() {
 
 // 从HDFS下载增量模型并同步到内存
 func (ms *ModelSyncer) DownloadAndSaveNewModel(path string) error {
-	log.Debugf("modelsyncer %s download and save model %s", ms.kafka_sync_group, path)
+	log.Debugf("modelSyncer %s download and save model %s", ms.kafka_sync_group, path)
 	err := ms.hdfsClient.CopyFileToLocal(path, path)
 	if err != nil {
 		return err
@@ -131,7 +131,37 @@ func (ms *ModelSyncer) DeteleRemoteModel(path string) error {
 }
 
 func (ms *ModelSyncer) DeteleLocalModel(path string) error {
-	log.Debugf("modelsSyncer %s DeteleLocalModel %s", ms.kafka_sync_group, path)
-	return nil
-	return os.Remove(path)
+	log.Debugf("modelSyncer %s DeteleLocalModel %s", ms.kafka_sync_group, path)
+	//return nil
+	err := os.Remove(path)
+	if err != nil {
+		return err
+	}
+
+	spkid := getIdFromPath(path)
+
+	if len(spkid) != 16 {
+		return fmt.Errorf("modelSyncer %s can not delete %s model from memory, bad spkid [%s]",
+			ms.kafka_sync_group, path, spkid)
+	}
+
+	log.Warnf("ModelSyncer %s delete model %s from memory", ms.kafka_sync_group, spkid)
+	return ms.delModelFromMemoryfunc(spkid)
+}
+
+func getIdFromPath(path string) string {
+	// /tmp/asv/fb0de09ff7da3560.ark success
+
+	field := strings.Split(path, "/")
+	if len(field) == 0 {
+		return ""
+	}
+
+	modelname := field[len(field)-1]
+
+	if strings.HasSuffix(modelname, ".ark") {
+		return strings.Split(modelname, ".")[0]
+	}
+
+	return ""
 }
