@@ -67,8 +67,7 @@ func TestNewTHBaseServiceGet(t *testing.T) {
 		log.Error(err)
 		t.Fatal(err)
 	}
-
-	log.Infof("rowkey{%s} in table{%s} Get: %s", rowkey, table, string(value.Row))
+	log.Infof("rowkey{%s} in table{%s} Get: rowkey %s", rowkey, table, string(value.Row))
 }
 
 func TestNewTHBaseServicePut(t *testing.T) {
