@@ -55,13 +55,20 @@ func TestNewTHBaseServiceGet(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	value, err := client.Get([]byte(table), &TGet{Row: []byte(rowkey)})
+	 	tColumns := []*TColumn{
+			&TColumn{
+				Family:    []byte("vpr_spkid"),
+				Qualifier: []byte("vpr"),
+			},
+		}
+
+	value, err := client.Get([]byte(table), &TGet{tColumns})
 	if err != nil {
 		log.Error(err)
 		t.Fatal(err)
 	}
 
-	log.Infof("rowkey{%s} in table{%s} Get: %s", rowkey, table, value.String())
+	log.Infof("rowkey{%s} in table{%s} Get: %s", rowkey, table, string(value.Row))
 }
 
 func TestNewTHBaseServicePut(t *testing.T) {
