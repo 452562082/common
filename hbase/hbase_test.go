@@ -55,14 +55,14 @@ func TestNewTHBaseServiceGet(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	 	tColumns := []*TColumn{
-			&TColumn{
-				Family:    []byte("vpr_spkid"),
-				Qualifier: []byte("vpr"),
-			},
-		}
+	tColumns := []*TColumn{
+		&TColumn{
+			Family:    []byte("vpr_spkid"),
+			Qualifier: []byte("vpr"),
+		},
+	}
 
-	value, err := client.Get([]byte(table), &TGet{tColumns})
+	value, err := client.Get([]byte(table), &TGet{Columns: tColumns})
 	if err != nil {
 		log.Error(err)
 		t.Fatal(err)
