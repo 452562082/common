@@ -10,10 +10,10 @@ import (
 )
 
 var (
-	host   string = "192.168.1.185"
+	host   string = "localhost"
 	port   string = "9090"
 	table  string = "asv_vpr_info"
-	rowkey string = "rowkey1111"
+	rowkey string = "row_1500430079604"
 )
 
 func TestNewTHBaseServiceExists(t *testing.T) {
@@ -55,19 +55,20 @@ func TestNewTHBaseServiceGet(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	tColumns := []*TColumn{
-		&TColumn{
-			Family:    []byte("vpr_spkid"),
-			Qualifier: []byte("vpr"),
-		},
-	}
-
-	value, err := client.Get([]byte(table), &TGet{Columns: tColumns})
+	//tColumns := []*TColumn{
+	//	&TColumn{
+	//		Family:    []byte("vpr_spkid"),
+	//		Qualifier: []byte("vpr"),
+	//	},
+	//}
+	//
+	//value, err := client.Get([]byte(table), &TGet{Columns: tColumns})
+	value, err := client.Get([]byte(table), &TGet{Row: []byte(rowkey)})
 	if err != nil {
 		log.Error(err)
 		t.Fatal(err)
 	}
-	log.Infof("rowkey{%s} in table{%s} Get: rowkey %s", rowkey, table, string(value.Row))
+	log.Infof("rowkey{%s} in table{%s} Get: rowkey %s", rowkey, table, value.String())
 }
 
 func TestNewTHBaseServicePut(t *testing.T) {
