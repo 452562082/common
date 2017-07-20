@@ -130,8 +130,7 @@ func (hc *HdfsClient) checkLoop(interval int, hdfs_addrs []string) {
 
 				if active {
 					alive[v] = struct{}{}
-					log.Infof("check hdfs %s State: active", v)
-					log.Debug("alive:", alive)
+					log.Infof("check hdfs connect %s State: active", v)
 				} else {
 					delete(alive, v)
 				}

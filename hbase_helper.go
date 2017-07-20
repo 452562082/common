@@ -108,6 +108,16 @@ func (this *HBaseHelper) HBDeleteSingle(table, rowkey string) error {
 	return this.DeleteSingle([]byte(table), &hbase.TDelete{Row: []byte(rowkey)})
 }
 
+// 	tColumns := []*hbase.TColumn{
+//		&hbase.TColumn{
+//			Family:    []byte("cf"),
+//			Qualifier: []byte("abc"),
+//		},
+//	}
+func (this *HBaseHelper) HBDeleteWithTColumn(table string,tColumns []*hbase.TColumn) error {
+	return this.DeleteSingle([]byte(table), &hbase.TDelete{Columns: tColumns})
+}
+
 func (this *HBaseHelper) HBDeleteMultiple(table string, rowkeys []string) ([]*hbase.TDelete, error) {
 	length := len(rowkeys)
 	var tdels []*hbase.TDelete
