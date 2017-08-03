@@ -17,7 +17,8 @@ func TestKafkaSyncProducer(t *testing.T) {
 	for {
 		timea := time.Now().String()
 		log.Debug("send", timea)
-		msg := producerMessagePool.Get().(*sarama.ProducerMessage)
+		//msg := producerMessagePool.Get().(*sarama.ProducerMessage)
+		msg := &sarama.ProducerMessage{}
 		msg.Topic = "test1"
 		msg.Key = sarama.ByteEncoder([]byte(timea))
 		msg.Value = sarama.ByteEncoder([]byte(fmt.Sprintf(data, timea, timea)))

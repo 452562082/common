@@ -81,14 +81,15 @@ func (asp *KafkaAsyncProducer) Close() error {
 }
 
 func (asp *KafkaAsyncProducer) SendMessage(msg *sarama.ProducerMessage) {
-	defer producerMessagePool.Put(msg)
+	//defer producerMessagePool.Put(msg)
 	asp.producer.Input() <- msg
 }
 
 func (asp *KafkaAsyncProducer) SendByteMessage(key, value []byte) {
-	msg := producerMessagePool.Get().(*sarama.ProducerMessage)
-	defer producerMessagePool.Put(msg)
+	//msg := producerMessagePool.Get().(*sarama.ProducerMessage)
+	//defer producerMessagePool.Put(msg)
 
+	msg := &sarama.ProducerMessage{}
 	msg.Topic = asp.topic
 	msg.Key = sarama.ByteEncoder(key)
 	msg.Value = sarama.ByteEncoder(value)
