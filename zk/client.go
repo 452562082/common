@@ -2,39 +2,47 @@ package zk
 
 import (
 	"fmt"
-	"time"
 	"strings"
-	
+	"time"
+
 	"git.oschina.net/kuaishangtong/common/utils/log"
 	"github.com/samuel/go-zookeeper/zk"
 )
 
 type GozkClient struct {
-	path string
-	conn *zk.Conn
+	path     string
+	conn     *zk.Conn
 	data     chan []byte
 	children chan []string
 }
 
-func NewGozkClient(zkhosts []string, nodepath string) (*GozkClient, error) {
+func NewGozkClient(zkhosts []string, nodepath string, _default []byte) (*GozkClient, error) {
 	nodepath = strings.Trim(nodepath, "/")
 	nodepath = "/" + nodepath
-	
+
 	client := &GozkClient{
 		path:     nodepath,
 		data:     make(chan []byte),
 		children: make(chan []string),
 	}
-	
+
 	c, _, err := zk.Connect(zkhosts, 2*time.Second)
 	if err != nil {
 		return nil, err
 	}
+
+	exist, _, err := c.Exists(nodepath)
+	if !exist {
+		_, err = c.Create(nodepath, _default, zk.FlagPersistent, zk.WorldACL(zk.PermAll))
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	client.conn = c
-	
 	go client.watchNodeDataChanged()
 	go client.watchNodeChildrenChanged()
-	
+
 	return client, nil
 }
 
@@ -52,33 +60,33 @@ func (gzc *GozkClient) GetChildren() <-chan []string {
 
 func (gzc *GozkClient) watchNodeDataChanged() {
 	first := true
-	
+
 	for {
 		data, _, events, err := gzc.conn.GetW(gzc.path)
 		if err != nil {
 			log.Error(err)
 			continue
 		}
-		
+
 		if first {
 			gzc.data <- data
 			first = false
 			continue
 		}
-		
+
 		evt := <-events
 		if evt.Err != nil {
 			log.Error(evt.Err)
 			continue
 		}
-		
+
 		if evt.Type == zk.EventNodeDataChanged {
 			data, _, err := gzc.conn.Get(gzc.path)
 			if err != nil {
 				log.Error(err)
 				continue
 			}
-			
+
 			gzc.data <- data
 		}
 	}
@@ -92,19 +100,19 @@ func (gzc *GozkClient) watchNodeChildrenChanged() {
 			log.Error(err)
 			continue
 		}
-		
+
 		if first {
 			gzc.children <- children
 			first = false
 			continue
 		}
-		
+
 		evt := <-events
 		if evt.Err != nil {
 			log.Error(evt.Err)
 			continue
 		}
-		
+
 		if evt.Type == zk.EventNodeChildrenChanged {
 			children, _, err := gzc.conn.Children(gzc.path)
 			if err != nil {
