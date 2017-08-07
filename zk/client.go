@@ -33,7 +33,7 @@ func NewGozkClient(zkhosts []string, nodepath string, _default []byte) (*GozkCli
 
 	exist, _, err := c.Exists(nodepath)
 	if !exist {
-		_, err = c.Create(nodepath, _default, zk.FlagPersistent, zk.WorldACL(zk.PermAll))
+		_, err = c.Create(nodepath, _default, 0, zk.WorldACL(zk.PermAll))
 		if err != nil {
 			return nil, err
 		}
