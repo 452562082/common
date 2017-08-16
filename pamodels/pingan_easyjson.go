@@ -31,7 +31,6 @@ func acquireWriter() *jwriter.Writer {
 func releaseWriter(wr *jwriter.Writer) {
 	writerPool.Put(wr)
 }
-
 func easyjson7459bf99DecodeModels(in *jlexer.Lexer, out *PaTasksBody) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
@@ -141,7 +140,6 @@ func (v PaTasksBody) MarshalJSONToByteBuffer(buf *bytes.Buffer) ([]byte, error) 
 	}
 	return buf.Bytes(), w.Error
 }
-
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v PaTasksBody) MarshalEasyJSON(w *jwriter.Writer) {
 	easyjson7459bf99EncodeModels(w, v)
@@ -307,6 +305,7 @@ func (v PaTaskRes) MarshalJSONToByteBuffer(buf *bytes.Buffer) ([]byte, error) {
 	}
 	return buf.Bytes(), w.Error
 }
+
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v PaTaskRes) MarshalEasyJSON(w *jwriter.Writer) {
 	easyjson7459bf99EncodeModels1(w, v)
@@ -360,52 +359,33 @@ func easyjson7459bf99DecodeModels2(in *jlexer.Lexer, out *PaTaskParam) {
 			out.Task_Param_RecordId = string(in.String())
 		case "task_param_top_n":
 			out.Task_Param_TopN = int(in.Int())
-		case "task_param_node":
+		case "task_param_nodes":
 			if in.IsNull() {
 				in.Skip()
-				out.Task_Param_Node = nil
+				out.Task_Param_Nodes = nil
 			} else {
 				in.Delim('[')
-				if out.Task_Param_Node == nil {
+				if out.Task_Param_Nodes == nil {
 					if !in.IsDelim(']') {
-						out.Task_Param_Node = make([]string, 0, 4)
+						out.Task_Param_Nodes = make([]string, 0, 4)
 					} else {
-						out.Task_Param_Node = []string{}
+						out.Task_Param_Nodes = []string{}
 					}
 				} else {
-					out.Task_Param_Node = (out.Task_Param_Node)[:0]
+					out.Task_Param_Nodes = (out.Task_Param_Nodes)[:0]
 				}
 				for !in.IsDelim(']') {
 					var v7 string
 					v7 = string(in.String())
-					out.Task_Param_Node = append(out.Task_Param_Node, v7)
+					out.Task_Param_Nodes = append(out.Task_Param_Nodes, v7)
 					in.WantComma()
 				}
 				in.Delim(']')
 			}
 		case "task_param_enroll_node":
-			if in.IsNull() {
-				in.Skip()
-				out.Task_Param_EnrollNode = nil
-			} else {
-				in.Delim('[')
-				if out.Task_Param_EnrollNode == nil {
-					if !in.IsDelim(']') {
-						out.Task_Param_EnrollNode = make([]string, 0, 4)
-					} else {
-						out.Task_Param_EnrollNode = []string{}
-					}
-				} else {
-					out.Task_Param_EnrollNode = (out.Task_Param_EnrollNode)[:0]
-				}
-				for !in.IsDelim(']') {
-					var v8 string
-					v8 = string(in.String())
-					out.Task_Param_EnrollNode = append(out.Task_Param_EnrollNode, v8)
-					in.WantComma()
-				}
-				in.Delim(']')
-			}
+			out.Task_Param_EnrollNode = string(in.String())
+		case "task_param_delete_node":
+			out.Task_Param_DeleteNode = string(in.String())
 		case "task_param_origin_node":
 			out.Task_Param_OriginNode = string(in.String())
 		case "task_param_target_node":
@@ -424,9 +404,9 @@ func easyjson7459bf99DecodeModels2(in *jlexer.Lexer, out *PaTaskParam) {
 					out.Task_Param_TargetNode = (out.Task_Param_TargetNode)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v9 string
-					v9 = string(in.String())
-					out.Task_Param_TargetNode = append(out.Task_Param_TargetNode, v9)
+					var v8 string
+					v8 = string(in.String())
+					out.Task_Param_TargetNode = append(out.Task_Param_TargetNode, v8)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -517,16 +497,16 @@ func easyjson7459bf99EncodeModels2(out *jwriter.Writer, in PaTaskParam) {
 		out.RawByte(',')
 	}
 	first = false
-	out.RawString("\"task_param_node\":")
-	if in.Task_Param_Node == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
+	out.RawString("\"task_param_nodes\":")
+	if in.Task_Param_Nodes == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
 		out.RawString("null")
 	} else {
 		out.RawByte('[')
-		for v10, v11 := range in.Task_Param_Node {
-			if v10 > 0 {
+		for v9, v10 := range in.Task_Param_Nodes {
+			if v9 > 0 {
 				out.RawByte(',')
 			}
-			out.String(string(v11))
+			out.String(string(v10))
 		}
 		out.RawByte(']')
 	}
@@ -535,18 +515,13 @@ func easyjson7459bf99EncodeModels2(out *jwriter.Writer, in PaTaskParam) {
 	}
 	first = false
 	out.RawString("\"task_param_enroll_node\":")
-	if in.Task_Param_EnrollNode == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
-		out.RawString("null")
-	} else {
-		out.RawByte('[')
-		for v12, v13 := range in.Task_Param_EnrollNode {
-			if v12 > 0 {
-				out.RawByte(',')
-			}
-			out.String(string(v13))
-		}
-		out.RawByte(']')
+	out.String(string(in.Task_Param_EnrollNode))
+	if !first {
+		out.RawByte(',')
 	}
+	first = false
+	out.RawString("\"task_param_delete_node\":")
+	out.String(string(in.Task_Param_DeleteNode))
 	if !first {
 		out.RawByte(',')
 	}
@@ -562,11 +537,11 @@ func easyjson7459bf99EncodeModels2(out *jwriter.Writer, in PaTaskParam) {
 		out.RawString("null")
 	} else {
 		out.RawByte('[')
-		for v14, v15 := range in.Task_Param_TargetNode {
-			if v14 > 0 {
+		for v11, v12 := range in.Task_Param_TargetNode {
+			if v11 > 0 {
 				out.RawByte(',')
 			}
-			out.String(string(v15))
+			out.String(string(v12))
 		}
 		out.RawByte(']')
 	}
@@ -632,6 +607,7 @@ func (v PaTaskParam) MarshalJSONToByteBuffer(buf *bytes.Buffer) ([]byte, error) 
 	}
 	return buf.Bytes(), w.Error
 }
+
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v PaTaskParam) MarshalEasyJSON(w *jwriter.Writer) {
 	easyjson7459bf99EncodeModels2(w, v)
@@ -879,9 +855,9 @@ func easyjson7459bf99DecodeModels5(in *jlexer.Lexer, out *PaProcRes) {
 					out.Task_Proc_Candidates = (out.Task_Proc_Candidates)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v16 PaIdentifyCandidate
-					(v16).UnmarshalEasyJSON(in)
-					out.Task_Proc_Candidates = append(out.Task_Proc_Candidates, v16)
+					var v13 PaIdentifyCandidate
+					(v13).UnmarshalEasyJSON(in)
+					out.Task_Proc_Candidates = append(out.Task_Proc_Candidates, v13)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -968,11 +944,11 @@ func easyjson7459bf99EncodeModels5(out *jwriter.Writer, in PaProcRes) {
 		out.RawString("null")
 	} else {
 		out.RawByte('[')
-		for v18, v19 := range in.Task_Proc_Candidates {
-			if v18 > 0 {
+		for v15, v16 := range in.Task_Proc_Candidates {
+			if v15 > 0 {
 				out.RawByte(',')
 			}
-			(v19).MarshalEasyJSON(out)
+			(v16).MarshalEasyJSON(out)
 		}
 		out.RawByte(']')
 	}
@@ -1108,6 +1084,7 @@ func (v PaIdentifyCandidate) MarshalJSONToByteBuffer(buf *bytes.Buffer) ([]byte,
 	}
 	return buf.Bytes(), w.Error
 }
+
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v PaIdentifyCandidate) MarshalEasyJSON(w *jwriter.Writer) {
 	easyjson7459bf99EncodeModels6(w, v)
