@@ -31,15 +31,15 @@ func NewGozkClient(zkhosts []string, nodepath string, _default []byte) (*GozkCli
 		return nil, err
 	}
 
-	exist, _, err := c.Exists(nodepath)
+	client.conn = c
+	exist, _, err := client.conn.Exists(nodepath)
 	if !exist {
-		_, err = c.Create(nodepath, _default, 0, zk.WorldACL(zk.PermAll))
+		_, err = client.conn.Create(nodepath, _default, 0, zk.WorldACL(zk.PermAll))
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	client.conn = c
 	go client.watchNodeDataChanged()
 	go client.watchNodeChildrenChanged()
 
