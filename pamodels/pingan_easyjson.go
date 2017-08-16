@@ -32,7 +32,7 @@ func releaseWriter(wr *jwriter.Writer) {
 	writerPool.Put(wr)
 }
 
-func easyjson7459bf99DecodeTproxy(in *jlexer.Lexer, out *PaTasksBody) {
+func easyjson7459bf99DecodeModels(in *jlexer.Lexer, out *PaTasksBody) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -88,7 +88,7 @@ func easyjson7459bf99DecodeTproxy(in *jlexer.Lexer, out *PaTasksBody) {
 		in.Consumed()
 	}
 }
-func easyjson7459bf99EncodeTproxy(out *jwriter.Writer, in PaTasksBody) {
+func easyjson7459bf99EncodeModels(out *jwriter.Writer, in PaTasksBody) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -127,13 +127,13 @@ func easyjson7459bf99EncodeTproxy(out *jwriter.Writer, in PaTasksBody) {
 // MarshalJSON supports json.Marshaler interface
 func (v PaTasksBody) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjson7459bf99EncodeTproxy(&w, v)
+	easyjson7459bf99EncodeModels(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 func (v PaTasksBody) MarshalJSONToByteBuffer(buf *bytes.Buffer) ([]byte, error) {
 	w := acquireWriter()
-	easyjson7459bf99EncodeTproxy(w, v)
+	easyjson7459bf99EncodeModels(w, v)
 	_, err := w.DumpTo(buf)
 	releaseWriter(w)
 	if err != nil {
@@ -142,23 +142,23 @@ func (v PaTasksBody) MarshalJSONToByteBuffer(buf *bytes.Buffer) ([]byte, error) 
 	return buf.Bytes(), w.Error
 }
 
-// MarshalEasyJSON supports pamodels.Marshaler interface
+// MarshalEasyJSON supports easyjson.Marshaler interface
 func (v PaTasksBody) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjson7459bf99EncodeTproxy(w, v)
+	easyjson7459bf99EncodeModels(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *PaTasksBody) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjson7459bf99DecodeTproxy(&r, v)
+	easyjson7459bf99DecodeModels(&r, v)
 	return r.Error()
 }
 
-// UnmarshalEasyJSON supports pamodels.Unmarshaler interface
+// UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *PaTasksBody) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjson7459bf99DecodeTproxy(l, v)
+	easyjson7459bf99DecodeModels(l, v)
 }
-func easyjson7459bf99DecodeTproxy1(in *jlexer.Lexer, out *PaTaskRes) {
+func easyjson7459bf99DecodeModels1(in *jlexer.Lexer, out *PaTaskRes) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -224,7 +224,7 @@ func easyjson7459bf99DecodeTproxy1(in *jlexer.Lexer, out *PaTaskRes) {
 		in.Consumed()
 	}
 }
-func easyjson7459bf99EncodeTproxy1(out *jwriter.Writer, in PaTaskRes) {
+func easyjson7459bf99EncodeModels1(out *jwriter.Writer, in PaTaskRes) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -293,13 +293,13 @@ func easyjson7459bf99EncodeTproxy1(out *jwriter.Writer, in PaTaskRes) {
 // MarshalJSON supports json.Marshaler interface
 func (v PaTaskRes) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjson7459bf99EncodeTproxy1(&w, v)
+	easyjson7459bf99EncodeModels1(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 func (v PaTaskRes) MarshalJSONToByteBuffer(buf *bytes.Buffer) ([]byte, error) {
 	w := acquireWriter()
-	easyjson7459bf99EncodeTproxy1(w, v)
+	easyjson7459bf99EncodeModels1(w, v)
 	_, err := w.DumpTo(buf)
 	releaseWriter(w)
 	if err != nil {
@@ -307,24 +307,23 @@ func (v PaTaskRes) MarshalJSONToByteBuffer(buf *bytes.Buffer) ([]byte, error) {
 	}
 	return buf.Bytes(), w.Error
 }
-
-// MarshalEasyJSON supports pamodels.Marshaler interface
+// MarshalEasyJSON supports easyjson.Marshaler interface
 func (v PaTaskRes) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjson7459bf99EncodeTproxy1(w, v)
+	easyjson7459bf99EncodeModels1(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *PaTaskRes) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjson7459bf99DecodeTproxy1(&r, v)
+	easyjson7459bf99DecodeModels1(&r, v)
 	return r.Error()
 }
 
-// UnmarshalEasyJSON supports pamodels.Unmarshaler interface
+// UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *PaTaskRes) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjson7459bf99DecodeTproxy1(l, v)
+	easyjson7459bf99DecodeModels1(l, v)
 }
-func easyjson7459bf99DecodeTproxy2(in *jlexer.Lexer, out *PaTaskParam) {
+func easyjson7459bf99DecodeModels2(in *jlexer.Lexer, out *PaTaskParam) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -456,7 +455,7 @@ func easyjson7459bf99DecodeTproxy2(in *jlexer.Lexer, out *PaTaskParam) {
 		in.Consumed()
 	}
 }
-func easyjson7459bf99EncodeTproxy2(out *jwriter.Writer, in PaTaskParam) {
+func easyjson7459bf99EncodeModels2(out *jwriter.Writer, in PaTaskParam) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -619,13 +618,13 @@ func easyjson7459bf99EncodeTproxy2(out *jwriter.Writer, in PaTaskParam) {
 // MarshalJSON supports json.Marshaler interface
 func (v PaTaskParam) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjson7459bf99EncodeTproxy2(&w, v)
+	easyjson7459bf99EncodeModels2(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 func (v PaTaskParam) MarshalJSONToByteBuffer(buf *bytes.Buffer) ([]byte, error) {
 	w := acquireWriter()
-	easyjson7459bf99EncodeTproxy2(w, v)
+	easyjson7459bf99EncodeModels2(w, v)
 	_, err := w.DumpTo(buf)
 	releaseWriter(w)
 	if err != nil {
@@ -633,24 +632,23 @@ func (v PaTaskParam) MarshalJSONToByteBuffer(buf *bytes.Buffer) ([]byte, error) 
 	}
 	return buf.Bytes(), w.Error
 }
-
-// MarshalEasyJSON supports pamodels.Marshaler interface
+// MarshalEasyJSON supports easyjson.Marshaler interface
 func (v PaTaskParam) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjson7459bf99EncodeTproxy2(w, v)
+	easyjson7459bf99EncodeModels2(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *PaTaskParam) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjson7459bf99DecodeTproxy2(&r, v)
+	easyjson7459bf99DecodeModels2(&r, v)
 	return r.Error()
 }
 
-// UnmarshalEasyJSON supports pamodels.Unmarshaler interface
+// UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *PaTaskParam) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjson7459bf99DecodeTproxy2(l, v)
+	easyjson7459bf99DecodeModels2(l, v)
 }
-func easyjson7459bf99DecodeTproxy3(in *jlexer.Lexer, out *PaTaskBody) {
+func easyjson7459bf99DecodeModels3(in *jlexer.Lexer, out *PaTaskBody) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -685,7 +683,7 @@ func easyjson7459bf99DecodeTproxy3(in *jlexer.Lexer, out *PaTaskBody) {
 		in.Consumed()
 	}
 }
-func easyjson7459bf99EncodeTproxy3(out *jwriter.Writer, in PaTaskBody) {
+func easyjson7459bf99EncodeModels3(out *jwriter.Writer, in PaTaskBody) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -713,13 +711,13 @@ func easyjson7459bf99EncodeTproxy3(out *jwriter.Writer, in PaTaskBody) {
 // MarshalJSON supports json.Marshaler interface
 func (v PaTaskBody) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjson7459bf99EncodeTproxy3(&w, v)
+	easyjson7459bf99EncodeModels3(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 func (v PaTaskBody) MarshalJSONToByteBuffer(buf *bytes.Buffer) ([]byte, error) {
 	w := acquireWriter()
-	easyjson7459bf99EncodeTproxy3(w, v)
+	easyjson7459bf99EncodeModels3(w, v)
 	_, err := w.DumpTo(buf)
 	releaseWriter(w)
 	if err != nil {
@@ -728,23 +726,23 @@ func (v PaTaskBody) MarshalJSONToByteBuffer(buf *bytes.Buffer) ([]byte, error) {
 	return buf.Bytes(), w.Error
 }
 
-// MarshalEasyJSON supports pamodels.Marshaler interface
+// MarshalEasyJSON supports easyjson.Marshaler interface
 func (v PaTaskBody) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjson7459bf99EncodeTproxy3(w, v)
+	easyjson7459bf99EncodeModels3(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *PaTaskBody) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjson7459bf99DecodeTproxy3(&r, v)
+	easyjson7459bf99DecodeModels3(&r, v)
 	return r.Error()
 }
 
-// UnmarshalEasyJSON supports pamodels.Unmarshaler interface
+// UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *PaTaskBody) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjson7459bf99DecodeTproxy3(l, v)
+	easyjson7459bf99DecodeModels3(l, v)
 }
-func easyjson7459bf99DecodeTproxy4(in *jlexer.Lexer, out *PaResBody) {
+func easyjson7459bf99DecodeModels4(in *jlexer.Lexer, out *PaResBody) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -777,7 +775,7 @@ func easyjson7459bf99DecodeTproxy4(in *jlexer.Lexer, out *PaResBody) {
 		in.Consumed()
 	}
 }
-func easyjson7459bf99EncodeTproxy4(out *jwriter.Writer, in PaResBody) {
+func easyjson7459bf99EncodeModels4(out *jwriter.Writer, in PaResBody) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -799,13 +797,13 @@ func easyjson7459bf99EncodeTproxy4(out *jwriter.Writer, in PaResBody) {
 // MarshalJSON supports json.Marshaler interface
 func (v PaResBody) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjson7459bf99EncodeTproxy4(&w, v)
+	easyjson7459bf99EncodeModels4(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 func (v PaResBody) MarshalJSONToByteBuffer(buf *bytes.Buffer) ([]byte, error) {
 	w := acquireWriter()
-	easyjson7459bf99EncodeTproxy4(w, v)
+	easyjson7459bf99EncodeModels4(w, v)
 	_, err := w.DumpTo(buf)
 	releaseWriter(w)
 	if err != nil {
@@ -814,23 +812,23 @@ func (v PaResBody) MarshalJSONToByteBuffer(buf *bytes.Buffer) ([]byte, error) {
 	return buf.Bytes(), w.Error
 }
 
-// MarshalEasyJSON supports pamodels.Marshaler interface
+// MarshalEasyJSON supports easyjson.Marshaler interface
 func (v PaResBody) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjson7459bf99EncodeTproxy4(w, v)
+	easyjson7459bf99EncodeModels4(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *PaResBody) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjson7459bf99DecodeTproxy4(&r, v)
+	easyjson7459bf99DecodeModels4(&r, v)
 	return r.Error()
 }
 
-// UnmarshalEasyJSON supports pamodels.Unmarshaler interface
+// UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *PaResBody) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjson7459bf99DecodeTproxy4(l, v)
+	easyjson7459bf99DecodeModels4(l, v)
 }
-func easyjson7459bf99DecodeTproxy5(in *jlexer.Lexer, out *PaProcRes) {
+func easyjson7459bf99DecodeModels5(in *jlexer.Lexer, out *PaProcRes) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -909,7 +907,7 @@ func easyjson7459bf99DecodeTproxy5(in *jlexer.Lexer, out *PaProcRes) {
 		in.Consumed()
 	}
 }
-func easyjson7459bf99EncodeTproxy5(out *jwriter.Writer, in PaProcRes) {
+func easyjson7459bf99EncodeModels5(out *jwriter.Writer, in PaProcRes) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -1002,13 +1000,13 @@ func easyjson7459bf99EncodeTproxy5(out *jwriter.Writer, in PaProcRes) {
 // MarshalJSON supports json.Marshaler interface
 func (v PaProcRes) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjson7459bf99EncodeTproxy5(&w, v)
+	easyjson7459bf99EncodeModels5(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 func (v PaProcRes) MarshalJSONToByteBuffer(buf *bytes.Buffer) ([]byte, error) {
 	w := acquireWriter()
-	easyjson7459bf99EncodeTproxy5(w, v)
+	easyjson7459bf99EncodeModels5(w, v)
 	_, err := w.DumpTo(buf)
 	releaseWriter(w)
 	if err != nil {
@@ -1017,23 +1015,23 @@ func (v PaProcRes) MarshalJSONToByteBuffer(buf *bytes.Buffer) ([]byte, error) {
 	return buf.Bytes(), w.Error
 }
 
-// MarshalEasyJSON supports pamodels.Marshaler interface
+// MarshalEasyJSON supports easyjson.Marshaler interface
 func (v PaProcRes) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjson7459bf99EncodeTproxy5(w, v)
+	easyjson7459bf99EncodeModels5(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *PaProcRes) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjson7459bf99DecodeTproxy5(&r, v)
+	easyjson7459bf99DecodeModels5(&r, v)
 	return r.Error()
 }
 
-// UnmarshalEasyJSON supports pamodels.Unmarshaler interface
+// UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *PaProcRes) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjson7459bf99DecodeTproxy5(l, v)
+	easyjson7459bf99DecodeModels5(l, v)
 }
-func easyjson7459bf99DecodeTproxy6(in *jlexer.Lexer, out *PaIdentifyCandidate) {
+func easyjson7459bf99DecodeModels6(in *jlexer.Lexer, out *PaIdentifyCandidate) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -1068,7 +1066,7 @@ func easyjson7459bf99DecodeTproxy6(in *jlexer.Lexer, out *PaIdentifyCandidate) {
 		in.Consumed()
 	}
 }
-func easyjson7459bf99EncodeTproxy6(out *jwriter.Writer, in PaIdentifyCandidate) {
+func easyjson7459bf99EncodeModels6(out *jwriter.Writer, in PaIdentifyCandidate) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -1096,13 +1094,13 @@ func easyjson7459bf99EncodeTproxy6(out *jwriter.Writer, in PaIdentifyCandidate) 
 // MarshalJSON supports json.Marshaler interface
 func (v PaIdentifyCandidate) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjson7459bf99EncodeTproxy6(&w, v)
+	easyjson7459bf99EncodeModels6(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 func (v PaIdentifyCandidate) MarshalJSONToByteBuffer(buf *bytes.Buffer) ([]byte, error) {
 	w := acquireWriter()
-	easyjson7459bf99EncodeTproxy6(w, v)
+	easyjson7459bf99EncodeModels6(w, v)
 	_, err := w.DumpTo(buf)
 	releaseWriter(w)
 	if err != nil {
@@ -1110,20 +1108,19 @@ func (v PaIdentifyCandidate) MarshalJSONToByteBuffer(buf *bytes.Buffer) ([]byte,
 	}
 	return buf.Bytes(), w.Error
 }
-
-// MarshalEasyJSON supports pamodels.Marshaler interface
+// MarshalEasyJSON supports easyjson.Marshaler interface
 func (v PaIdentifyCandidate) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjson7459bf99EncodeTproxy6(w, v)
+	easyjson7459bf99EncodeModels6(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *PaIdentifyCandidate) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjson7459bf99DecodeTproxy6(&r, v)
+	easyjson7459bf99DecodeModels6(&r, v)
 	return r.Error()
 }
 
-// UnmarshalEasyJSON supports pamodels.Unmarshaler interface
+// UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *PaIdentifyCandidate) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjson7459bf99DecodeTproxy6(l, v)
+	easyjson7459bf99DecodeModels6(l, v)
 }
