@@ -224,7 +224,7 @@ type PaTaskRes struct {
 func (p PaTaskRes) String() string {
 	results := ""
 	for _, res := range p.Task_Res_Results {
-		results += fmt.Sprintf("proc_errcode: %d, proc_errmsg: %s, proc_spkid: %s, proc_confidence: %s, proc_candidates： %v",
+		results += fmt.Sprintf("proc_errcode: %d, proc_errmsg: %s, proc_spkid: %s, proc_confidence: %.02f, proc_candidates： %v",
 			res.Task_Proc_ErrCode, res.Task_Proc_ErrMsg, res.Task_Proc_SpkId,
 			res.Task_Proc_Confidence, res.Task_Proc_Candidates)
 	}
@@ -261,6 +261,7 @@ type PaProcRes struct {
 type PaIdentifyCandidate struct {
 	Identify_SpkId      string  `json:"identify_spkid"`      // 字符串，16位长度，说话人ID
 	Identify_Confidence float32 `json:"identify_confidence"` // 浮点数，置信度
+	Identify_Node       string  `json:"identify_node"`       // 候选者所在node节点
 	Identify_RecordId   string  `json:"identify_recordid"`   // 字符串，匹配的语音id
 }
 
@@ -402,8 +403,9 @@ func (this *PaIdentifyCandidate) SetConfidence(confidence float32) {
 	this.Identify_Confidence = confidence
 }
 
-func (this *PaIdentifyCandidate) SetSpkIdAndConfidence(spkid string, confidence float32, recordId string) {
+func (this *PaIdentifyCandidate) SetSpkIdAndConfidence(spkid string, confidence float32, node, recordId string) {
 	this.Identify_SpkId = spkid
 	this.Identify_Confidence = confidence
+	this.Identify_Node  = node
 	this.Identify_RecordId = recordId
 }
