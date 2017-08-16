@@ -56,7 +56,7 @@ func ReleasePaTaskBody(ptaskBody *PaTaskBody) {
 	ptaskBody.TaskParam.Task_Param_Channel2 = -1
 	ptaskBody.TaskParam.Task_Param_RecordId = ""
 
-	ptaskBody.TaskParam.Task_Param_Node = ptaskBody.TaskParam.Task_Param_Node[:0]
+	ptaskBody.TaskParam.Task_Param_Nodes = ptaskBody.TaskParam.Task_Param_Nodes[:0]
 	ptaskBody.TaskParam.Task_Param_EnrollNode = ptaskBody.TaskParam.Task_Param_EnrollNode[:0]
 	ptaskBody.TaskParam.Task_Param_EnrollFlag = false
 	ptaskBody.TaskParam.Task_Param_OriginNode = ""
@@ -99,7 +99,7 @@ func ReleasePaTaskRes(paTaskRes *PaTaskRes) {
 	paTaskRes.Task_Res_ParamObj.Task_Param_WavAddr1 = ""
 	paTaskRes.Task_Res_ParamObj.Task_Param_WavAddr2 = ""
 
-	paTaskRes.Task_Res_ParamObj.Task_Param_Node = paTaskRes.Task_Res_ParamObj.Task_Param_Node[:0]
+	paTaskRes.Task_Res_ParamObj.Task_Param_Nodes = paTaskRes.Task_Res_ParamObj.Task_Param_Nodes[:0]
 	paTaskRes.Task_Res_ParamObj.Task_Param_EnrollNode = paTaskRes.Task_Res_ParamObj.Task_Param_EnrollNode[:0]
 	paTaskRes.Task_Res_ParamObj.Task_Param_EnrollFlag = false
 	paTaskRes.Task_Res_ParamObj.Task_Param_OriginNode = ""
@@ -179,8 +179,9 @@ type PaTaskParam struct {
 	Task_Param_RecordId string `json:"task_param_record_id"`
 	Task_Param_TopN     int    `json:"task_param_top_n"` // 整数，Top N
 
-	Task_Param_Node       []string `json:"task_param_node"` // verify, identify 比对语音库节点
-	Task_Param_EnrollNode []string `json:"task_param_enroll_node"`
+	Task_Param_Nodes      []string `json:"task_param_nodes"` // verify, identify 比对语音库节点
+	Task_Param_EnrollNode string   `json:"task_param_enroll_node"`
+	Task_Param_DeleteNode string   `json:"task_param_delete_node"`
 	Task_Param_OriginNode string   `json:"task_param_origin_node"`
 	Task_Param_TargetNode []string `json:"task_param_target_node"`
 	Task_Param_EnrollFlag bool     `json:"task_param_enroll_flag"`
@@ -368,6 +369,10 @@ func (this *PaProcRes) SetTaskProcCandidates(candidates []PaIdentifyCandidate) {
 
 func (this *PaProcRes) AddCandidate(candidate *PaIdentifyCandidate) {
 	this.Task_Proc_Candidates = append(this.Task_Proc_Candidates, *candidate)
+}
+
+func NewPaIdentifyCandidate() *PaIdentifyCandidate {
+	return &PaIdentifyCandidate{}
 }
 
 func (this *PaIdentifyCandidate) SetSpkId(spkid string) {
