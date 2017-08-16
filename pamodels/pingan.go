@@ -1,6 +1,7 @@
 package pamodels
 
 import (
+	"fmt"
 	"sync"
 )
 
@@ -201,6 +202,10 @@ type PaResBody struct {
 	Task_Res PaTaskRes `json:"task_res"` // PaRespParam对象，任务处理结果
 }
 
+func (p *PaResBody) String() string {
+	return fmt.Sprintf("Task id:%s, task resp: %s", p.Task_Id, p.Task_Res)
+}
+
 type PaTaskRes struct {
 	// 通用参数
 	Task_Res_SubTaskId string      `json:"task_res_subtaskid"` // 字符串，16位长度，语音ID
@@ -214,6 +219,20 @@ type PaTaskRes struct {
 	// 其他
 	Task_Res_Scene   string      `json:"task_res_scene"`   // 字符串，场景
 	Task_Res_Results []PaProcRes `json:"task_res_results"` // PaProcRes对象，处理结果
+}
+
+func (p PaTaskRes) String() string {
+	results := ""
+	for _, res := range p.Task_Res_Results {
+		results += fmt.Sprintf("proc_errcode: %d, proc_errmsg: %s, proc_spkid: %s, proc_confidence: %s, proc_candidates： %v",
+			res.Task_Proc_ErrCode, res.Task_Proc_ErrMsg, res.Task_Proc_SpkId,
+			res.Task_Proc_Confidence, res.Task_Proc_Candidates)
+	}
+
+	return fmt.Sprintf("subid: %s, type: %s, taskParam: %v, code: %d, msg: %s, results: [%s]",
+		p.Task_Res_SubTaskId, p.Task_Res_Type, p.Task_Res_ParamObj, p.Task_Res_ErrCode,
+		p.Task_Res_ErrMsg, results,
+	)
 }
 
 type PaProcRes struct {
