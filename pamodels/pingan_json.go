@@ -32,6 +32,7 @@ package pamodels
 //func releaseWriter(wr *jwriter.Writer) {
 //	writerPool.Put(wr)
 //}
+//
 //func easyjson7459bf99DecodeModels(in *jlexer.Lexer, out *PaTasksBody) {
 //	isTopLevel := in.IsStart()
 //	if in.IsNull() {
@@ -141,6 +142,7 @@ package pamodels
 //	}
 //	return buf.Bytes(), w.Error
 //}
+//
 //// MarshalEasyJSON supports easyjson.Marshaler interface
 //func (v PaTasksBody) MarshalEasyJSON(w *jwriter.Writer) {
 //	easyjson7459bf99EncodeModels(w, v)
@@ -1031,6 +1033,8 @@ package pamodels
 //			out.Identify_SpkId = string(in.String())
 //		case "identify_confidence":
 //			out.Identify_Confidence = float32(in.Float32())
+//		case "identify_node":
+//			out.Identify_Node = string(in.String())
 //		case "identify_recordid":
 //			out.Identify_RecordId = string(in.String())
 //		default:
@@ -1059,6 +1063,12 @@ package pamodels
 //	first = false
 //	out.RawString("\"identify_confidence\":")
 //	out.Float32(float32(in.Identify_Confidence))
+//	if !first {
+//		out.RawByte(',')
+//	}
+//	first = false
+//	out.RawString("\"identify_node\":")
+//	out.String(string(in.Identify_Node))
 //	if !first {
 //		out.RawByte(',')
 //	}

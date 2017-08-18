@@ -262,7 +262,6 @@ type PaIdentifyCandidate struct {
 	Identify_SpkId      string  `json:"identify_spkid"`      // 字符串，16位长度，说话人ID
 	Identify_Confidence float32 `json:"identify_confidence"` // 浮点数，置信度
 	Identify_Node       string  `json:"identify_node"`       // 候选者所在node节点
-	Identify_RecordId   string  `json:"identify_recordid"`   // 字符串，匹配的语音id
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -403,9 +402,8 @@ func (this *PaIdentifyCandidate) SetConfidence(confidence float32) {
 	this.Identify_Confidence = confidence
 }
 
-func (this *PaIdentifyCandidate) SetSpkIdAndConfidence(spkid string, confidence float32, node, recordId string) {
+func (this *PaIdentifyCandidate) SetSpkIdAndConfidence(spkid string, confidence float32, node string) {
 	this.Identify_SpkId = spkid
 	this.Identify_Confidence = confidence
 	this.Identify_Node  = node
-	this.Identify_RecordId = recordId
 }
