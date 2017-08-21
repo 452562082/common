@@ -178,6 +178,7 @@ type PaTaskParam struct {
 	Task_Param_Gender   string `json:"task_param_gender"`   // 字符串，性别
 	Task_Param_SpkId    string `json:"task_param_spkid"`    // 字符串，16位长度，说话人ID
 	Task_Param_RecordId string `json:"task_param_record_id"`
+	Task_Param_Source   string `json:"task_param_source"`
 	Task_Param_TopN     int    `json:"task_param_top_n"` // 整数，Top N
 
 	Task_Param_Nodes      []string `json:"task_param_nodes"` // verify, identify 比对语音库节点
@@ -185,7 +186,7 @@ type PaTaskParam struct {
 	Task_Param_DeleteNode string   `json:"task_param_delete_node"`
 	Task_Param_OriginNode string   `json:"task_param_origin_node"`
 	Task_Param_TargetNode []string `json:"task_param_target_node"`
-	Task_Param_EnrollFlag bool     `json:"task_param_enroll_flag"`
+	Task_Param_EnrollFlag bool     `json:"task_param_enroll_flag"` // Identify时，是否同时还需要注册入库
 
 	Task_Param_WavAddr1 string `json:"task_param_wav_addr_1"`
 	Task_Param_WavAddr2 string `json:"task_param_wav_addr_2"`
@@ -405,5 +406,5 @@ func (this *PaIdentifyCandidate) SetConfidence(confidence float32) {
 func (this *PaIdentifyCandidate) SetSpkIdAndConfidence(spkid string, confidence float32, node string) {
 	this.Identify_SpkId = spkid
 	this.Identify_Confidence = confidence
-	this.Identify_Node  = node
+	this.Identify_Node = node
 }

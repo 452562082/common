@@ -1036,8 +1036,6 @@ package pamodels
 //			out.Identify_Confidence = float32(in.Float32())
 //		case "identify_node":
 //			out.Identify_Node = string(in.String())
-//		case "identify_recordid":
-//			out.Identify_RecordId = string(in.String())
 //		default:
 //			in.SkipRecursive()
 //		}
@@ -1070,12 +1068,6 @@ package pamodels
 //	first = false
 //	out.RawString("\"identify_node\":")
 //	out.String(string(in.Identify_Node))
-//	if !first {
-//		out.RawByte(',')
-//	}
-//	first = false
-//	out.RawString("\"identify_recordid\":")
-//	out.String(string(in.Identify_RecordId))
 //	out.RawByte('}')
 //}
 //
