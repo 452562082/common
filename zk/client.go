@@ -62,6 +62,10 @@ func (gzc *GozkClient) GetChildrenOnce(node string) ([]string, *zk.Stat, error) 
 	return gzc.conn.Children(node)
 }
 
+func (gzc *GozkClient) Close() {
+	gzc.conn.Close()
+}
+
 func (gzc *GozkClient) watchNodeDataChanged() {
 	first := true
 	for {
