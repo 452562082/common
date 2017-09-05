@@ -31,7 +31,7 @@ func TestResponse(t *testing.T) {
 }
 
 func TestGet(t *testing.T) {
-	req := Get("http://httpbin.org/get")
+	req := Get("http://192.168.1.16:9001")
 	b, err := req.Bytes()
 	if err != nil {
 		t.Fatal(err)
@@ -122,7 +122,7 @@ func TestWithCookie(t *testing.T) {
 }
 
 func TestWithBasicAuth(t *testing.T) {
-	str, err := Get("http://httpbin.org/basic-auth/user/passwd").SetBasicAuth("user", "passwd").String()
+	str, err := Get("http://192.168.1.16:9001/index.html?processname=tproxy&action=stop").SetBasicAuth("user", "123").String()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -149,7 +149,7 @@ func TestWithUserAgent(t *testing.T) {
 
 func TestWithSetting(t *testing.T) {
 	v := "beego"
-	var setting BeegoHttpSettings
+	var setting HttpSettings
 	setting.EnableCookie = true
 	setting.UserAgent = v
 	setting.Transport = nil

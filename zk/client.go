@@ -58,9 +58,12 @@ func (gzc *GozkClient) GetChildren() <-chan []string {
 	return gzc.children
 }
 
+func (gzc *GozkClient) GetChildrenOnce(node string) ([]string, *zk.Stat, error) {
+	return gzc.conn.Children(node)
+}
+
 func (gzc *GozkClient) watchNodeDataChanged() {
 	first := true
-
 	for {
 		data, _, events, err := gzc.conn.GetW(gzc.path)
 		if err != nil {
