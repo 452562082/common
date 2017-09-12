@@ -1,8 +1,9 @@
 package elastic
 
 import (
-	"git.oschina.net/kuaishangtong/asvserver/models"
 	"fmt"
+	"git.oschina.net/kuaishangtong/asvserver/models"
+	"gopkg.in/olivere/elastic.v2"
 	"testing"
 	"time"
 )
@@ -190,8 +191,8 @@ func TestElasticClient_BoolQuery(t *testing.T) {
 	index, typ := "asv_voiceprint_info", "asv_voiceprint_info"
 
 	query := make(map[string]interface{})
-	query["vpr_spk_id"] = "0cbdd1b42a361270"
-	query["vpr_utt_node"] = "testnode"
+	query["vpr_utt_recordid"] = "*"
+	//query["vpr_utt_node"] = "testnode"
 	vpr := models.AcquireAsvVprInfo()
 	err = client.BoolQuery(index, typ, query, vpr)
 	if err != nil {
@@ -199,4 +200,25 @@ func TestElasticClient_BoolQuery(t *testing.T) {
 	}
 
 	t.Logf("recordid: %s", vpr.VPR_RecordId)
+}
+
+func TestElasticClient_WildcardQuery(t *testing.T) {
+	client, err := NewElasticClient("192.168.1.16", "9200")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Define wildcard query
+	q := elastic.NewWildcardQuery("vpr_utt_recordid", "*")
+	searchResult, err := client.client.Search().
+		Index("asv_voiceprint_info").
+		Type("asv_voiceprint_info"). // search in index "twitter"
+		Query(q).                    // use wildcard query defined above
+		Do()                         // execute
+	if err != nil {
+		// Handle error
+		panic(err)
+	}
+
+	t.Log(searchResult.Hits.TotalHits)
 }

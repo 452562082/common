@@ -171,3 +171,17 @@ func (ec *ElasticClient) BoolQuery(index, typ string, query map[string]interface
 	}
 	return nil
 }
+
+func (ec *ElasticClient) WildcardQuery(index, typ string, key, value string) (*elastic.SearchResult, error) {
+	q := elastic.NewWildcardQuery(key, value)
+	searchResult, err := ec.client.Search().
+		Index(index).
+		Type(typ). // search in index "twitter"
+		Query(q).  // use wildcard query defined above
+		Do()       // execute
+	if err != nil {
+		return nil, err
+	}
+
+	return searchResult, nil
+}
