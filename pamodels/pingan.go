@@ -151,9 +151,9 @@ func ReleasePaResBody(paResBody *PaResBody) {
 }
 
 type PaTasksBody struct {
-	TaskId      string        `json:"task_id""`       // 字符串，32位长度，全局唯一的任务ID
-	TaskParams  []PaTaskParam `json:"task_params""`   // PaTaskParam数组，任务参数
-	TaskAddTime string        `json:"task_add_time""` // 字符串，任务插入时间
+	TaskId      string        `json:"task_id"`       // 字符串，32位长度，全局唯一的任务ID
+	TaskParams  []PaTaskParam `json:"task_params"`   // PaTaskParam数组，任务参数
+	TaskAddTime string        `json:"task_add_time"` // 字符串，任务插入时间
 }
 
 type PaTaskBody struct {
