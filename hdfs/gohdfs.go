@@ -545,6 +545,8 @@ func SyncModel(modeldir string, deleteFromMeory func(vp_node string, vp_dir stri
 			log.Error(err)
 			continue
 		}
+
+		log.Debugf("vpnode: %s, vpdir: %s, spkid: %s", vpnode, vpdir, spkid)
 		err = deleteFromMeory(vpnode, vpdir, spkid)
 		if err != nil {
 			log.Error(err)
