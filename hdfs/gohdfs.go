@@ -564,3 +564,91 @@ func SyncModel(modeldir string, deleteFromMeory func(vp_node string, vp_dir stri
 	}
 	return nil
 }
+
+func TickSyncModel(modeldir string,
+	deleteFromMemory func(vp_node string, vp_dir string, spk_id string) error,
+	addModelToMemory func(vp_node string, vp_dir string, spk_id string) error) error {
+	if modeldir[len(modeldir)-1] != '/' {
+		modeldir += "/"
+	}
+
+	if DefaultHdfsClient == nil {
+		return fmt.Errorf("does not init hdfs")
+	}
+
+	var localmap, hdfsmap map[string]struct{} = make(map[string]struct{}), make(map[string]struct{})
+
+	local_file_infos, err := ioutil.ReadDir(modeldir)
+	if err != nil {
+		return err
+	}
+
+	for _, v := range local_file_infos {
+		localmap[modeldir+v.Name()] = struct{}{}
+	}
+
+	log.Infof("catch local ivfiles, count: %d", len(local_file_infos))
+
+	hdfs_file_infos, err := DefaultHdfsClient.ReadDir(modeldir)
+	if err != nil {
+		return err
+	}
+
+	for _, v := range hdfs_file_infos {
+		hdfsmap[modeldir+v.Name()] = struct{}{}
+	}
+
+	log.Infof("catch hdfs ivfiles, count: %d", len(hdfs_file_infos))
+
+	for k, _ := range hdfsmap {
+		if _, ok := localmap[k]; ok {
+			delete(localmap, k)
+			delete(hdfsmap, k)
+		}
+	}
+
+	download := len(hdfsmap)
+	log.Infof("%d need to download to local", download)
+	delete := len(localmap)
+
+	log.Infof("%d need to delete", delete)
+
+	for k, _ := range localmap {
+		err := os.Remove(k)
+		if err != nil {
+			log.Error(err)
+		}
+
+		vpdir, vpnode, spkid, err := utils.GetVpdirVpnodeAndIdFromPath(k)
+		if err != nil {
+			log.Error(err)
+			continue
+		}
+
+		log.Debugf("vpnode: %s, vpdir: %s, spkid: %s", vpnode, vpdir, spkid)
+		err = deleteFromMemory(vpnode, vpdir, spkid)
+		if err != nil {
+			log.Error(err)
+		}
+
+		log.Infof("remove local model %s", k)
+	}
+
+	for k, _ := range hdfsmap {
+		err := DefaultHdfsClient.CopyFileToLocal(k, k)
+		if err != nil {
+			log.Error(err)
+		}
+		log.Debugf("download hdfs model to local: %s and add to memory", k)
+		vpdir, vpnode, spkid, err := utils.GetVpdirVpnodeAndIdFromPath(k)
+		if err != nil {
+			log.Error(err)
+			continue
+		}
+		err = addModelToMemory(vpnode, vpdir, spkid)
+		if err != nil {
+			log.Error(err)
+		}
+	}
+	return nil
+}
