@@ -151,7 +151,7 @@ func (ec *ElasticClient) GetDoc(index, typ, id string) (*elastic.GetResult, erro
 	return ec.client.Get().Index(index).Type(typ).Id(id).Do()
 }
 
-func (ec *ElasticClient) BoolQuery(index, typ string, query map[string]interface{}, body interface{}) error {
+func (ec *ElasticClient) BoolQuery(index, typ string, query map[string]interface{}, body interface{}, id *string) error {
 	q := elastic.NewBoolQuery()
 	for k, v := range query {
 		q = q.Must(elastic.NewTermQuery(k, v))
@@ -169,6 +169,7 @@ func (ec *ElasticClient) BoolQuery(index, typ string, query map[string]interface
 	if err != nil {
 		return err
 	}
+	*id = hit.Id
 	return nil
 }
 

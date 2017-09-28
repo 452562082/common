@@ -161,7 +161,7 @@ func TestElasticClient_IndexBodyJson(t *testing.T) {
 	}
 
 	vpr_info := models.NewAsvVprInfo()
-	vpr_info.SetVprSpkId("3234567890ABCDEF")
+	vpr_info.SetVprSpkId("702c0afb3d424a70")
 	vpr_info.SetVprUttDir("hdfs:/kaldi/kaldi/kaldi/src/kvpbin/data/")
 	vpr_info.SetVprUttDuration(fmt.Sprintf("%f", 300.00))
 	vpr_info.SetVprUttValidDura(fmt.Sprintf("%f", 210.00))
