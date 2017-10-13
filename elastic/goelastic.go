@@ -161,7 +161,7 @@ func (ec *ElasticClient) BoolQuery(index, typ string, query map[string]interface
 	if err != nil {
 		return err
 	}
-	if searchResult.Hits.TotalHits == 0 {
+	if searchResult.Hits.TotalHits == 0  {
 		return fmt.Errorf("can not find result")
 	}
 	hit := searchResult.Hits.Hits[0]
@@ -169,6 +169,7 @@ func (ec *ElasticClient) BoolQuery(index, typ string, query map[string]interface
 	if err != nil {
 		return err
 	}
+
 	*id = hit.Id
 	return nil
 }

@@ -87,20 +87,53 @@ func NewHdfsClient(hdfs_addrs, hdfs_http_addrs []string, user string, check_inte
 	var client *hdfs.Client
 	var addr string
 
-	for _, addr = range hdfs_addrs {
-
-		client, err = hdfs.NewForUser(addr, user)
+	for http_addr, hdfsaddr := range web2HostMap {
+		active, err := CheckHDFSAlive(http_addr)
 		if err != nil {
-			log.Errorf("hdfs connect to %s failed: %v", addr, err)
+			log.Error(err)
 			continue
 		}
-		goto END
+
+		if !active {
+			continue
+		}
+
+		client, err = hdfs.NewForUser(hdfsaddr, user)
+		if err != nil {
+			log.Errorf("hdfs connect to %s failed: %v", hdfsaddr, err)
+			continue
+		}
+
+		_, err = client.Stat("/")
+		if err != nil {
+			client.Close()
+			log.Errorf("hdfs connect to %s failed: %v", hdfsaddr, err)
+			continue
+		}
+
+		addr = hdfsaddr
+		break
 	}
 
-END:
+	client, err = hdfs.NewForUser(addr, user)
 	if err != nil {
+		log.Errorf("hdfs connect to %s failed: %v", addr, err)
 		return nil, err
 	}
+
+	//for _, addr = range hdfs_addrs {
+	//	client, err = hdfs.NewForUser(addr, user)
+	//	if err != nil {
+	//		log.Errorf("hdfs connect to %s failed: %v", addr, err)
+	//		continue
+	//	}
+	//	goto END
+	//}
+	//
+	//END:
+	//	if err != nil {
+	//		return nil, err
+	//	}
 
 	hclient := &HdfsClient{
 		conn_hdfs_addr: addr,
