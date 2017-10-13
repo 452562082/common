@@ -121,6 +121,8 @@ func NewHdfsClient(hdfs_addrs, hdfs_http_addrs []string, user string, check_inte
 		return nil, err
 	}
 
+	log.Infof("hdfs connect to %s success", addr)
+
 	//for _, addr = range hdfs_addrs {
 	//	client, err = hdfs.NewForUser(addr, user)
 	//	if err != nil {
