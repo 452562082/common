@@ -90,8 +90,14 @@ type ElasticClient struct {
 	client *elastic.Client
 }
 
-func NewElasticClient(ip, port string) (*ElasticClient, error) {
-	client, err := elastic.NewClient(elastic.SetURL(fmt.Sprintf("http://%s:%s", ip, port)))
+func NewElasticClient(ips, ports []string) (*ElasticClient, error) {
+	urls := make([]string, 0)
+	for i := 0; i < len(ips); i++ {
+		_url := fmt.Sprintf("http://%s:%s", ips[i], ports[i])
+		urls = append(urls, _url)
+	}
+
+	client, err := elastic.NewClient(elastic.SetURL(urls...))
 	if err != nil {
 		return nil, err
 	}
@@ -161,7 +167,7 @@ func (ec *ElasticClient) BoolQuery(index, typ string, query map[string]interface
 	if err != nil {
 		return err
 	}
-	if searchResult.Hits.TotalHits == 0  {
+	if searchResult.Hits.TotalHits == 0 {
 		return fmt.Errorf("can not find result")
 	}
 	hit := searchResult.Hits.Hits[0]
