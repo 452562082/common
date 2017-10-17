@@ -373,6 +373,10 @@ func (hc *HdfsClient) CopyAllFilesToLocal(hdfsdir, localdir string) error {
 	return nil
 }
 
+func (hc *HdfsClient) Rename(oldpath, newpath string) error {
+	return hc.client.Rename(oldpath, newpath)
+}
+
 func (hc *HdfsClient) CopyFiles(hdfs_src_dir, hdfs_dst_dir string) error {
 	if hdfs_src_dir[len(hdfs_src_dir)-1] != '/' {
 		hdfs_src_dir += "/"

@@ -15,7 +15,7 @@ type Student struct {
 }
 
 func TestElasticClient_IndexExists(t *testing.T) {
-	client, err := NewElasticClient("192.168.1.16", "9200")
+	client, err := NewElasticClient([]string{"192.168.1.16"}, []string{"9200"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -29,7 +29,7 @@ func TestElasticClient_IndexExists(t *testing.T) {
 }
 
 func TestElasticClient_CreateIndexBodyString(t *testing.T) {
-	client, err := NewElasticClient("192.168.1.16", "9200")
+	client, err := NewElasticClient([]string{"192.168.1.16"}, []string{"9200"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -141,7 +141,7 @@ func TestElasticClient_CreateIndexBodyString(t *testing.T) {
 }
 
 func TestElasticClient_DeleteIndex(t *testing.T) {
-	client, err := NewElasticClient("192.168.1.16", "9200")
+	client, err := NewElasticClient([]string{"192.168.1.16"}, []string{"9200"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -155,7 +155,7 @@ func TestElasticClient_DeleteIndex(t *testing.T) {
 }
 
 func TestElasticClient_IndexBodyJson(t *testing.T) {
-	client, err := NewElasticClient("192.168.1.16", "9200")
+	client, err := NewElasticClient([]string{"192.168.1.16"}, []string{"9200"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -183,7 +183,7 @@ func TestElasticClient_IndexBodyJson(t *testing.T) {
 }
 
 func TestElasticClient_BoolQuery(t *testing.T) {
-	client, err := NewElasticClient("192.168.1.16", "9200")
+	client, err := NewElasticClient([]string{"192.168.1.16"}, []string{"9200"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -194,7 +194,8 @@ func TestElasticClient_BoolQuery(t *testing.T) {
 	query["vpr_utt_recordid"] = "*"
 	//query["vpr_utt_node"] = "testnode"
 	vpr := models.AcquireAsvVprInfo()
-	err = client.BoolQuery(index, typ, query, vpr)
+	var id string
+	err = client.BoolQuery(index, typ, query, vpr, &id)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -203,7 +204,7 @@ func TestElasticClient_BoolQuery(t *testing.T) {
 }
 
 func TestElasticClient_WildcardQuery(t *testing.T) {
-	client, err := NewElasticClient("192.168.1.16", "9200")
+	client, err := NewElasticClient([]string{"192.168.1.16"}, []string{"9200"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -221,4 +222,19 @@ func TestElasticClient_WildcardQuery(t *testing.T) {
 	}
 
 	t.Log(searchResult.Hits.TotalHits)
+}
+
+func TestElasticClient_UpdateDocBodyWithID(t *testing.T) {
+	client, err := NewElasticClient([]string{"192.168.1.16"}, []string{"9200"})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	data := make(map[string]interface{})
+	data["vpr_utt_node"] = "testnode1"
+	data["_id"] = "1111"
+	err = client.UpdateDocBodyWithID("asv_voiceprint_info", "asv_voiceprint_info", "testnode#recordId00019#4659e731868e24a0", data)
+	if err != nil {
+		t.Fatal(err)
+	}
 }

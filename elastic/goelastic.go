@@ -137,6 +137,19 @@ func (ec *ElasticClient) DeleteDocWithID(index, typ, id string) (*elastic.Delete
 //	return ec.client.Delete().Index(index).Type(typ).Do()
 //}
 
+func (ec *ElasticClient) UpdateDocBodyWithID(index, typ, id string, data map[string]interface{}) error {
+	// Update (non-existent) tweet with id #1
+	_, err := ec.client.Update().
+		Index(index).Type(typ).Fields().
+		Doc(data).
+		Do()
+
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (ec *ElasticClient) InsertDocBodyJsonWithID(index, typ, id string, body interface{}) (*elastic.IndexResult, error) {
 	return ec.client.Index().Index(index).Type(typ).Id(id).BodyJson(body).Do()
 }
