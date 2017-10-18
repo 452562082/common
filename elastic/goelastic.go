@@ -193,6 +193,15 @@ func (ec *ElasticClient) BoolQuery(index, typ string, query map[string]interface
 	return nil
 }
 
+func (ec *ElasticClient) BoolQuerys(index, typ string, query map[string]interface{}) (*elastic.SearchResult, error) {
+	q := elastic.NewBoolQuery()
+	for k, v := range query {
+		q = q.Must(elastic.NewTermQuery(k, v))
+	}
+
+	return ec.client.Search().Index(index).Type(typ).Query(q).Do()
+}
+
 func (ec *ElasticClient) WildcardQuery(index, typ string, key, value string) (*elastic.SearchResult, error) {
 	q := elastic.NewWildcardQuery(key, value)
 	searchResult, err := ec.client.Search().
