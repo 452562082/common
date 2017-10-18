@@ -548,7 +548,7 @@ func SyncModel(modeldir string, deleteFromMeory func(vp_node string, vp_dir stri
 		localmap[modeldir+v.Name()] = struct{}{}
 	}
 
-	log.Infof("catch local ivfiles, count: %d", len(local_file_infos))
+	log.Infof("dir %s catch local ivfiles, count: %d", modeldir, len(local_file_infos))
 
 	hdfs_file_infos, err := DefaultHdfsClient.ReadDir(modeldir)
 	if err != nil {
@@ -559,7 +559,7 @@ func SyncModel(modeldir string, deleteFromMeory func(vp_node string, vp_dir stri
 		hdfsmap[modeldir+v.Name()] = struct{}{}
 	}
 
-	log.Infof("catch hdfs ivfiles, count: %d", len(hdfs_file_infos))
+	log.Infof("dir %s catch hdfs ivfiles, count: %d", modeldir, len(hdfs_file_infos))
 
 	for k, _ := range hdfsmap {
 		if _, ok := localmap[k]; ok {
@@ -569,10 +569,10 @@ func SyncModel(modeldir string, deleteFromMeory func(vp_node string, vp_dir stri
 	}
 
 	download := len(hdfsmap)
-	log.Infof("%d need to download to local", download)
+	log.Infof("dir %s :%d need to download to local", modeldir, download)
 	delete := len(localmap)
 
-	log.Infof("%d need to delete", delete)
+	log.Infof("dir %s :%d need to delete", modeldir, delete)
 
 	for k, _ := range localmap {
 		err := os.Remove(k)
