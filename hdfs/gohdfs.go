@@ -409,6 +409,7 @@ func (hc *HdfsClient) CopyFiles(hdfs_src_dir, hdfs_dst_dir string) error {
 		return err
 	}
 
+	log.Debugf("length of %s: %d", hdfs_src_dir, len(srcInfos))
 	for _, fi := range srcInfos {
 		log.Debugf("copy model %s to model %s", hdfs_src_dir+fi.Name(), hdfs_dst_dir+fi.Name())
 		data, err := hc.ReadFile(hdfs_src_dir + fi.Name())
