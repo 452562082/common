@@ -90,10 +90,10 @@ type ElasticClient struct {
 	client *elastic.Client
 }
 
-func NewElasticClient(ips, ports []string) (*ElasticClient, error) {
+func NewElasticClient(hosts []string) (*ElasticClient, error) {
 	urls := make([]string, 0)
-	for i := 0; i < len(ips); i++ {
-		_url := fmt.Sprintf("http://%s:%s", ips[i], ports[i])
+	for i := 0; i < len(hosts); i++ {
+		_url := fmt.Sprintf("http://%s", hosts[i])
 		urls = append(urls, _url)
 	}
 

@@ -181,7 +181,8 @@ type PaTaskParam struct {
 	Task_Param_Source   string `json:"task_param_source"`
 	Task_Param_TopN     int    `json:"task_param_top_n"` // 整数，Top N
 
-	Task_Param_Nodes      []string `json:"task_param_nodes"` // verify, identify 比对语音库节点
+	Task_Param_Version    string   `json:"task_param_version"` // verify, identify 比对语音库节点版本号
+	Task_Param_Nodes      []string `json:"task_param_nodes"`   // verify, identify 比对语音库节点
 	Task_Param_EnrollNode string   `json:"task_param_enroll_node"`
 	Task_Param_DeleteNode string   `json:"task_param_delete_node"`
 	Task_Param_OriginNode string   `json:"task_param_origin_node"`
