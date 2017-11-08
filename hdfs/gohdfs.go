@@ -230,6 +230,27 @@ func (hc *HdfsClient) ResetHDFSConnection(hdfsaddr string, user string) error {
 	return nil
 }
 
+func (hc *HdfsClient) CheckFilesCount(hdfs_file_path string) (int, error) {
+	err := checkPath(hdfs_file_path)
+	if err != nil {
+		return -1, err
+	}
+
+	fileinfos, err := hc.client.ReadDir(path.Dir(hdfs_file_path))
+	if err != nil {
+		return -1, err
+	}
+
+	var count int
+
+	for _, fi := range fileinfos {
+		if !fi.IsDir() && strings.HasSuffix(fi.Name(), "ark") {
+			count++
+		}
+	}
+	return count, nil
+}
+
 func (hc *HdfsClient) WriteFile(filename string, data []byte) error {
 	err := checkPath(filename)
 	if err != nil {
