@@ -244,7 +244,6 @@ func (hc *HdfsClient) CheckFilesCount(hdfs_file_path string) (int, error) {
 	var count int
 
 	for _, fi := range fileinfos {
-		log.Debugf(fi.Name())
 		if !fi.IsDir() && strings.HasSuffix(fi.Name(), "ark") {
 			count++
 		}
