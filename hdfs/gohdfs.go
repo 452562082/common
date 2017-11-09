@@ -34,7 +34,7 @@ type NameNodeStatus struct {
 func InitHDFS(hdfs_addr, hdfs_http_addr []string, user string) error {
 	var err error
 
-	DefaultHdfsClient, err = NewHdfsClient(hdfs_addr, hdfs_http_addr, user, 5)
+	DefaultHdfsClient, err = NewHdfsClient2(hdfs_addr, hdfs_http_addr, user, 5)
 	if err != nil {
 		return err
 
@@ -123,20 +123,6 @@ func NewHdfsClient(hdfs_addrs, hdfs_http_addrs []string, user string, check_inte
 
 	log.Infof("hdfs connect to %s success", addr)
 
-	//for _, addr = range hdfs_addrs {
-	//	client, err = hdfs.NewForUser(addr, user)
-	//	if err != nil {
-	//		log.Errorf("hdfs connect to %s failed: %v", addr, err)
-	//		continue
-	//	}
-	//	goto END
-	//}
-	//
-	//END:
-	//	if err != nil {
-	//		return nil, err
-	//	}
-
 	hclient := &HdfsClient{
 		conn_hdfs_addr: addr,
 		client:         client,
@@ -147,6 +133,88 @@ func NewHdfsClient(hdfs_addrs, hdfs_http_addrs []string, user string, check_inte
 	}
 
 	go hclient.checkLoop(check_interval, hdfs_http_addrs)
+
+	return hclient, nil
+}
+
+func NewHdfsClient2(hdfs_addrs, hdfs_http_addrs []string, user string, check_interval int) (*HdfsClient, error) {
+
+	if len(hdfs_addrs) == 0 {
+		return nil, fmt.Errorf("hdfs host array length can not be 0")
+	}
+
+	if len(hdfs_addrs) != len(hdfs_http_addrs) {
+		return nil, fmt.Errorf("hdfs host array length must be equal to hdfs http address array lentgh")
+	}
+
+	var host2WebMap map[string]string = make(map[string]string)
+	var web2HostMap map[string]string = make(map[string]string)
+	//
+	for _, http_addr := range hdfs_http_addrs {
+		for _, addr := range hdfs_addrs {
+			if strings.Split(http_addr, ":")[0] == strings.Split(addr, ":")[0] {
+				host2WebMap[addr] = http_addr
+				web2HostMap[http_addr] = addr
+			}
+		}
+	}
+	//
+	//log.Info("host2WebMap:", host2WebMap)
+	//log.Info("web2HostMap:", web2HostMap)
+
+	var err error
+	var client *hdfs.Client
+	var addr string
+
+	//for http_addr, hdfsaddr := range web2HostMap {
+	//	active, err := CheckHDFSAlive(http_addr)
+	//	if err != nil {
+	//		log.Error(err)
+	//		continue
+	//	}
+	//
+	//	if !active {
+	//		continue
+	//	}
+
+	client, err = hdfs.NewClient(hdfs.ClientOptions{
+		Addresses: hdfs_addrs,
+		User:      user,
+	})
+	if err != nil {
+		log.Errorf("hdfs connect to %v failed: %v", hdfs_addrs, err)
+		return nil, err
+	}
+	//
+	//	_, err = client.Stat("/")
+	//	if err != nil {
+	//		client.Close()
+	//		log.Errorf("hdfs connect to %s failed: %v", hdfsaddr, err)
+	//		continue
+	//	}
+	//
+	//	addr = hdfsaddr
+	//	break
+	//}
+
+	//client, err = hdfs.NewForUser(addr, user)
+	//if err != nil {
+	//	log.Errorf("hdfs connect to %s failed: %v", addr, err)
+	//	return nil, err
+	//}
+
+	log.Infof("hdfs connect to %s success", addr)
+
+	hclient := &HdfsClient{
+		conn_hdfs_addr: addr,
+		client:         client,
+		host2WebMap:    host2WebMap,
+		web2HostMap:    web2HostMap,
+		user:           user,
+		closed:         false,
+	}
+
+	//go hclient.checkLoop(check_interval, hdfs_http_addrs)
 
 	return hclient, nil
 }
