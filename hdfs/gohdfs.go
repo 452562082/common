@@ -14,11 +14,12 @@ import (
 )
 
 type HdfsClient struct {
-	conn_hdfs_addr string
-	client         *hdfs.Client
-	user           string
-	host2WebMap    map[string]string
-	web2HostMap    map[string]string
+	conn_hdfs_addr  string
+	conn_hdfs_addrs []string
+	client          *hdfs.Client
+	user            string
+	host2WebMap     map[string]string
+	web2HostMap     map[string]string
 
 	closed bool
 }
@@ -164,7 +165,7 @@ func NewHdfsClient2(hdfs_addrs, hdfs_http_addrs []string, user string, check_int
 
 	var err error
 	var client *hdfs.Client
-	var addr string
+	var addr string = strings.Join(hdfs_addrs, ";")
 
 	//for http_addr, hdfsaddr := range web2HostMap {
 	//	active, err := CheckHDFSAlive(http_addr)
@@ -206,17 +207,46 @@ func NewHdfsClient2(hdfs_addrs, hdfs_http_addrs []string, user string, check_int
 	log.Infof("hdfs connect to %s success", addr)
 
 	hclient := &HdfsClient{
-		conn_hdfs_addr: addr,
-		client:         client,
-		host2WebMap:    host2WebMap,
-		web2HostMap:    web2HostMap,
-		user:           user,
-		closed:         false,
+		conn_hdfs_addr:  addr,
+		conn_hdfs_addrs: hdfs_addrs,
+		client:          client,
+		host2WebMap:     host2WebMap,
+		web2HostMap:     web2HostMap,
+		user:            user,
+		closed:          false,
 	}
 
-	//go hclient.checkLoop(check_interval, hdfs_http_addrs)
+	go hclient.checkStatus(check_interval)
 
 	return hclient, nil
+}
+
+func (hc *HdfsClient) checkStatus(interval int) {
+	ticker := time.NewTicker(time.Duration(interval) * time.Second)
+	defer ticker.Stop()
+	for !hc.closed {
+
+		select {
+		case <-ticker.C:
+			_, err := hc.client.Stat("/")
+			if err != nil {
+				log.Errorf("hdfs connect %s bad: %v", hc.conn_hdfs_addrs, err)
+
+				client, err1 := hdfs.NewClient(hdfs.ClientOptions{
+					Addresses: hc.conn_hdfs_addrs,
+					User:      hc.user,
+				})
+
+				if err1 == nil {
+					hc.client.Close()
+					hc.client = client
+					log.Infof("Reconnect to HDFS %v success", hc.conn_hdfs_addrs)
+				}
+			} else {
+				log.Infof("check hdfs %v State: active", hc.conn_hdfs_addrs)
+			}
+		}
+	}
 }
 
 func (hc *HdfsClient) checkLoop(interval int, hdfs_addrs []string) {
