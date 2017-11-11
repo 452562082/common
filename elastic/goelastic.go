@@ -6,6 +6,9 @@ import (
 	"gopkg.in/olivere/elastic.v2"
 	"bytes"
 	"io/ioutil"
+	"git.oschina.net/kuaishangtong/asvWebApi/const"
+	"os"
+	"strconv"
 )
 
 var ASV_VPR_INFO_INDEX string = `{
@@ -219,7 +222,7 @@ func (ec *ElasticClient) WildcardQuery(index, typ string, key, value string) (*e
 	return searchResult, nil
 }
 
-func (ec *ElasticClient) BackupByNodename(index, _type, node_name, filename string) error {
+/*func (ec *ElasticClient) BackupByNodename(index, _type, node_name, filename string) error {
 	//client, err := NewElasticClient([]string{"192.168.1.16:9200"})
 	//if err != nil {
 	//	t.Fatal(err)
@@ -254,7 +257,7 @@ func (ec *ElasticClient) BackupByNodename(index, _type, node_name, filename stri
 	data := bytes.Join(s, []byte("\r\n"))
 	ioutil.WriteFile(filename, data, 0666)
 	return nil
-}
+}*/
 
 func (ec *ElasticClient) RestoreByNodename(filename string)  error{
 	//client, err := NewElasticClient([]string{"192.168.1.16:9200"})
@@ -287,5 +290,43 @@ func (ec *ElasticClient) RestoreByNodename(filename string)  error{
 			return err
 		}
 	}
+	return nil
+}
+
+func (ec *ElasticClient) Backup(node_name string, backup_time int64) error {
+	//__elastic_client, err := NewElasticClient(_const.ELASTIC_HOSTS)
+	//if err != nil {
+	//	return err
+	//}
+
+	backup_path := "/tmp/backup/"
+	os.MkdirAll(backup_path, os.ModeDir)
+	//__elastic_client.BackupByNodename(_const.ELASTIC_INDEX, _const.ELASTIC_INDEX, backup.Lib.LibNodeId, backup_path + backup.Lib.LibNodeId + "_" + strconv.FormatInt(backup.BackupTime,10))
+	q := elastic.NewWildcardQuery("vpr_utt_node", node_name)
+	searchResult, err := ec.client.Search().
+		Index(_const.ELASTIC_INDEX).
+		Type(_const.ELASTIC_INDEX). // search in index "twitter"
+		Query(q).                    // use wildcard query defined above
+		Size(10000000).
+		Do()                         // execute
+	if err != nil {
+		// Handle error
+		return err
+	}
+
+
+	s := make([][]byte, searchResult.Hits.TotalHits)
+	for index, hit := range searchResult.Hits.Hits {
+		if err != nil {
+			// Deserialization failed
+			//t.Fatal(err)
+			return err
+		}
+		str := hit.Index + "<-|->" + hit.Type + "<-|->" + hit.Id + "<-|->" + string(*hit.Source)
+		s[index] = []byte(str)
+	}
+	data := bytes.Join(s, []byte("\r\n"))
+	ioutil.WriteFile(backup_path + node_name + "_" + strconv.FormatInt(backup_time,10), data, 0666)
+
 	return nil
 }
