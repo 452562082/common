@@ -15,7 +15,7 @@ type Student struct {
 }
 
 func TestElasticClient_IndexExists(t *testing.T) {
-	client, err := NewElasticClient([]string{"192.168.1.16"}, []string{"9200"})
+	client, err := NewElasticClient([]string{"192.168.1.16:9200"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -29,7 +29,7 @@ func TestElasticClient_IndexExists(t *testing.T) {
 }
 
 func TestElasticClient_CreateIndexBodyString(t *testing.T) {
-	client, err := NewElasticClient([]string{"192.168.1.16"}, []string{"9200"})
+	client, err := NewElasticClient([]string{"192.168.1.16:9200"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -141,7 +141,7 @@ func TestElasticClient_CreateIndexBodyString(t *testing.T) {
 }
 
 func TestElasticClient_DeleteIndex(t *testing.T) {
-	client, err := NewElasticClient([]string{"192.168.1.16"}, []string{"9200"})
+	client, err := NewElasticClient([]string{"192.168.1.16:9200"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -155,7 +155,7 @@ func TestElasticClient_DeleteIndex(t *testing.T) {
 }
 
 func TestElasticClient_IndexBodyJson(t *testing.T) {
-	client, err := NewElasticClient([]string{"192.168.1.16"}, []string{"9200"})
+	client, err := NewElasticClient([]string{"192.168.1.16:9200"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -183,7 +183,7 @@ func TestElasticClient_IndexBodyJson(t *testing.T) {
 }
 
 func TestElasticClient_BoolQuery(t *testing.T) {
-	client, err := NewElasticClient([]string{"192.168.1.16"}, []string{"9200"})
+	client, err := NewElasticClient([]string{"192.168.1.16:9200"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -204,7 +204,7 @@ func TestElasticClient_BoolQuery(t *testing.T) {
 }
 
 func TestElasticClient_WildcardQuery(t *testing.T) {
-	client, err := NewElasticClient([]string{"192.168.1.16"}, []string{"9200"})
+	client, err := NewElasticClient([]string{"192.168.1.16:9200"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -225,7 +225,7 @@ func TestElasticClient_WildcardQuery(t *testing.T) {
 }
 
 func TestElasticClient_UpdateDocBodyWithID(t *testing.T) {
-	client, err := NewElasticClient([]string{"192.168.1.16"}, []string{"9200"})
+	client, err := NewElasticClient([]string{"192.168.1.16:9200"})
 	if err != nil {
 		t.Fatal(err)
 	}
