@@ -7,8 +7,8 @@ import (
 	"bytes"
 	"io/ioutil"
 	"git.oschina.net/kuaishangtong/asvWebApi/const"
-	"os"
 	"strconv"
+	"os"
 )
 
 var ASV_VPR_INFO_INDEX string = `{
@@ -259,12 +259,7 @@ func (ec *ElasticClient) WildcardQuery(index, typ string, key, value string) (*e
 	return nil
 }*/
 
-func (ec *ElasticClient) RestoreByNodename(filename string)  error{
-	//client, err := NewElasticClient([]string{"192.168.1.16:9200"})
-	//if err != nil {
-	//	t.Fatal(err)
-	//}
-
+func (ec *ElasticClient) RestoreByFilename(filename string)  error{
 	//filename := "D:\\backup.txt"
 	s, err := ioutil.ReadFile(filename)
 	if err != nil {
@@ -272,7 +267,6 @@ func (ec *ElasticClient) RestoreByNodename(filename string)  error{
 		return err
 	}
 
-	//res, err := client.InsertDocBodyJsonWithID("asv_vpr_info", "asv_vpr_info", "3234567890ABCDEF", vpr_info)
 	data := bytes.Split(s, []byte("\r\n"))
 	for _, d := range data {
 		val := bytes.Split(d,[]byte("<-|->"))
@@ -293,13 +287,8 @@ func (ec *ElasticClient) RestoreByNodename(filename string)  error{
 	return nil
 }
 
-func (ec *ElasticClient) Backup(node_name string, backup_time int64) error {
-	//__elastic_client, err := NewElasticClient(_const.ELASTIC_HOSTS)
-	//if err != nil {
-	//	return err
-	//}
-
-	backup_path := "/tmp/backup/"
+func (ec *ElasticClient) Backup(backup_path, node_name string, backup_time int64) error {
+	//backup_path := "/tmp/backup/"
 	os.MkdirAll(backup_path, os.ModeDir)
 	//__elastic_client.BackupByNodename(_const.ELASTIC_INDEX, _const.ELASTIC_INDEX, backup.Lib.LibNodeId, backup_path + backup.Lib.LibNodeId + "_" + strconv.FormatInt(backup.BackupTime,10))
 	q := elastic.NewWildcardQuery("vpr_utt_node", node_name)
