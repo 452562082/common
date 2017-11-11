@@ -6,6 +6,10 @@ import (
 	"gopkg.in/olivere/elastic.v2"
 	"testing"
 	"time"
+	//"encoding/json"
+	"io/ioutil"
+	"bytes"
+	"strings"
 )
 
 type Student struct {
@@ -15,7 +19,7 @@ type Student struct {
 }
 
 func TestElasticClient_IndexExists(t *testing.T) {
-	client, err := NewElasticClient([]string{"192.168.1.16"}, []string{"9200"})
+	client, err := NewElasticClient([]string{"192.168.1.16:9200"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -29,7 +33,7 @@ func TestElasticClient_IndexExists(t *testing.T) {
 }
 
 func TestElasticClient_CreateIndexBodyString(t *testing.T) {
-	client, err := NewElasticClient([]string{"192.168.1.16"}, []string{"9200"})
+	client, err := NewElasticClient([]string{"192.168.1.16:9200"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -141,12 +145,12 @@ func TestElasticClient_CreateIndexBodyString(t *testing.T) {
 }
 
 func TestElasticClient_DeleteIndex(t *testing.T) {
-	client, err := NewElasticClient([]string{"192.168.1.16"}, []string{"9200"})
+	client, err := NewElasticClient([]string{"192.168.1.16:9200"})
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	res, err := client.DeleteIndex("asv_vpr_info")
+	res, err := client.client.DeleteIndex("asv_voiceprint_info&2017-11-10").Do()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -155,7 +159,7 @@ func TestElasticClient_DeleteIndex(t *testing.T) {
 }
 
 func TestElasticClient_IndexBodyJson(t *testing.T) {
-	client, err := NewElasticClient([]string{"192.168.1.16"}, []string{"9200"})
+	client, err := NewElasticClient([]string{"192.168.1.16:9200"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -183,7 +187,7 @@ func TestElasticClient_IndexBodyJson(t *testing.T) {
 }
 
 func TestElasticClient_BoolQuery(t *testing.T) {
-	client, err := NewElasticClient([]string{"192.168.1.16"}, []string{"9200"})
+	client, err := NewElasticClient([]string{"192.168.1.16:9200"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -204,7 +208,7 @@ func TestElasticClient_BoolQuery(t *testing.T) {
 }
 
 func TestElasticClient_WildcardQuery(t *testing.T) {
-	client, err := NewElasticClient([]string{"192.168.1.16"}, []string{"9200"})
+	client, err := NewElasticClient([]string{"192.168.1.16:9200"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -215,17 +219,156 @@ func TestElasticClient_WildcardQuery(t *testing.T) {
 		Index("asv_voiceprint_info").
 		Type("asv_voiceprint_info"). // search in index "twitter"
 		Query(q).                    // use wildcard query defined above
+		Do()                        // execute
+	if err != nil {
+		// Handle error
+		panic(err)
+	}
+
+	t.Logf("totalHits: %d",searchResult.Hits.TotalHits)
+}
+
+func TestElasticClient_backupNode(t *testing.T) {
+	client, err := NewElasticClient([]string{"192.168.1.16:9200"})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	q := elastic.NewWildcardQuery("vpr_utt_recordid", "*")
+	searchResult, err := client.client.Search().
+		Index("asv_voiceprint_info&test").
+		Type("asv_voiceprint_info&test"). // search in index "twitter"
+		Query(q).                    // use wildcard query defined above
+		Size(10000).
 		Do()                         // execute
 	if err != nil {
 		// Handle error
 		panic(err)
 	}
 
-	t.Log(searchResult.Hits.TotalHits)
+	t.Logf("totalHits: %d",searchResult.Hits.TotalHits)
+
+	filename := "D:\\backup.txt"
+
+	s := make([][]byte, searchResult.Hits.TotalHits)
+	for index, hit := range searchResult.Hits.Hits {
+		if err != nil {
+			// Deserialization failed
+			t.Fatal(err)
+		}
+		str := hit.Index + "<-|->" + hit.Type + "<-|->" + hit.Id + "<-|->" + string(*hit.Source)
+		s[index] = []byte(str)
+	}
+	data := bytes.Join(s, []byte("\r\n"))
+	ioutil.WriteFile(filename, data, 0666)
+}
+
+func TestElasticClient_backupNode2(t *testing.T) {
+	client, err := NewElasticClient([]string{"192.168.1.16:9200"})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	node_name := "testnode"
+	q := elastic.NewWildcardQuery("vpr_utt_node", node_name)
+	searchResult, err := client.client.Search().
+		Index("asv_voiceprint_info").
+		Type("asv_voiceprint_info"). // search in index "twitter"
+		Query(q).                    // use wildcard query defined above
+		Size(10000).
+		Do()                         // execute
+	if err != nil {
+		// Handle error
+		panic(err)
+	}
+
+	t.Logf("totalHits: %d",searchResult.Hits.TotalHits)
+
+	//timeStr := time.Now().Format("2006-01-02")
+	timeStr := "test"
+	//s := make([][]byte, searchResult.Hits.TotalHits)
+	for _, hit := range searchResult.Hits.Hits {
+		if err != nil {
+			// Deserialization failed
+			t.Fatal(err)
+		}
+
+		_, err := client.client.Index().Index(hit.Type + "&" + timeStr).Type(hit.Type + "&" + timeStr).Id(hit.Id).BodyJson(hit.Source).Do()
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+}
+
+func TestElasticClient_RestoreNode(t *testing.T) {
+	client, err := NewElasticClient([]string{"192.168.1.16:9200"})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	filename := "D:\\backup.txt"
+	s, err := ioutil.ReadFile(filename)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	//res, err := client.InsertDocBodyJsonWithID("asv_vpr_info", "asv_vpr_info", "3234567890ABCDEF", vpr_info)
+	data := bytes.Split(s, []byte("\r\n"))
+	for _, d := range data {
+		val := bytes.Split(d,[]byte("<-|->"))
+		if len(val) < 4 {
+			continue
+		}
+
+		//fmt.Println(string(val[0]))
+		//fmt.Println(string(val[1]))
+		//fmt.Println(string(val[2]))
+		//fmt.Println(string(val[3]))
+		_, err := client.client.Index().Index(string(val[0])).Type(string(val[1])).Id(string(val[2])).BodyJson(string(val[3])).Do()
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+	//t.Log(res)
+}
+
+func TestElasticClient_RestoreNode2(t *testing.T) {
+	client, err := NewElasticClient([]string{"192.168.1.16:9200"})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	node_name := "testnode"
+	q := elastic.NewWildcardQuery("vpr_utt_node", node_name)
+	timeStr := time.Now().Format("2006-01-02")
+	searchResult, err := client.client.Search().
+		Index("asv_voiceprint_info&" + timeStr).
+		Type("asv_voiceprint_info&" + timeStr). // search in index "twitter"
+		Query(q).                    // use wildcard query defined above
+		Size(10000).
+		Do()                         // execute
+	if err != nil {
+		// Handle error
+		panic(err)
+	}
+
+	//res, err := client.InsertDocBodyJsonWithID("asv_vpr_info", "asv_vpr_info", "3234567890ABCDEF", vpr_info)
+	for _, hit := range searchResult.Hits.Hits {
+		if err != nil {
+			// Deserialization failed
+			t.Fatal(err)
+		}
+		//s[index] = *hit.Source
+		_, err := client.client.Index().Index(strings.Split(hit.Index,"&")[0]).Type(strings.Split(hit.Type,"&")[0]).Id(hit.Id).BodyJson(hit.Source).Do()
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+	//t.Log(res)
 }
 
 func TestElasticClient_UpdateDocBodyWithID(t *testing.T) {
-	client, err := NewElasticClient([]string{"192.168.1.16"}, []string{"9200"})
+	client, err := NewElasticClient([]string{"192.168.1.16:9200"})
 	if err != nil {
 		t.Fatal(err)
 	}

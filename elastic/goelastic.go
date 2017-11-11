@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"gopkg.in/olivere/elastic.v2"
+	"bytes"
+	"io/ioutil"
 )
 
 var ASV_VPR_INFO_INDEX string = `{
@@ -215,4 +217,75 @@ func (ec *ElasticClient) WildcardQuery(index, typ string, key, value string) (*e
 	}
 
 	return searchResult, nil
+}
+
+func (ec *ElasticClient) BackupByNodename(index, _type, node_name, filename string) error {
+	//client, err := NewElasticClient([]string{"192.168.1.16:9200"})
+	//if err != nil {
+	//	t.Fatal(err)
+	//}
+
+	q := elastic.NewWildcardQuery("vpr_utt_node", node_name)
+	searchResult, err := ec.client.Search().
+		Index(index).
+		Type(_type). // search in index "twitter"
+		Query(q).                    // use wildcard query defined above
+		Size(10000000).
+		Do()                         // execute
+	if err != nil {
+		// Handle error
+		return err
+	}
+
+	//t.Logf("totalHits: %d",searchResult.Hits.TotalHits)
+
+	//filename := "D:\\backup.txt"
+
+	s := make([][]byte, searchResult.Hits.TotalHits)
+	for index, hit := range searchResult.Hits.Hits {
+		if err != nil {
+			// Deserialization failed
+			//t.Fatal(err)
+			return err
+		}
+		str := hit.Index + "<-|->" + hit.Type + "<-|->" + hit.Id + "<-|->" + string(*hit.Source)
+		s[index] = []byte(str)
+	}
+	data := bytes.Join(s, []byte("\r\n"))
+	ioutil.WriteFile(filename, data, 0666)
+	return nil
+}
+
+func (ec *ElasticClient) RestoreByNodename(filename string)  error{
+	//client, err := NewElasticClient([]string{"192.168.1.16:9200"})
+	//if err != nil {
+	//	t.Fatal(err)
+	//}
+
+	//filename := "D:\\backup.txt"
+	s, err := ioutil.ReadFile(filename)
+	if err != nil {
+		//t.Fatal(err)
+		return err
+	}
+
+	//res, err := client.InsertDocBodyJsonWithID("asv_vpr_info", "asv_vpr_info", "3234567890ABCDEF", vpr_info)
+	data := bytes.Split(s, []byte("\r\n"))
+	for _, d := range data {
+		val := bytes.Split(d,[]byte("<-|->"))
+		if len(val) < 4 {
+			continue
+		}
+
+		//fmt.Println(string(val[0]))
+		//fmt.Println(string(val[1]))
+		//fmt.Println(string(val[2]))
+		//fmt.Println(string(val[3]))
+		_, err := ec.client.Index().Index(string(val[0])).Type(string(val[1])).Id(string(val[2])).BodyJson(string(val[3])).Do()
+		if err != nil {
+			//t.Fatal(err)
+			return err
+		}
+	}
+	return nil
 }
