@@ -34,23 +34,13 @@ func (asp *KafkaSyncProducer) Close() error {
 }
 
 func (asp *KafkaSyncProducer) SendMessage(msg *sarama.ProducerMessage) error {
-	//msg := producerMessagePool.Get().(*sarama.ProducerMessage)
-	//defer producerMessagePool.Put(msg)
-
-	//msg.Topic = asp.topic
-	//msg.Key = sarama.ByteEncoder(key)
-	//msg.Value = sarama.ByteEncoder(value)
 	if _, _, err := asp.producer.SendMessage(msg); err != nil {
 		return err
 	}
-
 	return nil
 }
 
 func (asp *KafkaSyncProducer) SendStringMessage(key, value string) error {
-	//msg := producerMessagePool.Get().(*sarama.ProducerMessage)
-	//defer producerMessagePool.Put(msg)
-
 	msg := &sarama.ProducerMessage{}
 
 	msg.Topic = asp.topic
@@ -58,18 +48,13 @@ func (asp *KafkaSyncProducer) SendStringMessage(key, value string) error {
 	msg.Value = sarama.StringEncoder(value)
 
 	if _, _, err := asp.producer.SendMessage(msg); err != nil {
-		//producerMessagePool.Put(msg)
 		return err
 	}
 
-	//producerMessagePool.Put(msg)
 	return nil
 }
 
 func (asp *KafkaSyncProducer) SendByteMessage(key, value []byte) error {
-	//msg := producerMessagePool.Get().(*sarama.ProducerMessage)
-	//defer producerMessagePool.Put(msg)
-
 	msg := &sarama.ProducerMessage{}
 
 	msg.Topic = asp.topic
@@ -77,10 +62,7 @@ func (asp *KafkaSyncProducer) SendByteMessage(key, value []byte) error {
 	msg.Value = sarama.ByteEncoder(value)
 
 	if _, _, err := asp.producer.SendMessage(msg); err != nil {
-		//producerMessagePool.Put(msg)
 		return err
 	}
-
-	//producerMessagePool.Put(msg)
 	return nil
 }

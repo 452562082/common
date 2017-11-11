@@ -71,7 +71,6 @@ func (asp *KafkaAsyncProducer) loop() {
 				log.Error(err)
 			}
 		case <-asp.producer.Successes():
-			//log.Warn(s.Key, s.Value, s.Offset, s.Metadata)
 		}
 	}
 }
@@ -81,13 +80,10 @@ func (asp *KafkaAsyncProducer) Close() error {
 }
 
 func (asp *KafkaAsyncProducer) SendMessage(msg *sarama.ProducerMessage) {
-	//defer producerMessagePool.Put(msg)
 	asp.producer.Input() <- msg
 }
 
 func (asp *KafkaAsyncProducer) SendByteMessage(key, value []byte) {
-	//msg := producerMessagePool.Get().(*sarama.ProducerMessage)
-	//defer producerMessagePool.Put(msg)
 
 	msg := &sarama.ProducerMessage{}
 	msg.Topic = asp.topic
