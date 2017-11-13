@@ -485,7 +485,7 @@ func (hc *HdfsClient) CopyFiles(hdfs_src_dir, hdfs_dst_dir string) error {
 	}
 
 	for _, fi := range dstInfos {
-		log.Debugf("remove: %s", hdfs_dst_dir+fi.Name())
+		//log.Debugf("remove: %s", hdfs_dst_dir+fi.Name())
 		err = hc.Remove(hdfs_dst_dir + fi.Name())
 		if err != nil {
 			log.Errorf("remove model %s failed: %v", hdfs_dst_dir+fi.Name(), err)
@@ -497,18 +497,20 @@ func (hc *HdfsClient) CopyFiles(hdfs_src_dir, hdfs_dst_dir string) error {
 		return err
 	}
 
-	log.Debugf("length of %s: %d", hdfs_src_dir, len(srcInfos))
+	//log.Debugf("length of %s: %d", hdfs_src_dir, len(srcInfos))
 	for _, fi := range srcInfos {
-		log.Debugf("copy model %s to model %s", hdfs_src_dir+fi.Name(), hdfs_dst_dir+fi.Name())
-		data, err := hc.ReadFile(hdfs_src_dir + fi.Name())
-		if err != nil {
-			log.Errorf("copy model %s to model %s ReadFile failed: %v", hdfs_src_dir+fi.Name(), hdfs_dst_dir+fi.Name(), err)
-			continue
-		}
+		if strings.HasSuffix(fi.Name(), ".ark") {
+			//log.Debugf("copy model %s to model %s", hdfs_src_dir+fi.Name(), hdfs_dst_dir+fi.Name())
+			data, err := hc.ReadFile(hdfs_src_dir + fi.Name())
+			if err != nil {
+				log.Errorf("copy model %s to model %s ReadFile failed: %v", hdfs_src_dir+fi.Name(), hdfs_dst_dir+fi.Name(), err)
+				continue
+			}
 
-		err = hc.WriteFile(hdfs_dst_dir+fi.Name(), data)
-		if err != nil {
-			log.Errorf("copy model %s to model %s WriteFile failed: %v", hdfs_src_dir+fi.Name(), hdfs_dst_dir+fi.Name(), err)
+			err = hc.WriteFile(hdfs_dst_dir+fi.Name(), data)
+			if err != nil {
+				log.Errorf("copy model %s to model %s WriteFile failed: %v", hdfs_src_dir+fi.Name(), hdfs_dst_dir+fi.Name(), err)
+			}
 		}
 	}
 
