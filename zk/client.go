@@ -16,7 +16,7 @@ type GozkClient struct {
 	children chan []string
 }
 
-func NewGozkClient(zkhosts []string, nodepath string, _default []byte) (*GozkClient, error) {
+func NewGozkClient(zkhosts []string, nodepath string, _default []byte, writeDefault bool) (*GozkClient, error) {
 	nodepath = strings.Trim(nodepath, "/")
 	nodepath = "/" + nodepath
 
@@ -34,6 +34,9 @@ func NewGozkClient(zkhosts []string, nodepath string, _default []byte) (*GozkCli
 	client.conn = c
 	exist, _, err := client.conn.Exists(nodepath)
 	if !exist {
+		if !writeDefault {
+			return nil, fmt.Errorf("zookeeper node %s is not existed", nodepath)
+		}
 		_, err = client.conn.Create(nodepath, _default, 0, zk.WorldACL(zk.PermAll))
 		if err != nil {
 			return nil, err
