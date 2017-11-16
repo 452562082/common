@@ -47,6 +47,7 @@ type GozkServer struct {
 	connEvent   <-chan zk.Event
 	registryMap map[string]*zknode
 	lock        *sync.RWMutex
+	closed      bool
 }
 
 func NewGozkServer(zkhosts []string) (*GozkServer, error) {
@@ -60,6 +61,7 @@ func NewGozkServer(zkhosts []string) (*GozkServer, error) {
 		connEvent:   event,
 		registryMap: make(map[string]*zknode),
 		lock:        &sync.RWMutex{},
+		closed:      false,
 	}
 	go gzs.loop()
 
@@ -72,10 +74,11 @@ func (gzs *GozkServer) String() string {
 
 func (gzs *GozkServer) Close() {
 	gzs.conn.Close()
+	gzs.closed = true
 }
 
 func (gzs *GozkServer) loop() {
-	for {
+	for !gzs.closed {
 		select {
 		case evt, ok := <-gzs.connEvent:
 			if ok && evt.Type == zk.EventSession {
