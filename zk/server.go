@@ -7,8 +7,8 @@ import (
 	"sync"
 	"time"
 
-	"git.oschina.net/kuaishangtong/common/utils/log"
 	"git.oschina.net/kuaishangtong/common/utils"
+	"git.oschina.net/kuaishangtong/common/utils/log"
 	"github.com/samuel/go-zookeeper/zk"
 )
 
@@ -68,6 +68,10 @@ func NewGozkServer(zkhosts []string) (*GozkServer, error) {
 
 func (gzs *GozkServer) String() string {
 	return fmt.Sprintf("go-zk Server sid[%d]", gzs.conn.SessionID())
+}
+
+func (gzs *GozkServer) Close() {
+	gzs.conn.Close()
 }
 
 func (gzs *GozkServer) loop() {
