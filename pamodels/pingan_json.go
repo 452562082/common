@@ -1,7 +1,6 @@
 package pamodels
 
 //
-//
 //import (
 //	"bytes"
 //	json "encoding/json"
@@ -361,6 +360,8 @@ package pamodels
 //			out.Task_Param_SpkId = string(in.String())
 //		case "task_param_record_id":
 //			out.Task_Param_RecordId = string(in.String())
+//		case "task_param_source":
+//			out.Task_Param_Source = string(in.String())
 //		case "task_param_top_n":
 //			out.Task_Param_TopN = int(in.Int())
 //		case "task_param_nodes":
@@ -491,6 +492,12 @@ package pamodels
 //	first = false
 //	out.RawString("\"task_param_record_id\":")
 //	out.String(string(in.Task_Param_RecordId))
+//	if !first {
+//		out.RawByte(',')
+//	}
+//	first = false
+//	out.RawString("\"task_param_source\":")
+//	out.String(string(in.Task_Param_Source))
 //	if !first {
 //		out.RawByte(',')
 //	}
@@ -695,27 +702,9 @@ package pamodels
 //	return w.Buffer.BuildBytes(), w.Error
 //}
 //
-//func (v PaTaskBody) MarshalJSONToByteBuffer(buf *bytes.Buffer) ([]byte, error) {
-//	w := acquireWriter()
-//	easyjson7459bf99EncodeModels3(w, v)
-//	_, err := w.DumpTo(buf)
-//	releaseWriter(w)
-//	if err != nil {
-//		return nil, err
-//	}
-//	return buf.Bytes(), w.Error
-//}
-//
-//// MarshalEasyJSON supports easyjson.Marshaler interface
-//func (v PaTaskBody) MarshalEasyJSON(w *jwriter.Writer) {
-//	easyjson7459bf99EncodeModels3(w, v)
-//}
-//
-//// UnmarshalJSON supports json.Unmarshaler interface
-//func (v *PaTaskBody) UnmarshalJSON(data []byte) error {
-//	r := jlexer.Lexer{Data: data}
-//	easyjson7459bf99DecodeModels3(&r, v)
-//	return r.Error()
+//r := jlexer.Lexer{Data: data}
+//easyjson7459bf99DecodeModels3(&r, v)
+//return r.Error()
 //}
 //
 //// UnmarshalEasyJSON supports easyjson.Unmarshaler interface
@@ -1104,4 +1093,22 @@ package pamodels
 //// UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 //func (v *PaIdentifyCandidate) UnmarshalEasyJSON(l *jlexer.Lexer) {
 //	easyjson7459bf99DecodeModels6(l, v)
+//}func (v PaTaskBody) MarshalJSONToByteBuffer(buf *bytes.Buffer) ([]byte, error) {
+//	w := acquireWriter()
+//	easyjson7459bf99EncodeModels3(w, v)
+//	_, err := w.DumpTo(buf)
+//	releaseWriter(w)
+//	if err != nil {
+//		return nil, err
+//	}
+//	return buf.Bytes(), w.Error
 //}
+//
+//// MarshalEasyJSON supports easyjson.Marshaler interface
+//func (v PaTaskBody) MarshalEasyJSON(w *jwriter.Writer) {
+//	easyjson7459bf99EncodeModels3(w, v)
+//}
+//
+//// UnmarshalJSON supports json.Unmarshaler interface
+//func (v *PaTaskBody) UnmarshalJSON(data []byte) error {
+//
