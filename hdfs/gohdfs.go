@@ -45,7 +45,7 @@ func InitHDFS(hdfs_addr, hdfs_http_addr []string, user string) error {
 
 func CheckHDFSAlive(hdfs_web_host string) (bool, error) {
 	var nnStatus NameNodeStatus
-	err := httplib.Get("http://" + hdfs_web_host + "/jmx?qry=Hadoop:service=NameNode,name=NameNodeStatus").ToJson(&nnStatus)
+	err := httplib.Get("http://" + hdfs_web_host + "/jmx?qry=Hadoop:service=NameNode,name=NameNodeStatus").ToJSON(&nnStatus)
 	if err != nil {
 		return false, err
 	}
