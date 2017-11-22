@@ -200,8 +200,8 @@ type PaTaskParam struct {
 }
 
 type PaResBody struct {
-	Task_Id  string    `json:"task_id"`  // 字符串，32位长度，全局唯一的任务ID
-	Task_Res PaTaskRes `json:"task_res"` // PaRespParam对象，任务处理结果
+	Task_Id  string     `json:"task_id"`  // 字符串，32位长度，全局唯一的任务ID
+	Task_Res *PaTaskRes `json:"task_res"` // PaRespParam对象，任务处理结果
 }
 
 func (p *PaResBody) String() string {
@@ -210,9 +210,9 @@ func (p *PaResBody) String() string {
 
 type PaTaskRes struct {
 	// 通用参数
-	Task_Res_SubTaskId string      `json:"task_res_subtaskid"` // 字符串，16位长度，语音ID
-	Task_Res_Type      string      `json:"task_res_type"`      // 字符串，任务类型
-	Task_Res_ParamObj  PaTaskParam `json:"task_res_paramobj"`  // PaTaskParam对象，请求参数
+	Task_Res_SubTaskId string       `json:"task_res_subtaskid"` // 字符串，16位长度，语音ID
+	Task_Res_Type      string       `json:"task_res_type"`      // 字符串，任务类型
+	Task_Res_ParamObj  *PaTaskParam `json:"task_res_paramobj"`  // PaTaskParam对象，请求参数
 
 	Task_Res_ErrCode int    `json:"task_res_errcode"` // 整型，错误码
 	Task_Res_ErrMsg  string `json:"task_res_errmsg"`  // 字符串，错误消息
@@ -285,7 +285,7 @@ func (this *PaResBody) SetTaskId(task_id string) {
 }
 
 func (this *PaResBody) SetTaskRes(res *PaTaskRes) {
-	this.Task_Res = *res
+	this.Task_Res = res
 }
 
 //////////////////////////////////////////////////////////////////
@@ -306,7 +306,7 @@ func (this *PaTaskRes) SetTaskResType(task_type string) {
 	this.Task_Res_Type = task_type
 }
 
-func (this *PaTaskRes) SetTaskResParamObj(param PaTaskParam) {
+func (this *PaTaskRes) SetTaskResParamObj(param *PaTaskParam) {
 	this.Task_Res_ParamObj = param
 }
 
