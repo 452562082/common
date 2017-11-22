@@ -21,7 +21,7 @@ import (
 	"time"
 )
 
-var defaultSetting = HttpSettings{
+var defaultSetting = HTTPSettings{
 	UserAgent:        "KST",
 	ConnectTimeout:   60 * time.Second,
 	ReadWriteTimeout: 60 * time.Second,
@@ -39,8 +39,8 @@ func createDefaultCookie() {
 	defaultCookieJar, _ = cookiejar.New(nil)
 }
 
-// Overwrite default settings
-func SetDefaultSetting(setting HttpSettings) {
+// SetDefaultSetting Overwrite default settings
+func SetDefaultSetting(setting HTTPSettings) {
 	settingMutex.Lock()
 	defer settingMutex.Unlock()
 	defaultSetting = setting
@@ -52,12 +52,12 @@ func SetDefaultSetting(setting HttpSettings) {
 	}
 }
 
-// return *HttpRequest with specific method
-func NewRequest(rawurl, method string) *HttpRequest {
+// NewRequest return *HTTPRequest with specific method
+func NewRequest(rawurl, method string) *HTTPRequest {
 	var resp http.Response
 	u, err := url.Parse(rawurl)
 	if err != nil {
-		log.Fatal(err)
+		log.Error("Httplib:", err)
 	}
 	req := http.Request{
 		URL:        u,
@@ -67,141 +67,152 @@ func NewRequest(rawurl, method string) *HttpRequest {
 		ProtoMajor: 1,
 		ProtoMinor: 1,
 	}
-	return &HttpRequest{
+	return &HTTPRequest{
 		url:     rawurl,
 		req:     &req,
-		params:  map[string]string{},
+		params:  map[string][]string{},
 		files:   map[string]string{},
 		setting: defaultSetting,
 		resp:    &resp,
 	}
 }
 
-// Get returns *HttpRequest with GET method.
-func Get(url string) *HttpRequest {
+// Get returns *HTTPRequest with GET method.
+func Get(url string) *HTTPRequest {
 	return NewRequest(url, "GET")
 }
 
-// Post returns *HttpRequest with POST method.
-func Post(url string) *HttpRequest {
+// Post returns *HTTPRequest with POST method.
+func Post(url string) *HTTPRequest {
 	return NewRequest(url, "POST")
 }
 
-// Put returns *HttpRequest with PUT method.
-func Put(url string) *HttpRequest {
+// Put returns *HTTPRequest with PUT method.
+func Put(url string) *HTTPRequest {
 	return NewRequest(url, "PUT")
 }
 
-// Delete returns *HttpRequest DELETE method.
-func Delete(url string) *HttpRequest {
+// Delete returns *HTTPRequest DELETE method.
+func Delete(url string) *HTTPRequest {
 	return NewRequest(url, "DELETE")
 }
 
-// Head returns *HttpRequest with HEAD method.
-func Head(url string) *HttpRequest {
+// Head returns *HTTPRequest with HEAD method.
+func Head(url string) *HTTPRequest {
 	return NewRequest(url, "HEAD")
 }
 
-// HttpSettings
-type HttpSettings struct {
+// HTTPSettings is the http.Client setting
+type HTTPSettings struct {
 	ShowDebug        bool
 	UserAgent        string
 	ConnectTimeout   time.Duration
 	ReadWriteTimeout time.Duration
-	TlsClientConfig  *tls.Config
+	TLSClientConfig  *tls.Config
 	Proxy            func(*http.Request) (*url.URL, error)
 	Transport        http.RoundTripper
+	CheckRedirect    func(req *http.Request, via []*http.Request) error
 	EnableCookie     bool
 	Gzip             bool
 	DumpBody         bool
+	Retries          int // if set to -1 means will retry forever
 }
 
-// HttpRequest provides more useful methods for requesting one url than http.Request.
-type HttpRequest struct {
+// HTTPRequest provides more useful methods for requesting one url than http.Request.
+type HTTPRequest struct {
 	url     string
 	req     *http.Request
-	params  map[string]string
+	params  map[string][]string
 	files   map[string]string
-	setting HttpSettings
+	setting HTTPSettings
 	resp    *http.Response
 	body    []byte
 	dump    []byte
 }
 
-// get request
-func (b *HttpRequest) GetRequest() *http.Request {
+// GetRequest return the request object
+func (b *HTTPRequest) GetRequest() *http.Request {
 	return b.req
 }
 
-// Change request settings
-func (b *HttpRequest) Setting(setting HttpSettings) *HttpRequest {
+// Setting Change request settings
+func (b *HTTPRequest) Setting(setting HTTPSettings) *HTTPRequest {
 	b.setting = setting
 	return b
 }
 
 // SetBasicAuth sets the request's Authorization header to use HTTP Basic Authentication with the provided username and password.
-func (b *HttpRequest) SetBasicAuth(username, password string) *HttpRequest {
+func (b *HTTPRequest) SetBasicAuth(username, password string) *HTTPRequest {
 	b.req.SetBasicAuth(username, password)
 	return b
 }
 
 // SetEnableCookie sets enable/disable cookiejar
-func (b *HttpRequest) SetEnableCookie(enable bool) *HttpRequest {
+func (b *HTTPRequest) SetEnableCookie(enable bool) *HTTPRequest {
 	b.setting.EnableCookie = enable
 	return b
 }
 
 // SetUserAgent sets User-Agent header field
-func (b *HttpRequest) SetUserAgent(useragent string) *HttpRequest {
+func (b *HTTPRequest) SetUserAgent(useragent string) *HTTPRequest {
 	b.setting.UserAgent = useragent
 	return b
 }
 
 // Debug sets show debug or not when executing request.
-func (b *HttpRequest) Debug(isdebug bool) *HttpRequest {
+func (b *HTTPRequest) Debug(isdebug bool) *HTTPRequest {
 	b.setting.ShowDebug = isdebug
 	return b
 }
 
-// Dump Body.
-func (b *HttpRequest) DumpBody(isdump bool) *HttpRequest {
+// Retries sets Retries times.
+// default is 0 means no retried.
+// -1 means retried forever.
+// others means retried times.
+func (b *HTTPRequest) Retries(times int) *HTTPRequest {
+	b.setting.Retries = times
+	return b
+}
+
+// DumpBody setting whether need to Dump the Body.
+func (b *HTTPRequest) DumpBody(isdump bool) *HTTPRequest {
 	b.setting.DumpBody = isdump
 	return b
 }
 
-// return the DumpRequest
-func (b *HttpRequest) DumpRequest() []byte {
+// DumpRequest return the DumpRequest
+func (b *HTTPRequest) DumpRequest() []byte {
 	return b.dump
 }
 
 // SetTimeout sets connect time out and read-write time out for BeegoRequest.
-func (b *HttpRequest) SetTimeout(connectTimeout, readWriteTimeout time.Duration) *HttpRequest {
+func (b *HTTPRequest) SetTimeout(connectTimeout, readWriteTimeout time.Duration) *HTTPRequest {
 	b.setting.ConnectTimeout = connectTimeout
 	b.setting.ReadWriteTimeout = readWriteTimeout
 	return b
 }
 
 // SetTLSClientConfig sets tls connection configurations if visiting https url.
-func (b *HttpRequest) SetTLSClientConfig(config *tls.Config) *HttpRequest {
-	b.setting.TlsClientConfig = config
+func (b *HTTPRequest) SetTLSClientConfig(config *tls.Config) *HTTPRequest {
+	b.setting.TLSClientConfig = config
 	return b
 }
 
 // Header add header item string in request.
-func (b *HttpRequest) Header(key, value string) *HttpRequest {
+func (b *HTTPRequest) Header(key, value string) *HTTPRequest {
 	b.req.Header.Set(key, value)
 	return b
 }
 
-// Set HOST
-func (b *HttpRequest) SetHost(host string) *HttpRequest {
+// SetHost set the request host
+func (b *HTTPRequest) SetHost(host string) *HTTPRequest {
 	b.req.Host = host
 	return b
 }
 
-// Set the protocol version for incoming requests.
+// SetProtocolVersion Set the protocol version for incoming requests.
 // Client requests always use HTTP/1.1.
-func (b *HttpRequest) SetProtocolVersion(vers string) *HttpRequest {
+func (b *HTTPRequest) SetProtocolVersion(vers string) *HTTPRequest {
 	if len(vers) == 0 {
 		vers = "HTTP/1.1"
 	}
@@ -217,44 +228,58 @@ func (b *HttpRequest) SetProtocolVersion(vers string) *HttpRequest {
 }
 
 // SetCookie add cookie into request.
-func (b *HttpRequest) SetCookie(cookie *http.Cookie) *HttpRequest {
+func (b *HTTPRequest) SetCookie(cookie *http.Cookie) *HTTPRequest {
 	b.req.Header.Add("Cookie", cookie.String())
 	return b
 }
 
-// Set transport to
-func (b *HttpRequest) SetTransport(transport http.RoundTripper) *HttpRequest {
+// SetTransport set the setting transport
+func (b *HTTPRequest) SetTransport(transport http.RoundTripper) *HTTPRequest {
 	b.setting.Transport = transport
 	return b
 }
 
-// Set http proxy
-// test4tproxy:
+// SetProxy set the http proxy
+// example:
 //
 //	func(req *http.Request) (*url.URL, error) {
 // 		u, _ := url.ParseRequestURI("http://127.0.0.1:8118")
 // 		return u, nil
 // 	}
-func (b *HttpRequest) SetProxy(proxy func(*http.Request) (*url.URL, error)) *HttpRequest {
+func (b *HTTPRequest) SetProxy(proxy func(*http.Request) (*url.URL, error)) *HTTPRequest {
 	b.setting.Proxy = proxy
+	return b
+}
+
+// SetCheckRedirect specifies the policy for handling redirects.
+//
+// If CheckRedirect is nil, the Client uses its default policy,
+// which is to stop after 10 consecutive requests.
+func (b *HTTPRequest) SetCheckRedirect(redirect func(req *http.Request, via []*http.Request) error) *HTTPRequest {
+	b.setting.CheckRedirect = redirect
 	return b
 }
 
 // Param adds query param in to request.
 // params build query string as ?key1=value1&key2=value2...
-func (b *HttpRequest) Param(key, value string) *HttpRequest {
-	b.params[key] = value
+func (b *HTTPRequest) Param(key, value string) *HTTPRequest {
+	if param, ok := b.params[key]; ok {
+		b.params[key] = append(param, value)
+	} else {
+		b.params[key] = []string{value}
+	}
 	return b
 }
 
-func (b *HttpRequest) PostFile(formname, filename string) *HttpRequest {
+// PostFile add a post file to the request
+func (b *HTTPRequest) PostFile(formname, filename string) *HTTPRequest {
 	b.files[formname] = filename
 	return b
 }
 
 // Body adds request raw body.
 // it supports string and []byte.
-func (b *HttpRequest) Body(data interface{}) *HttpRequest {
+func (b *HTTPRequest) Body(data interface{}) *HTTPRequest {
 	switch t := data.(type) {
 	case string:
 		bf := bytes.NewBufferString(t)
@@ -268,26 +293,24 @@ func (b *HttpRequest) Body(data interface{}) *HttpRequest {
 	return b
 }
 
-// JsonBody adds request raw body encoding by JSON.
-func (b *HttpRequest) JsonBody(obj interface{}) (*HttpRequest, error) {
+// JSONBody adds request raw body encoding by JSON.
+func (b *HTTPRequest) JSONBody(obj interface{}) (*HTTPRequest, error) {
 	if b.req.Body == nil && obj != nil {
-		buf := bytes.NewBuffer(nil)
-		enc := json.NewEncoder(buf)
-		if err := enc.Encode(obj); err != nil {
+		byts, err := json.Marshal(obj)
+		if err != nil {
 			return b, err
 		}
-		
-		b.req.Body = ioutil.NopCloser(buf)
-		b.req.ContentLength = int64(buf.Len())
+		b.req.Body = ioutil.NopCloser(bytes.NewReader(byts))
+		b.req.ContentLength = int64(len(byts))
 		b.req.Header.Set("Content-Type", "application/json")
 	}
 	return b, nil
 }
 
-func (b *HttpRequest) buildUrl(paramBody string) {
+func (b *HTTPRequest) buildURL(paramBody string) {
 	// build GET url with query string
 	if b.req.Method == "GET" && len(paramBody) > 0 {
-		if strings.Index(b.url, "?") != -1 {
+		if strings.Contains(b.url, "?") {
 			b.url += "&" + paramBody
 		} else {
 			b.url = b.url + "?" + paramBody
@@ -296,7 +319,7 @@ func (b *HttpRequest) buildUrl(paramBody string) {
 	}
 
 	// build POST/PUT/PATCH url and body
-	if (b.req.Method == "POST" || b.req.Method == "PUT" || b.req.Method == "PATCH") && b.req.Body == nil {
+	if (b.req.Method == "POST" || b.req.Method == "PUT" || b.req.Method == "PATCH" || b.req.Method == "DELETE") && b.req.Body == nil {
 		// with files
 		if len(b.files) > 0 {
 			pr, pw := io.Pipe()
@@ -305,21 +328,26 @@ func (b *HttpRequest) buildUrl(paramBody string) {
 				for formname, filename := range b.files {
 					fileWriter, err := bodyWriter.CreateFormFile(formname, filename)
 					if err != nil {
-						log.Fatal(err)
+						log.Error("Httplib:", err)
+						return
 					}
 					fh, err := os.Open(filename)
 					if err != nil {
-						log.Fatal(err)
+						log.Error("Httplib:", err)
+						return
 					}
 					//iocopy
 					_, err = io.Copy(fileWriter, fh)
 					fh.Close()
 					if err != nil {
-						log.Fatal(err)
+						log.Error("Httplib:", err)
+						return
 					}
 				}
 				for k, v := range b.params {
-					bodyWriter.WriteField(k, v)
+					for _, vv := range v {
+						bodyWriter.WriteField(k, vv)
+					}
 				}
 				bodyWriter.Close()
 				pw.Close()
@@ -337,11 +365,11 @@ func (b *HttpRequest) buildUrl(paramBody string) {
 	}
 }
 
-func (b *HttpRequest) getResponse() (*http.Response, error) {
+func (b *HTTPRequest) getResponse() (*http.Response, error) {
 	if b.resp.StatusCode != 0 {
 		return b.resp, nil
 	}
-	resp, err := b.SendOut()
+	resp, err := b.DoRequest()
 	if err != nil {
 		return nil, err
 	}
@@ -349,21 +377,24 @@ func (b *HttpRequest) getResponse() (*http.Response, error) {
 	return resp, nil
 }
 
-func (b *HttpRequest) SendOut() (*http.Response, error) {
+// DoRequest will do the client.Do
+func (b *HTTPRequest) DoRequest() (resp *http.Response, err error) {
 	var paramBody string
 	if len(b.params) > 0 {
 		var buf bytes.Buffer
 		for k, v := range b.params {
-			buf.WriteString(url.QueryEscape(k))
-			buf.WriteByte('=')
-			buf.WriteString(url.QueryEscape(v))
-			buf.WriteByte('&')
+			for _, vv := range v {
+				buf.WriteString(url.QueryEscape(k))
+				buf.WriteByte('=')
+				buf.WriteString(url.QueryEscape(vv))
+				buf.WriteByte('&')
+			}
 		}
 		paramBody = buf.String()
 		paramBody = paramBody[0 : len(paramBody)-1]
 	}
 
-	b.buildUrl(paramBody)
+	b.buildURL(paramBody)
 	url, err := url.Parse(b.url)
 	if err != nil {
 		return nil, err
@@ -376,15 +407,16 @@ func (b *HttpRequest) SendOut() (*http.Response, error) {
 	if trans == nil {
 		// create default transport
 		trans = &http.Transport{
-			TLSClientConfig: b.setting.TlsClientConfig,
-			Proxy:           b.setting.Proxy,
-			Dial:            TimeoutDialer(b.setting.ConnectTimeout, b.setting.ReadWriteTimeout),
+			TLSClientConfig:     b.setting.TLSClientConfig,
+			Proxy:               b.setting.Proxy,
+			Dial:                TimeoutDialer(b.setting.ConnectTimeout, b.setting.ReadWriteTimeout),
+			MaxIdleConnsPerHost: -1,
 		}
 	} else {
 		// if b.transport is *http.Transport then set the settings.
 		if t, ok := trans.(*http.Transport); ok {
 			if t.TLSClientConfig == nil {
-				t.TLSClientConfig = b.setting.TlsClientConfig
+				t.TLSClientConfig = b.setting.TLSClientConfig
 			}
 			if t.Proxy == nil {
 				t.Proxy = b.setting.Proxy
@@ -395,7 +427,7 @@ func (b *HttpRequest) SendOut() (*http.Response, error) {
 		}
 	}
 
-	var jar http.CookieJar = nil
+	var jar http.CookieJar
 	if b.setting.EnableCookie {
 		if defaultCookieJar == nil {
 			createDefaultCookie()
@@ -412,19 +444,32 @@ func (b *HttpRequest) SendOut() (*http.Response, error) {
 		b.req.Header.Set("User-Agent", b.setting.UserAgent)
 	}
 
+	if b.setting.CheckRedirect != nil {
+		client.CheckRedirect = b.setting.CheckRedirect
+	}
+
 	if b.setting.ShowDebug {
 		dump, err := httputil.DumpRequest(b.req, b.setting.DumpBody)
 		if err != nil {
-			log.Error(err.Error())
+			log.Error(err)
 		}
 		b.dump = dump
 	}
-	return client.Do(b.req)
+	// retries default value is 0, it will run once.
+	// retries equal to -1, it will run forever until success
+	// retries is setted, it will retries fixed times.
+	for i := 0; b.setting.Retries == -1 || i <= b.setting.Retries; i++ {
+		resp, err = client.Do(b.req)
+		if err == nil {
+			break
+		}
+	}
+	return resp, err
 }
 
 // String returns the body string in response.
 // it calls Response inner.
-func (b *HttpRequest) String() (string, error) {
+func (b *HTTPRequest) String() (string, error) {
 	data, err := b.Bytes()
 	if err != nil {
 		return "", err
@@ -435,7 +480,7 @@ func (b *HttpRequest) String() (string, error) {
 
 // Bytes returns the body []byte in response.
 // it calls Response inner.
-func (b *HttpRequest) Bytes() ([]byte, error) {
+func (b *HTTPRequest) Bytes() ([]byte, error) {
 	if b.body != nil {
 		return b.body, nil
 	}
@@ -453,15 +498,15 @@ func (b *HttpRequest) Bytes() ([]byte, error) {
 			return nil, err
 		}
 		b.body, err = ioutil.ReadAll(reader)
-	} else {
-		b.body, err = ioutil.ReadAll(resp.Body)
+		return b.body, err
 	}
+	b.body, err = ioutil.ReadAll(resp.Body)
 	return b.body, err
 }
 
 // ToFile saves the body data in response to one file.
 // it calls Response inner.
-func (b *HttpRequest) ToFile(filename string) error {
+func (b *HTTPRequest) ToFile(filename string) error {
 	f, err := os.Create(filename)
 	if err != nil {
 		return err
@@ -480,9 +525,9 @@ func (b *HttpRequest) ToFile(filename string) error {
 	return err
 }
 
-// ToJson returns the map that marshals from the body bytes as json in response .
+// ToJSON returns the map that marshals from the body bytes as json in response .
 // it calls Response inner.
-func (b *HttpRequest) ToJson(v interface{}) error {
+func (b *HTTPRequest) ToJSON(v interface{}) error {
 	data, err := b.Bytes()
 	if err != nil {
 		return err
@@ -490,9 +535,9 @@ func (b *HttpRequest) ToJson(v interface{}) error {
 	return json.Unmarshal(data, v)
 }
 
-// ToXml returns the map that marshals from the body bytes as xml in response .
+// ToXML returns the map that marshals from the body bytes as xml in response .
 // it calls Response inner.
-func (b *HttpRequest) ToXml(v interface{}) error {
+func (b *HTTPRequest) ToXML(v interface{}) error {
 	data, err := b.Bytes()
 	if err != nil {
 		return err
@@ -501,7 +546,7 @@ func (b *HttpRequest) ToXml(v interface{}) error {
 }
 
 // Response executes request client gets response mannually.
-func (b *HttpRequest) Response() (*http.Response, error) {
+func (b *HTTPRequest) Response() (*http.Response, error) {
 	return b.getResponse()
 }
 
