@@ -1,6 +1,7 @@
 package pamodels
 
 import (
+	"fmt"
 	"sync"
 )
 
@@ -203,9 +204,9 @@ type PaResBody struct {
 	Task_Res *PaTaskRes `json:"task_res"` // PaRespParam对象，任务处理结果
 }
 
-//func (p *PaResBody) String() string {
-//	return fmt.Sprintf("Task id:%s, task resp: %s", p.Task_Id, p.Task_Res)
-//}
+func (p *PaResBody) String() string {
+	return fmt.Sprintf("Task id:%s, task resp: %s", p.Task_Id, p.Task_Res)
+}
 
 type PaTaskRes struct {
 	// 通用参数
@@ -222,19 +223,19 @@ type PaTaskRes struct {
 	Task_Res_Results []*PaProcRes `json:"task_res_results"` // PaProcRes对象，处理结果
 }
 
-//func (p PaTaskRes) String() string {
-//	results := ""
-//	for _, res := range p.Task_Res_Results {
-//		results += fmt.Sprintf("proc_errcode: %d, proc_errmsg: %s, proc_spkid: %s, proc_confidence: %.02f, proc_candidates： %v",
-//			res.Task_Proc_ErrCode, res.Task_Proc_ErrMsg, res.Task_Proc_SpkId,
-//			res.Task_Proc_Confidence, res.Task_Proc_Candidates)
-//	}
-//
-//	return fmt.Sprintf("subid: %s, type: %s, taskParam: %v, code: %d, msg: %s, results: [%s]",
-//		p.Task_Res_SubTaskId, p.Task_Res_Type, p.Task_Res_ParamObj, p.Task_Res_ErrCode,
-//		p.Task_Res_ErrMsg, results,
-//	)
-//}
+func (p PaTaskRes) String() string {
+	results := ""
+	for _, res := range p.Task_Res_Results {
+		results += fmt.Sprintf("proc_errcode: %d, proc_errmsg: %s, proc_spkid: %s, proc_confidence: %.02f, proc_candidates： %v",
+			res.Task_Proc_ErrCode, res.Task_Proc_ErrMsg, res.Task_Proc_SpkId,
+			res.Task_Proc_Confidence, res.Task_Proc_Candidates)
+	}
+
+	return fmt.Sprintf("subid: %s, type: %s, taskParam: %v, code: %d, msg: %s, results: [%s]",
+		p.Task_Res_SubTaskId, p.Task_Res_Type, p.Task_Res_ParamObj, p.Task_Res_ErrCode,
+		p.Task_Res_ErrMsg, results,
+	)
+}
 
 type PaProcRes struct {
 	Task_Proc_Chan int `json:"task_proc_chan"` // 整型，信道标记，0：左声道；1：右声道
