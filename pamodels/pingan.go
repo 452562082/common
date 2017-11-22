@@ -151,18 +151,18 @@ func ReleasePaResBody(paResBody *PaResBody) {
 }
 
 type PaTasksBody struct {
-	TaskId      string        `json:"task_id"`       // 字符串，32位长度，全局唯一的任务ID
-	TaskParams  []PaTaskParam `json:"task_params"`   // PaTaskParam数组，任务参数
-	TaskAddTime string        `json:"task_add_time"` // 字符串，任务插入时间
+	TaskId      string         `json:"task_id"`       // 字符串，32位长度，全局唯一的任务ID
+	TaskParams  []*PaTaskParam `json:"task_params"`   // PaTaskParam数组，任务参数
+	TaskAddTime string         `json:"task_add_time"` // 字符串，任务插入时间
 }
 
 type PaTaskBody struct {
-	TaskId      string      `json:"task_id"`       // 字符串，32位长度，全局唯一的任务ID
-	TaskParam   PaTaskParam `json:"task_param"`    // PaTaskParam，任务参数
-	TaskAddTime string      `json:"task_add_time"` // 字符串，任务插入时间
+	TaskId      string       `json:"task_id"`       // 字符串，32位长度，全局唯一的任务ID
+	TaskParam   *PaTaskParam `json:"task_param"`    // PaTaskParam，任务参数
+	TaskAddTime string       `json:"task_add_time"` // 字符串，任务插入时间
 }
 
-func (ptb *PaTaskBody) SetTaskParam(tp PaTaskParam) {
+func (ptb *PaTaskBody) SetTaskParam(tp *PaTaskParam) {
 	ptb.TaskParam = tp
 }
 
@@ -182,7 +182,7 @@ type PaTaskParam struct {
 	Task_Param_TopN     int    `json:"task_param_top_n"` // 整数，Top N
 
 	//Task_Param_Version    string   `json:"task_param_version"` // verify, identify 比对语音库节点版本号
-	Task_Param_Nodes      []string `json:"task_param_nodes"`   // verify, identify 比对语音库节点
+	Task_Param_Nodes      []string `json:"task_param_nodes"` // verify, identify 比对语音库节点
 	Task_Param_EnrollNode string   `json:"task_param_enroll_node"`
 	Task_Param_DeleteNode string   `json:"task_param_delete_node"`
 	Task_Param_OriginNode string   `json:"task_param_origin_node"`
@@ -219,8 +219,8 @@ type PaTaskRes struct {
 	Task_Res_Addtime string `json:"task_res_addtime"` // 字符串，任务插入时间
 
 	// 其他
-	Task_Res_Scene   string      `json:"task_res_scene"`   // 字符串，场景
-	Task_Res_Results []PaProcRes `json:"task_res_results"` // PaProcRes对象，处理结果
+	Task_Res_Scene   string       `json:"task_res_scene"`   // 字符串，场景
+	Task_Res_Results []*PaProcRes `json:"task_res_results"` // PaProcRes对象，处理结果
 }
 
 func (p PaTaskRes) String() string {
@@ -249,8 +249,8 @@ type PaProcRes struct {
 	Task_Proc_ErrMsg  string `json:"task_proc_errmsg"`  // 字符串，错误消息
 
 	// 说话人辨认、验证
-	Task_Proc_Top        int                   `json:"task_proc_top"`        // 整型，候选声纹集数目
-	Task_Proc_Candidates []PaIdentifyCandidate `json:"task_proc_candidates"` // Json数组，候选集
+	Task_Proc_Top        int                    `json:"task_proc_top"`        // 整型，候选声纹集数目
+	Task_Proc_Candidates []*PaIdentifyCandidate `json:"task_proc_candidates"` // Json数组，候选集
 
 	// 说话人注册
 	Task_Proc_SpkId      string  `json:"task_proc_spkid"`      // 字符串，16位长度，说话人ID
@@ -294,7 +294,7 @@ func (this *PaResBody) SetTaskRes(res *PaTaskRes) {
 //////////////////////////////////////////////////////////////////
 func NewPaTaskRes() *PaTaskRes {
 	return &PaTaskRes{
-		Task_Res_Results: make([]PaProcRes, 0),
+		Task_Res_Results: make([]*PaProcRes, 0),
 	}
 }
 
@@ -327,7 +327,7 @@ func (this *PaTaskRes) SetTaskResScene(scene string) {
 }
 
 func (this *PaTaskRes) AddTaskResResult(res *PaProcRes) {
-	this.Task_Res_Results = append(this.Task_Res_Results, *res)
+	this.Task_Res_Results = append(this.Task_Res_Results, res)
 }
 
 //////////////////////////////////////////////////////////////////
@@ -336,7 +336,7 @@ func (this *PaTaskRes) AddTaskResResult(res *PaProcRes) {
 //////////////////////////////////////////////////////////////////
 func NewPaProcRes() *PaProcRes {
 	return &PaProcRes{
-		Task_Proc_Candidates: make([]PaIdentifyCandidate, 0),
+		Task_Proc_Candidates: make([]*PaIdentifyCandidate, 0),
 	}
 }
 
@@ -384,12 +384,12 @@ func (this *PaProcRes) SetTaskProcFeatureFile(featureFile []byte) {
 	this.Task_Proc_FeatureFile = featureFile
 }
 
-func (this *PaProcRes) SetTaskProcCandidates(candidates []PaIdentifyCandidate) {
+func (this *PaProcRes) SetTaskProcCandidates(candidates []*PaIdentifyCandidate) {
 	this.Task_Proc_Candidates = append(this.Task_Proc_Candidates, candidates...)
 }
 
 func (this *PaProcRes) AddCandidate(candidate *PaIdentifyCandidate) {
-	this.Task_Proc_Candidates = append(this.Task_Proc_Candidates, *candidate)
+	this.Task_Proc_Candidates = append(this.Task_Proc_Candidates, candidate)
 }
 
 func NewPaIdentifyCandidate() *PaIdentifyCandidate {
