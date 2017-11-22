@@ -61,16 +61,24 @@ func easyjson7459bf99DecodeModels(in *jlexer.Lexer, out *PaTasksBody) {
 				in.Delim('[')
 				if out.TaskParams == nil {
 					if !in.IsDelim(']') {
-						out.TaskParams = make([]PaTaskParam, 0, 1)
+						out.TaskParams = make([]*PaTaskParam, 0, 8)
 					} else {
-						out.TaskParams = []PaTaskParam{}
+						out.TaskParams = []*PaTaskParam{}
 					}
 				} else {
 					out.TaskParams = (out.TaskParams)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v1 PaTaskParam
-					(v1).UnmarshalEasyJSON(in)
+					var v1 *PaTaskParam
+					if in.IsNull() {
+						in.Skip()
+						v1 = nil
+					} else {
+						if v1 == nil {
+							v1 = new(PaTaskParam)
+						}
+						(*v1).UnmarshalEasyJSON(in)
+					}
 					out.TaskParams = append(out.TaskParams, v1)
 					in.WantComma()
 				}
@@ -118,7 +126,11 @@ func easyjson7459bf99EncodeModels(out *jwriter.Writer, in PaTasksBody) {
 				if v2 > 0 {
 					out.RawByte(',')
 				}
-				(v3).MarshalEasyJSON(out)
+				if v3 == nil {
+					out.RawString("null")
+				} else {
+					(*v3).MarshalEasyJSON(out)
+				}
 			}
 			out.RawByte(']')
 		}
@@ -211,16 +223,24 @@ func easyjson7459bf99DecodeModels1(in *jlexer.Lexer, out *PaTaskRes) {
 				in.Delim('[')
 				if out.Task_Res_Results == nil {
 					if !in.IsDelim(']') {
-						out.Task_Res_Results = make([]PaProcRes, 0, 1)
+						out.Task_Res_Results = make([]*PaProcRes, 0, 8)
 					} else {
-						out.Task_Res_Results = []PaProcRes{}
+						out.Task_Res_Results = []*PaProcRes{}
 					}
 				} else {
 					out.Task_Res_Results = (out.Task_Res_Results)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v4 PaProcRes
-					(v4).UnmarshalEasyJSON(in)
+					var v4 *PaProcRes
+					if in.IsNull() {
+						in.Skip()
+						v4 = nil
+					} else {
+						if v4 == nil {
+							v4 = new(PaProcRes)
+						}
+						(*v4).UnmarshalEasyJSON(in)
+					}
 					out.Task_Res_Results = append(out.Task_Res_Results, v4)
 					in.WantComma()
 				}
@@ -326,7 +346,11 @@ func easyjson7459bf99EncodeModels1(out *jwriter.Writer, in PaTaskRes) {
 				if v5 > 0 {
 					out.RawByte(',')
 				}
-				(v6).MarshalEasyJSON(out)
+				if v6 == nil {
+					out.RawString("null")
+				} else {
+					(*v6).MarshalEasyJSON(out)
+				}
 			}
 			out.RawByte(']')
 		}
@@ -351,6 +375,7 @@ func (v PaTaskRes) MarshalJSONToByteBuffer(buf *bytes.Buffer) ([]byte, error) {
 	}
 	return buf.Bytes(), w.Error
 }
+
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v PaTaskRes) MarshalEasyJSON(w *jwriter.Writer) {
@@ -788,7 +813,15 @@ func easyjson7459bf99DecodeModels3(in *jlexer.Lexer, out *PaTaskBody) {
 		case "task_id":
 			out.TaskId = string(in.String())
 		case "task_param":
-			(out.TaskParam).UnmarshalEasyJSON(in)
+			if in.IsNull() {
+				in.Skip()
+				out.TaskParam = nil
+			} else {
+				if out.TaskParam == nil {
+					out.TaskParam = new(PaTaskParam)
+				}
+				(*out.TaskParam).UnmarshalEasyJSON(in)
+			}
 		case "task_add_time":
 			out.TaskAddTime = string(in.String())
 		default:
@@ -823,7 +856,11 @@ func easyjson7459bf99EncodeModels3(out *jwriter.Writer, in PaTaskBody) {
 		} else {
 			out.RawString(prefix)
 		}
-		(in.TaskParam).MarshalEasyJSON(out)
+		if in.TaskParam == nil {
+			out.RawString("null")
+		} else {
+			(*in.TaskParam).MarshalEasyJSON(out)
+		}
 	}
 	{
 		const prefix string = ",\"task_add_time\":"
@@ -1009,16 +1046,24 @@ func easyjson7459bf99DecodeModels5(in *jlexer.Lexer, out *PaProcRes) {
 				in.Delim('[')
 				if out.Task_Proc_Candidates == nil {
 					if !in.IsDelim(']') {
-						out.Task_Proc_Candidates = make([]PaIdentifyCandidate, 0, 1)
+						out.Task_Proc_Candidates = make([]*PaIdentifyCandidate, 0, 8)
 					} else {
-						out.Task_Proc_Candidates = []PaIdentifyCandidate{}
+						out.Task_Proc_Candidates = []*PaIdentifyCandidate{}
 					}
 				} else {
 					out.Task_Proc_Candidates = (out.Task_Proc_Candidates)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v13 PaIdentifyCandidate
-					(v13).UnmarshalEasyJSON(in)
+					var v13 *PaIdentifyCandidate
+					if in.IsNull() {
+						in.Skip()
+						v13 = nil
+					} else {
+						if v13 == nil {
+							v13 = new(PaIdentifyCandidate)
+						}
+						(*v13).UnmarshalEasyJSON(in)
+					}
 					out.Task_Proc_Candidates = append(out.Task_Proc_Candidates, v13)
 					in.WantComma()
 				}
@@ -1145,7 +1190,11 @@ func easyjson7459bf99EncodeModels5(out *jwriter.Writer, in PaProcRes) {
 				if v15 > 0 {
 					out.RawByte(',')
 				}
-				(v16).MarshalEasyJSON(out)
+				if v16 == nil {
+					out.RawString("null")
+				} else {
+					(*v16).MarshalEasyJSON(out)
+				}
 			}
 			out.RawByte(']')
 		}
