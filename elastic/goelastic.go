@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"git.oschina.net/kuaishangtong/asvWebApi/const"
 	"git.oschina.net/kuaishangtong/common/hdfs"
+	"git.oschina.net/kuaishangtong/common/utils"
 	"gopkg.in/olivere/elastic.v2"
 	"os"
 	"strconv"
@@ -102,7 +103,7 @@ func NewElasticClient(hosts []string) (*ElasticClient, error) {
 		urls = append(urls, _url)
 	}
 
-	client, err := elastic.NewClient(elastic.SetURL(urls...))
+	client, err := elastic.NewClient(elastic.SetURL(urls...), elastic.SetErrorLog(new(utils.ErrLog)), elastic.SetInfoLog(new(utils.InfoLog)))
 	if err != nil {
 		return nil, err
 	}
