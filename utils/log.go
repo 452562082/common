@@ -13,5 +13,5 @@ type InfoLog struct {
 }
 
 func (e *InfoLog) Printf(format string, v ...interface{}) {
-	log.Errorf(format, v...)
+	log.Infof(format, v...)
 }
