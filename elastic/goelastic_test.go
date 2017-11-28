@@ -269,8 +269,8 @@ func TestElasticClient_backupNode2(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	node_name := "testnode"
-	q := elastic.NewWildcardQuery("vpr_utt_node", node_name)
+	node_name := "recordId?*"
+	q := elastic.NewWildcardQuery("vpr_utt_recordid", node_name)
 	searchResult, err := client.client.Search().
 		Index("asv_voiceprint_info").
 		Type("asv_voiceprint_info"). // search in index "twitter"
