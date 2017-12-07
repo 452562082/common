@@ -41,28 +41,34 @@ func ReleasePaTaskBody(ptaskBody *PaTaskBody) {
 
 	ptaskBody.TaskId = ""
 
-	ptaskBody.TaskParam.Task_Param_SubTaskId = ""
-	ptaskBody.TaskParam.Task_Param_Type = ""
-	ptaskBody.TaskParam.Task_Param_WavAddr = ""
-	ptaskBody.TaskParam.Task_Param_TopN = -1
-	ptaskBody.TaskParam.Task_Param_SpkId = ""
-	ptaskBody.TaskParam.Task_Param_Scene = ""
-	ptaskBody.TaskParam.Task_Param_Channel = -1
-	ptaskBody.TaskParam.Task_Param_Gender = ""
-	ptaskBody.TaskParam.Task_Param_CutLen = -1
-	ptaskBody.TaskParam.Task_Param_HasTone = false
-	ptaskBody.TaskParam.Task_Param_WavAddr1 = ""
-	ptaskBody.TaskParam.Task_Param_WavAddr2 = ""
-	ptaskBody.TaskParam.Task_Param_Channel1 = -1
-	ptaskBody.TaskParam.Task_Param_Channel2 = -1
-	ptaskBody.TaskParam.Task_Param_RecordId = ""
+	if ptaskBody.TaskParam != nil {
+		ptaskBody.TaskParam.Task_Param_SubTaskId = ""
+		ptaskBody.TaskParam.Task_Param_Type = ""
+		ptaskBody.TaskParam.Task_Param_WavAddr = ""
+		ptaskBody.TaskParam.Task_Param_TopN = -1
+		ptaskBody.TaskParam.Task_Param_SpkId = ""
+		ptaskBody.TaskParam.Task_Param_Scene = ""
+		ptaskBody.TaskParam.Task_Param_Channel = -1
+		ptaskBody.TaskParam.Task_Param_Gender = ""
+		ptaskBody.TaskParam.Task_Param_CutLen = -1
+		ptaskBody.TaskParam.Task_Param_HasTone = false
+		ptaskBody.TaskParam.Task_Param_WavAddr1 = ""
+		ptaskBody.TaskParam.Task_Param_WavAddr2 = ""
+		ptaskBody.TaskParam.Task_Param_Channel1 = -1
+		ptaskBody.TaskParam.Task_Param_Channel2 = -1
+		ptaskBody.TaskParam.Task_Param_RecordId = ""
 
-	ptaskBody.TaskParam.Task_Param_Nodes = ptaskBody.TaskParam.Task_Param_Nodes[:0]
-	ptaskBody.TaskParam.Task_Param_EnrollNode = ptaskBody.TaskParam.Task_Param_EnrollNode[:0]
-	ptaskBody.TaskParam.Task_Param_EnrollFlag = false
-	ptaskBody.TaskParam.Task_Param_OriginNode = ""
-	ptaskBody.TaskParam.Task_Param_TargetNode = ptaskBody.TaskParam.Task_Param_TargetNode[:0]
+		if ptaskBody.TaskParam.Task_Param_Nodes != nil {
+			ptaskBody.TaskParam.Task_Param_Nodes = ptaskBody.TaskParam.Task_Param_Nodes[:0]
+		}
 
+		ptaskBody.TaskParam.Task_Param_EnrollNode = ""
+		ptaskBody.TaskParam.Task_Param_EnrollFlag = false
+		ptaskBody.TaskParam.Task_Param_OriginNode = ""
+		if ptaskBody.TaskParam.Task_Param_TargetNode != nil {
+			ptaskBody.TaskParam.Task_Param_TargetNode = ptaskBody.TaskParam.Task_Param_TargetNode[:0]
+		}
+	}
 	ptaskBody.TaskAddTime = ""
 	paTaskBodyPool.Put(ptaskBody)
 }
@@ -85,28 +91,36 @@ func ReleasePaTaskRes(paTaskRes *PaTaskRes) {
 	paTaskRes.Task_Res_SubTaskId = ""
 	paTaskRes.Task_Res_Scene = ""
 
-	paTaskRes.Task_Res_ParamObj.Task_Param_SubTaskId = ""
-	paTaskRes.Task_Res_ParamObj.Task_Param_Type = ""
-	paTaskRes.Task_Res_ParamObj.Task_Param_WavAddr = ""
-	paTaskRes.Task_Res_ParamObj.Task_Param_TopN = -1
-	paTaskRes.Task_Res_ParamObj.Task_Param_SpkId = ""
-	paTaskRes.Task_Res_ParamObj.Task_Param_Scene = ""
-	paTaskRes.Task_Res_ParamObj.Task_Param_Channel = -1
-	paTaskRes.Task_Res_ParamObj.Task_Param_Gender = ""
-	paTaskRes.Task_Res_ParamObj.Task_Param_CutLen = -1
-	paTaskRes.Task_Res_ParamObj.Task_Param_HasTone = false
-	paTaskRes.Task_Res_ParamObj.Task_Param_Channel1 = -1
-	paTaskRes.Task_Res_ParamObj.Task_Param_Channel2 = -1
-	paTaskRes.Task_Res_ParamObj.Task_Param_WavAddr1 = ""
-	paTaskRes.Task_Res_ParamObj.Task_Param_WavAddr2 = ""
+	if paTaskRes.Task_Res_ParamObj != nil {
+		paTaskRes.Task_Res_ParamObj.Task_Param_SubTaskId = ""
+		paTaskRes.Task_Res_ParamObj.Task_Param_Type = ""
+		paTaskRes.Task_Res_ParamObj.Task_Param_WavAddr = ""
+		paTaskRes.Task_Res_ParamObj.Task_Param_TopN = -1
+		paTaskRes.Task_Res_ParamObj.Task_Param_SpkId = ""
+		paTaskRes.Task_Res_ParamObj.Task_Param_Scene = ""
+		paTaskRes.Task_Res_ParamObj.Task_Param_Channel = -1
+		paTaskRes.Task_Res_ParamObj.Task_Param_Gender = ""
+		paTaskRes.Task_Res_ParamObj.Task_Param_CutLen = -1
+		paTaskRes.Task_Res_ParamObj.Task_Param_HasTone = false
+		paTaskRes.Task_Res_ParamObj.Task_Param_Channel1 = -1
+		paTaskRes.Task_Res_ParamObj.Task_Param_Channel2 = -1
+		paTaskRes.Task_Res_ParamObj.Task_Param_WavAddr1 = ""
+		paTaskRes.Task_Res_ParamObj.Task_Param_WavAddr2 = ""
 
-	paTaskRes.Task_Res_ParamObj.Task_Param_Nodes = paTaskRes.Task_Res_ParamObj.Task_Param_Nodes[:0]
-	paTaskRes.Task_Res_ParamObj.Task_Param_EnrollNode = paTaskRes.Task_Res_ParamObj.Task_Param_EnrollNode[:0]
-	paTaskRes.Task_Res_ParamObj.Task_Param_EnrollFlag = false
-	paTaskRes.Task_Res_ParamObj.Task_Param_OriginNode = ""
-	paTaskRes.Task_Res_ParamObj.Task_Param_TargetNode = paTaskRes.Task_Res_ParamObj.Task_Param_TargetNode[:0]
+		if paTaskRes.Task_Res_ParamObj.Task_Param_Nodes != nil {
+			paTaskRes.Task_Res_ParamObj.Task_Param_Nodes = paTaskRes.Task_Res_ParamObj.Task_Param_Nodes[:0]
+		}
+		paTaskRes.Task_Res_ParamObj.Task_Param_EnrollNode = ""
+		paTaskRes.Task_Res_ParamObj.Task_Param_EnrollFlag = false
+		paTaskRes.Task_Res_ParamObj.Task_Param_OriginNode = ""
+		if paTaskRes.Task_Res_ParamObj.Task_Param_TargetNode != nil {
+			paTaskRes.Task_Res_ParamObj.Task_Param_TargetNode = paTaskRes.Task_Res_ParamObj.Task_Param_TargetNode[:0]
+		}
+	}
 
-	paTaskRes.Task_Res_Results = paTaskRes.Task_Res_Results[:0]
+	if paTaskRes.Task_Res_Results != nil {
+		paTaskRes.Task_Res_Results = paTaskRes.Task_Res_Results[:0]
+	}
 	paTaskRes.Task_Res_ErrCode = -1
 	paTaskRes.Task_Res_ErrMsg = ""
 	paTaskRes.Task_Res_Addtime = ""
@@ -130,23 +144,26 @@ func ReleasePaResBody(paResBody *PaResBody) {
 
 	paResBody.Task_Id = ""
 
-	paResBody.Task_Res.Task_Res_Addtime = ""
-	paResBody.Task_Res.Task_Res_ErrCode = -1
-	paResBody.Task_Res.Task_Res_ErrMsg = ""
-	paResBody.Task_Res.Task_Res_Results = paResBody.Task_Res.Task_Res_Results[:0]
-	paResBody.Task_Res.Task_Res_ParamObj.Task_Param_SubTaskId = ""
-	paResBody.Task_Res.Task_Res_ParamObj.Task_Param_Type = ""
-	paResBody.Task_Res.Task_Res_ParamObj.Task_Param_WavAddr = ""
-	paResBody.Task_Res.Task_Res_ParamObj.Task_Param_TopN = -1
-	paResBody.Task_Res.Task_Res_ParamObj.Task_Param_SpkId = ""
-	paResBody.Task_Res.Task_Res_ParamObj.Task_Param_Scene = ""
-	paResBody.Task_Res.Task_Res_ParamObj.Task_Param_Channel = -1
-	paResBody.Task_Res.Task_Res_ParamObj.Task_Param_Gender = ""
-	paResBody.Task_Res.Task_Res_ParamObj.Task_Param_CutLen = -1
-	paResBody.Task_Res.Task_Res_Scene = ""
-	paResBody.Task_Res.Task_Res_SubTaskId = ""
-	paResBody.Task_Res.Task_Res_Type = ""
-
+	if paResBody.Task_Res != nil {
+		paResBody.Task_Res.Task_Res_Addtime = ""
+		paResBody.Task_Res.Task_Res_ErrCode = -1
+		paResBody.Task_Res.Task_Res_ErrMsg = ""
+		if paResBody.Task_Res.Task_Res_Results != nil {
+			paResBody.Task_Res.Task_Res_Results = paResBody.Task_Res.Task_Res_Results[:0]
+		}
+		paResBody.Task_Res.Task_Res_ParamObj.Task_Param_SubTaskId = ""
+		paResBody.Task_Res.Task_Res_ParamObj.Task_Param_Type = ""
+		paResBody.Task_Res.Task_Res_ParamObj.Task_Param_WavAddr = ""
+		paResBody.Task_Res.Task_Res_ParamObj.Task_Param_TopN = -1
+		paResBody.Task_Res.Task_Res_ParamObj.Task_Param_SpkId = ""
+		paResBody.Task_Res.Task_Res_ParamObj.Task_Param_Scene = ""
+		paResBody.Task_Res.Task_Res_ParamObj.Task_Param_Channel = -1
+		paResBody.Task_Res.Task_Res_ParamObj.Task_Param_Gender = ""
+		paResBody.Task_Res.Task_Res_ParamObj.Task_Param_CutLen = -1
+		paResBody.Task_Res.Task_Res_Scene = ""
+		paResBody.Task_Res.Task_Res_SubTaskId = ""
+		paResBody.Task_Res.Task_Res_Type = ""
+	}
 	paResBodyPool.Put(paResBody)
 }
 

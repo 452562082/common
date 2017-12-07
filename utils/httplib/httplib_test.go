@@ -31,22 +31,30 @@ func TestResponse(t *testing.T) {
 }
 
 func TestGet(t *testing.T) {
-	req := Get("http://192.168.1.16:9001")
-	b, err := req.Bytes()
+	req := Get("http://torrent.google.com.btba.xiaoeryi.com/download?p=dXBsb2FkLzIwMTcvMTEvMzAv44CQQlTlkKfjgJFbVEM3MjBw5Zu96K%2Bt5Lit5a2XXS3nvp7nvp7nmoTpk4Hmi7MtTmV2ZXIgU2F5IERpZS0xLjExR0IudG9ycmVudA%3D%3D")
+	//req := Get("https://www.bttt.la/download4.php")
+	resp, err := req.Response()
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log(b)
 
-	s, err := req.String()
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Log(s)
+	t.Logf("Content-Disposition: %s", resp.Header.Get("Content-Disposition"))
 
-	if string(b) != s {
-		t.Fatal("request data not match")
-	}
+	//b, err := req.Bytes()
+	//if err != nil {
+	//	t.Fatal(err)
+	//}
+	//t.Log(b)
+	//
+	//s, err := req.String()
+	//if err != nil {
+	//	t.Fatal(err)
+	//}
+	//t.Log(s)
+	//
+	//if string(b) != s {
+	//	t.Fatal("request data not match")
+	//}
 }
 
 func TestSimplePost(t *testing.T) {
@@ -149,7 +157,7 @@ func TestWithUserAgent(t *testing.T) {
 
 func TestWithSetting(t *testing.T) {
 	v := "beego"
-	var setting HttpSettings
+	var setting HTTPSettings
 	setting.EnableCookie = true
 	setting.UserAgent = v
 	setting.Transport = nil
@@ -180,7 +188,7 @@ func TestToJson(t *testing.T) {
 		Origin string `json:"origin"`
 	}
 	var ip Ip
-	err = req.ToJson(&ip)
+	err = req.ToJSON(&ip)
 	if err != nil {
 		t.Fatal(err)
 	}
