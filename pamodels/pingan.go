@@ -151,18 +151,20 @@ func ReleasePaResBody(paResBody *PaResBody) {
 		if paResBody.Task_Res.Task_Res_Results != nil {
 			paResBody.Task_Res.Task_Res_Results = paResBody.Task_Res.Task_Res_Results[:0]
 		}
-		paResBody.Task_Res.Task_Res_ParamObj.Task_Param_SubTaskId = ""
-		paResBody.Task_Res.Task_Res_ParamObj.Task_Param_Type = ""
-		paResBody.Task_Res.Task_Res_ParamObj.Task_Param_WavAddr = ""
-		paResBody.Task_Res.Task_Res_ParamObj.Task_Param_TopN = -1
-		paResBody.Task_Res.Task_Res_ParamObj.Task_Param_SpkId = ""
-		paResBody.Task_Res.Task_Res_ParamObj.Task_Param_Scene = ""
-		paResBody.Task_Res.Task_Res_ParamObj.Task_Param_Channel = -1
-		paResBody.Task_Res.Task_Res_ParamObj.Task_Param_Gender = ""
-		paResBody.Task_Res.Task_Res_ParamObj.Task_Param_CutLen = -1
-		paResBody.Task_Res.Task_Res_Scene = ""
-		paResBody.Task_Res.Task_Res_SubTaskId = ""
-		paResBody.Task_Res.Task_Res_Type = ""
+		if paResBody.Task_Res.Task_Res_ParamObj != nil {
+			paResBody.Task_Res.Task_Res_ParamObj.Task_Param_SubTaskId = ""
+			paResBody.Task_Res.Task_Res_ParamObj.Task_Param_Type = ""
+			paResBody.Task_Res.Task_Res_ParamObj.Task_Param_WavAddr = ""
+			paResBody.Task_Res.Task_Res_ParamObj.Task_Param_TopN = -1
+			paResBody.Task_Res.Task_Res_ParamObj.Task_Param_SpkId = ""
+			paResBody.Task_Res.Task_Res_ParamObj.Task_Param_Scene = ""
+			paResBody.Task_Res.Task_Res_ParamObj.Task_Param_Channel = -1
+			paResBody.Task_Res.Task_Res_ParamObj.Task_Param_Gender = ""
+			paResBody.Task_Res.Task_Res_ParamObj.Task_Param_CutLen = -1
+			paResBody.Task_Res.Task_Res_Scene = ""
+			paResBody.Task_Res.Task_Res_SubTaskId = ""
+			paResBody.Task_Res.Task_Res_Type = ""
+		}
 	}
 	paResBodyPool.Put(paResBody)
 }
