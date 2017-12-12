@@ -13,6 +13,27 @@ import (
 )
 
 var ASV_VPR_INFO_INDEX string = `{
+  "settings": {
+    "analysis": {
+      "analyzer": {
+        "my_analyzer": {
+          "tokenizer": "my_tokenizer"
+        }
+      },
+      "tokenizer": {
+        "my_tokenizer": {
+          "type": "ngram",
+          "min_gram": 3,
+          "max_gram": 3,
+          "token_chars": [
+            "letter",
+            "digit"
+          ]
+        }
+      }
+    }
+  },
+
     "mappings": {
       "%s": {
         "properties": {
@@ -86,9 +107,9 @@ var ASV_VPR_INFO_INDEX string = `{
             "store": "yes",
             "type": "string"
           }
+      	}
       }
     }
-  }
 }
 `
 

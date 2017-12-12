@@ -38,88 +38,94 @@ func TestElasticClient_CreateIndexBodyString(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	var __ASV_VPR_INFO_INDEX string = `{
-  "asv_vpr_info": {
+	var __ASV_VPR_INFO_INDEX string =`{
+  "settings": {
+    "analysis": {
+      "analyzer": {
+        "my_analyzer": {
+          "tokenizer": "my_tokenizer"
+        }
+      },
+      "tokenizer": {
+        "my_tokenizer": {
+          "type": "ngram",
+          "min_gram": 3,
+          "max_gram": 3,
+          "token_chars": [
+            "letter",
+            "digit",
+			"punctuation",
+			"symbol"
+          ]
+        }
+      }
+    }
+  },
+
     "mappings": {
-      "asv_vpr_info": {
-        "_ttl": {
-          "enabled": false
-        },
-        "_timestamp": {
-          "enabled": true
-        },
-        "_all": {
-          "enabled": false
-        },
+      "asv_voiceprint_info": {
         "properties": {
           "vpr_task_id": {
-            //注册该条语音的任务ID
             "index": "not_analyzed",
             "store": "yes",
             "type": "string"
           },
           "vpr_spk_id": {
-            //语音唯一表示
             "index": "not_analyzed",
             "store": "yes",
             "type": "string"
           },
           "vpr_wav_file": {
-            //语音文件名
             "index": "not_analyzed",
             "store": "yes",
             "type": "string"
           },
           "vpr_utt_node": {
-            //声纹库id
+            "index": "not_analyzed",
+            "store": "yes",
+            "type": "string"
+          },
+          "vpr_utt_recordid": {
             "index": "not_analyzed",
             "store": "yes",
             "type": "string"
           },
           "vpr_add_time": {
-            //入库时间
             "index": "not_analyzed",
             "store": "yes",
             "type": "date"
           },
           "vpr_utt_duration": {
-            //语音时长
             "index": "not_analyzed",
             "store": "yes",
-            "type": "integer"
+            "type": "string"
           },
           "vpr_utt_valid_dura": {
-            //有效时长
             "index": "not_analyzed",
             "store": "yes",
-            "type": "integer"
+            "type": "string"
           },
           "vpr_utt_chan": {
-            //声道
             "index": "not_analyzed",
             "store": "yes",
-            "type": "integer"
+            "type": "string"
           },
           "vpr_utt_dir": {
-            //语音路径
             "index": "not_analyzed",
             "store": "yes",
             "type": "string"
           },
           "vpr_utt_gender": {
-            //说话人性别
             "index": "not_analyzed",
             "store": "yes",
             "type": "string"
           },
           "vpr_norm_params": {
-            // 得分归一化参数
             "index": "not_analyzed",
             "store": "yes",
-            "type": "integer"
+            "type": "string"
           },
           "vpr_utt_scene": {
-            // 语音场景
             "index": "not_analyzed",
             "store": "yes",
             "type": "string"
@@ -129,14 +135,13 @@ func TestElasticClient_CreateIndexBodyString(t *testing.T) {
             "store": "yes",
             "type": "string"
           }
-        }
+      	}
       }
     }
-  }
 }
 `
 
-	res, err := client.CreateIndexBodyString("asv_vpr_info", __ASV_VPR_INFO_INDEX)
+	res, err := client.CreateIndexBodyString("asv_voiceprint_info", __ASV_VPR_INFO_INDEX)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -174,11 +179,11 @@ func TestElasticClient_IndexBodyJson(t *testing.T) {
 	vpr_info.SetVprUttGender("M")
 	vpr_info.SetVprUttScene("lcc")
 	vpr_info.SetVprHasTone("no")
-
+	vpr_info.SetVprRecordId("recordId-testnode-00001")
 	vpr_info.SetVprAddTime(time.Now().Format("2006-01-02 15:04:05"))
 	vpr_info.SetVprWavFile("tbfaa_A.wav")
 
-	res, err := client.InsertDocBodyJsonWithID("asv_vpr_info", "asv_vpr_info", "3234567890ABCDEF", vpr_info)
+	res, err := client.InsertDocBodyJsonWithID("asv_voiceprint_info", "asv_voiceprint_info", "3234567890ABCDEF", vpr_info)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -195,7 +200,7 @@ func TestElasticClient_BoolQuery(t *testing.T) {
 	index, typ := "asv_voiceprint_info", "asv_voiceprint_info"
 
 	query := make(map[string]interface{})
-	query["vpr_utt_recordid"] = "*"
+	query["vpr_utt_recordid"] = "recordId-testnode-00001"
 	//query["vpr_utt_node"] = "testnode"
 	vpr := models.AcquireAsvVprInfo()
 	var id string
@@ -214,7 +219,7 @@ func TestElasticClient_WildcardQuery(t *testing.T) {
 	}
 
 	// Define wildcard query
-	q := elastic.NewWildcardQuery("vpr_utt_recordid", "*")
+	q := elastic.NewWildcardQuery("vpr_utt_recordid", "recordId-*-00001")
 	searchResult, err := client.client.Search().
 		Index("asv_voiceprint_info").
 		Type("asv_voiceprint_info"). // search in index "twitter"
