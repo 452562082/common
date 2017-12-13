@@ -13,104 +13,106 @@ import (
 )
 
 var ASV_VPR_INFO_INDEX string = `{
-  "settings": {
-    "analysis": {
-      "analyzer": {
-        "my_analyzer": {
-          "tokenizer": "my_tokenizer"
-        }
-      },
-      "tokenizer": {
-        "my_tokenizer": {
-          "type": "ngram",
-          "min_gram": 3,
-          "max_gram": 3,
-          "token_chars": [
-            "letter",
-            "digit"
-          ]
-        }
-      }
-    }
-  },
+	  "settings": {
+		"analysis": {
+		  "analyzer": {
+			"my_analyzer": {
+			  "tokenizer": "my_tokenizer"
+			}
+		  },
+		  "tokenizer": {
+			"my_tokenizer": {
+			  "type": "ngram",
+			  "min_gram": 1,
+			  "max_gram": 20,
+			  "token_chars": [
+				"letter",
+            	"digit",
+				"punctuation",
+				"symbol"
+			  ]
+			}
+		  }
+		}
+	  },
 
-    "mappings": {
-      "%s": {
-        "properties": {
-          "vpr_task_id": {
-            "index": "not_analyzed",
-            "store": "yes",
-            "type": "string"
-          },
-          "vpr_spk_id": {
-            "index": "not_analyzed",
-            "store": "yes",
-            "type": "string"
-          },
-          "vpr_wav_file": {
-            "index": "not_analyzed",
-            "store": "yes",
-            "type": "string"
-          },
-          "vpr_utt_node": {
-            "index": "not_analyzed",
-            "store": "yes",
-            "type": "string"
-          },
-          "vpr_utt_recordid": {
-            "index": "not_analyzed",
-            "store": "yes",
-            "type": "string"
-          },
-          "vpr_add_time": {
-            "index": "not_analyzed",
-            "store": "yes",
-            "type": "date"
-          },
-          "vpr_utt_duration": {
-            "index": "not_analyzed",
-            "store": "yes",
-            "type": "string"
-          },
-          "vpr_utt_valid_dura": {
-            "index": "not_analyzed",
-            "store": "yes",
-            "type": "string"
-          },
-          "vpr_utt_chan": {
-            "index": "not_analyzed",
-            "store": "yes",
-            "type": "string"
-          },
-          "vpr_utt_dir": {
-            "index": "not_analyzed",
-            "store": "yes",
-            "type": "string"
-          },
-          "vpr_utt_gender": {
-            "index": "not_analyzed",
-            "store": "yes",
-            "type": "string"
-          },
-          "vpr_norm_params": {
-            "index": "not_analyzed",
-            "store": "yes",
-            "type": "string"
-          },
-          "vpr_utt_scene": {
-            "index": "not_analyzed",
-            "store": "yes",
-            "type": "string"
-          },
-          "vpr_has_tone": {
-            "index": "not_analyzed",
-            "store": "yes",
-            "type": "string"
-          }
-      	}
-      }
-    }
-}
+		"mappings": {
+		  "%s": {
+			"properties": {
+			  "vpr_task_id": {
+				"index": "not_analyzed",
+				"store": "yes",
+				"type": "string"
+			  },
+			  "vpr_spk_id": {
+				"index": "not_analyzed",
+				"store": "yes",
+				"type": "string"
+			  },
+			  "vpr_wav_file": {
+				"index": "not_analyzed",
+				"store": "yes",
+				"type": "string"
+			  },
+			  "vpr_utt_node": {
+				"index": "not_analyzed",
+				"store": "yes",
+				"type": "string"
+			  },
+			  "vpr_utt_recordid": {
+				"index": "not_analyzed",
+				"store": "yes",
+				"type": "string"
+			  },
+			  "vpr_add_time": {
+				"index": "not_analyzed",
+				"store": "yes",
+				"type": "date"
+			  },
+			  "vpr_utt_duration": {
+				"index": "not_analyzed",
+				"store": "yes",
+				"type": "string"
+			  },
+			  "vpr_utt_valid_dura": {
+				"index": "not_analyzed",
+				"store": "yes",
+				"type": "string"
+			  },
+			  "vpr_utt_chan": {
+				"index": "not_analyzed",
+				"store": "yes",
+				"type": "string"
+			  },
+			  "vpr_utt_dir": {
+				"index": "not_analyzed",
+				"store": "yes",
+				"type": "string"
+			  },
+			  "vpr_utt_gender": {
+				"index": "not_analyzed",
+				"store": "yes",
+				"type": "string"
+			  },
+			  "vpr_norm_params": {
+				"index": "not_analyzed",
+				"store": "yes",
+				"type": "string"
+			  },
+			  "vpr_utt_scene": {
+				"index": "not_analyzed",
+				"store": "yes",
+				"type": "string"
+			  },
+			  "vpr_has_tone": {
+				"index": "not_analyzed",
+				"store": "yes",
+				"type": "string"
+			  }
+			}
+		  }
+		}
+	}
 `
 
 type ElasticClient struct {
