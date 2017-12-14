@@ -66,9 +66,10 @@ func main() {
 		log.Infof("__elastic_client create indexBodyString %s", dstindex)
 	}
 
+	finish := 0
 	if result.Hits.TotalHits > 0 {
 		log.Infof("data from src index, total: %d", result.Hits.TotalHits)
-		finish := 0
+
 		for _, hit := range result.Hits.Hits {
 			insertresult, err := __elastic_client_dst.InsertDocBodyStringWithID(dstindex, dstindex, hit.Id, string(*hit.Source))
 			if err != nil {
@@ -82,5 +83,5 @@ func main() {
 			}
 		}
 	}
-	log.Infof("transfer done success")
+	log.Infof("transfer done success %d", finish)
 }
