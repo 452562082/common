@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"git.oschina.net/kuaishangtong/common/elastic"
 	"git.oschina.net/kuaishangtong/common/utils/log"
 	"strings"
@@ -50,6 +51,19 @@ func main() {
 
 	if result.Hits == nil {
 		log.Fatalf("wildcard query in src index %s failed", srcindex)
+	}
+
+	exist, err := __elastic_client_dst.IndexExists(dstindex)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if !exist {
+		_, err = __elastic_client_dst.CreateIndexBodyString(dstindex, fmt.Sprintf(elastic.ASV_VPR_INFO_INDEX, dstindex))
+		if err != nil {
+			log.Fatalf("CreateIndexBodyString error: %v", err)
+		}
+		log.Infof("__elastic_client create indexBodyString %s", dstindex)
 	}
 
 	if result.Hits.TotalHits > 0 {
