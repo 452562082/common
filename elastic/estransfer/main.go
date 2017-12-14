@@ -9,9 +9,8 @@ import (
 )
 
 var hosts string
-
-var srcindex string = "testnode"
-var dstindex string = "testnode1"
+var srcindex string
+var dstindex string
 
 func init() {
 	flag.StringVar(&hosts, "hosts", "", "elasticsearch cluster hosts")
