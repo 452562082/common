@@ -19,6 +19,8 @@ func init() {
 }
 
 func main() {
+
+	flag.Parse()
 	if len(hosts) == 0 {
 		log.Fatal("hosts can not be \"\"")
 	}
