@@ -289,7 +289,4 @@ func (ec *ElasticClient) Backup(hc *hdfs.HdfsClient, backup_path, node_name stri
 
 	data := bytes.Join(s, []byte("\r\n"))
 	return hc.WriteFile(backup_path+"/"+node_name+"_"+strconv.FormatInt(backup_time, 10), data)
-	//ioutil.WriteFile(backup_path+node_name+"_"+strconv.FormatInt(backup_time, 10), data, 0666)
-
-	//return nil
 }
