@@ -218,6 +218,45 @@ type PaTaskParam struct {
 	Task_Param_HasTone bool  `json:"task_param_has_tone"` // 布尔型，是否有tone音
 }
 
+func (p *PaTaskParam) Copy() *PaTaskParam {
+	newTaskParam := new(PaTaskParam)
+
+	newTaskParam.Task_Param_SubTaskId = p.Task_Param_SubTaskId
+	newTaskParam.Task_Param_Type = p.Task_Param_Type
+	// 注册、验证、辨认参数
+	newTaskParam.Task_Param_Scene = p.Task_Param_Scene
+	newTaskParam.Task_Param_WavAddr = p.Task_Param_WavAddr
+	newTaskParam.Task_Param_Channel = p.Task_Param_Channel
+	newTaskParam.Task_Param_Gender = p.Task_Param_Gender
+	newTaskParam.Task_Param_SpkId = p.Task_Param_SpkId
+	newTaskParam.Task_Param_RecordId = p.Task_Param_RecordId
+	newTaskParam.Task_Param_Source = p.Task_Param_Source
+	newTaskParam.Task_Param_TopN = p.Task_Param_TopN
+	//Task_Param_Version
+	newTaskParam.Task_Param_Nodes = make([]string, len(p.Task_Param_Nodes), len(p.Task_Param_Nodes))
+	for i := 0; i < len(p.Task_Param_Nodes); i++ {
+		newTaskParam.Task_Param_Nodes[i] = p.Task_Param_Nodes[i]
+	}
+
+	newTaskParam.Task_Param_EnrollNode = p.Task_Param_EnrollNode
+	newTaskParam.Task_Param_DeleteNode = p.Task_Param_DeleteNode
+	newTaskParam.Task_Param_OriginNode = p.Task_Param_OriginNode
+	newTaskParam.Task_Param_TargetNode = make([]string, len(p.Task_Param_TargetNode), len(p.Task_Param_TargetNode))
+	for i := 0; i < len(p.Task_Param_TargetNode); i++ {
+		newTaskParam.Task_Param_TargetNode[i] = p.Task_Param_TargetNode[i]
+	}
+	newTaskParam.Task_Param_EnrollFlag = p.Task_Param_EnrollFlag
+	newTaskParam.Task_Param_WavAddr1 = p.Task_Param_WavAddr1
+	newTaskParam.Task_Param_WavAddr2 = p.Task_Param_WavAddr2
+	newTaskParam.Task_Param_Channel1 = p.Task_Param_Channel1
+	newTaskParam.Task_Param_Channel2 = p.Task_Param_Channel2
+	// 其他
+	newTaskParam.Task_Param_CutLen = p.Task_Param_CutLen
+	newTaskParam.Task_Param_HasTone = p.Task_Param_HasTone
+
+	return newTaskParam
+}
+
 type PaResBody struct {
 	Task_Id  string     `json:"task_id"`  // 字符串，32位长度，全局唯一的任务ID
 	Task_Res *PaTaskRes `json:"task_res"` // PaRespParam对象，任务处理结果
