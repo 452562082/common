@@ -22,12 +22,27 @@ import (
 )
 
 func TestResponse(t *testing.T) {
-	req := Get("http://httpbin.org/get")
+	body := make(map[string]interface{})
+	body["filename"] = "123.txt"
+	body["data"] = []byte("mytest")
+	req, err := Post("http://192.168.1.16:8081/uploadwav").Header("Content-Type", "application/json").JSONBody(&body)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	resp, err := req.Response()
 	if err != nil {
 		t.Fatal(err)
 	}
 	t.Log(resp)
+	data, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+
+
+	t.Log(string(data))
 }
 
 func TestGet(t *testing.T) {
