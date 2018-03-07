@@ -2,9 +2,9 @@ package hdfs
 
 import (
 	"fmt"
-	"git.oschina.net/kuaishangtong/asvserver/utils"
-	"git.oschina.net/kuaishangtong/common/utils/httplib"
-	"git.oschina.net/kuaishangtong/common/utils/log"
+	"kuaishangtong/asvserver/utils"
+	"kuaishangtong/common/utils/httplib"
+	"kuaishangtong/common/utils/log"
 	"github.com/colinmarc/hdfs"
 	"io/ioutil"
 	"os"

@@ -3,8 +3,8 @@ package main
 import (
 	"flag"
 	"fmt"
-	"git.oschina.net/kuaishangtong/common/elastic"
-	"git.oschina.net/kuaishangtong/common/utils/log"
+	"kuaishangtong/common/elastic"
+	"kuaishangtong/common/utils/log"
 	"strings"
 )
 

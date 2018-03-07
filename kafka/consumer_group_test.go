@@ -3,7 +3,7 @@ package kafka
 import (
 	"testing"
 
-	"git.oschina.net/kuaishangtong/common/utils/log"
+	"kuaishangtong/common/utils/log"
 	"time"
 )
 

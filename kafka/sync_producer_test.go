@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 	"time"
-	"git.oschina.net/kuaishangtong/common/utils/log"
+	"kuaishangtong/common/utils/log"
 	"github.com/Shopify/sarama"
 )
 

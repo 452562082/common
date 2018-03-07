@@ -3,7 +3,7 @@ package daemon
 import (
 	"bytes"
 	"fmt"
-	"git.oschina.net/kuaishangtong/common/utils/log"
+	"kuaishangtong/common/utils/log"
 	"os"
 	"os/exec"
 	"os/signal"

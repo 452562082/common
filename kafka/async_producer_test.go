@@ -2,7 +2,7 @@ package kafka
 
 import (
 	"fmt"
-	"git.oschina.net/kuaishangtong/common/utils/log"
+	"kuaishangtong/common/utils/log"
 	"testing"
 	"time"
 )

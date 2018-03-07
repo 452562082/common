@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"git.apache.org/thrift.git/lib/go/thrift"
-	"git.oschina.net/kuaishangtong/common/hbase"
+	"kuaishangtong/common/hbase"
 )
 
 type HBaseHelper struct {

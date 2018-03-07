@@ -4,7 +4,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"git.apache.org/thrift.git/lib/go/thrift"
-	"git.oschina.net/kuaishangtong/common/utils/log"
+	"kuaishangtong/common/utils/log"
 	"testing"
 	"time"
 )

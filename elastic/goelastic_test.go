@@ -2,7 +2,7 @@ package elastic
 
 import (
 	"fmt"
-	"git.oschina.net/kuaishangtong/asvserver/models"
+	"kuaishangtong/asvserver/models"
 	"gopkg.in/olivere/elastic.v2"
 	"testing"
 	"time"

@@ -7,7 +7,7 @@ import (
 	"flag"
 	"fmt"
 	"git.apache.org/thrift.git/lib/go/thrift"
-	"git.oschina.net/kuaishangtong/common/hbase"
+	"kuaishangtong/common/hbase"
 	"math"
 	"net"
 	"net/url"

@@ -1,6 +1,6 @@
 package utils
 
-import "git.oschina.net/kuaishangtong/common/utils/log"
+import "kuaishangtong/common/utils/log"
 
 type ErrLog struct {
 }

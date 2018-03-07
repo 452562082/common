@@ -6,7 +6,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"encoding/xml"
-	"git.oschina.net/kuaishangtong/common/utils/log"
+	"kuaishangtong/common/utils/log"
 	"io"
 	"io/ioutil"
 	"mime/multipart"

@@ -7,8 +7,8 @@ import (
 	"sync"
 	"time"
 
-	"git.oschina.net/kuaishangtong/common/utils"
-	"git.oschina.net/kuaishangtong/common/utils/log"
+	"kuaishangtong/common/utils"
+	"kuaishangtong/common/utils/log"
 	"github.com/samuel/go-zookeeper/zk"
 )
 
