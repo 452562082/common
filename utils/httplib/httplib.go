@@ -19,6 +19,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"github.com/opentracing/opentracing-go"
 )
 
 var defaultSetting = HTTPSettings{
@@ -67,6 +68,7 @@ func NewRequest(rawurl, method string) *HTTPRequest {
 		ProtoMajor: 1,
 		ProtoMinor: 1,
 	}
+
 	return &HTTPRequest{
 		url:     rawurl,
 		req:     &req,
@@ -128,6 +130,8 @@ type HTTPRequest struct {
 	resp    *http.Response
 	body    []byte
 	dump    []byte
+
+	Tracer opentracing.Tracer
 }
 
 // GetRequest return the request object
