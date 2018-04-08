@@ -30,6 +30,7 @@ type Logger interface {
 	WriteMsg(msg string, level int, color bool) error
 	Destroy()
 	Flush()
+	Println(v ...interface{})
 }
 
 var adapters = make(map[string]loggerType)
@@ -363,6 +364,10 @@ func (bl *ZeusLogger) Flush() {
 	for _, l := range bl.outputs {
 		l.Flush()
 	}
+}
+
+func (bl *ZeusLogger) Println(v ...interface{}) {
+	bl.Println(v...)
 }
 
 // Close close logger, flush all chan data and destroy all adapters in ZeusLogger.

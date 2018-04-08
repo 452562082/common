@@ -82,6 +82,10 @@ func (c *consoleWriter) Flush() {
 
 }
 
+func (c *consoleWriter) Println(v ...interface{}) {
+	c.lg.Println(v...)
+}
+
 func init() {
 	Register("console", NewConsole)
 }
