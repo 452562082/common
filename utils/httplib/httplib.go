@@ -6,9 +6,10 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"encoding/xml"
-	"kuaishangtong/common/utils/log"
+	"github.com/opentracing/opentracing-go"
 	"io"
 	"io/ioutil"
+	"kuaishangtong/common/utils/log"
 	"mime/multipart"
 	"net"
 	"net/http"
@@ -19,7 +20,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-	"github.com/opentracing/opentracing-go"
 )
 
 var defaultSetting = HTTPSettings{
