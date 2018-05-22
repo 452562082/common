@@ -4,13 +4,12 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/olivere/elastic"
+	"gopkg.in/olivere/elastic.v3"
 	"kuaishangtong/asvWebApi/const"
 	"kuaishangtong/common/hdfs"
 	"kuaishangtong/common/utils"
 	"os"
 	"strconv"
-	"context"
 )
 
 var ASV_VPR_INFO_INDEX string = `{
@@ -140,11 +139,11 @@ func NewElasticClient(hosts []string) (*ElasticClient, error) {
 }
 
 func (ec *ElasticClient) IndexExists(indices string) (bool, error) {
-	return ec.client.IndexExists(indices).Do(context.Background())
+	return ec.client.IndexExists(indices).Do()
 }
 
 func (ec *ElasticClient) CreateIndexBodyString(name string, body string) (*elastic.IndicesCreateResult, error) {
-	return ec.client.CreateIndex(name).Body(body).Do(context.Background())
+	return ec.client.CreateIndex(name).Body(body).Do()
 }
 
 //func (ec *ElasticClient) CreateIndex(name string) (*elastic.CreateIndexResult, error) {
@@ -156,11 +155,11 @@ func (ec *ElasticClient) CreateIndexBodyString(name string, body string) (*elast
 //}
 
 func (ec *ElasticClient) DeleteIndex(indices string) (*elastic.IndicesDeleteResponse, error) {
-	return ec.client.DeleteIndex(indices).Do(context.Background())
+	return ec.client.DeleteIndex(indices).Do()
 }
 
 func (ec *ElasticClient) DeleteDocWithID(index, typ, id string) (*elastic.DeleteResponse, error) {
-	return ec.client.Delete().Index(index).Type(typ).Id(id).Do(context.Background())
+	return ec.client.Delete().Index(index).Type(typ).Id(id).Do()
 }
 
 //func (ec *ElasticClient) DeleteDoc(index, typ string) (*elastic.DeleteResult, error) {
@@ -172,7 +171,7 @@ func (ec *ElasticClient) UpdateDocBodyWithID(index, typ, id string, data map[str
 	_, err := ec.client.Update().
 		Index(index).Type(typ).Fields().
 		Doc(data).
-		Do(context.Background())
+		Do()
 
 	if err != nil {
 		return err
@@ -181,23 +180,23 @@ func (ec *ElasticClient) UpdateDocBodyWithID(index, typ, id string, data map[str
 }
 
 func (ec *ElasticClient) InsertDocBodyJsonWithID(index, typ, id string, body interface{}) (*elastic.IndexResponse, error) {
-	return ec.client.Index().Index(index).Type(typ).Id(id).BodyJson(body).Do(context.Background())
+	return ec.client.Index().Index(index).Type(typ).Id(id).BodyJson(body).Do()
 }
 
 func (ec *ElasticClient) InsertDocBodyStringWithID(index, typ, id string, body string) (*elastic.IndexResponse, error) {
-	return ec.client.Index().Index(index).Type(typ).Id(id).BodyString(body).Do(context.Background())
+	return ec.client.Index().Index(index).Type(typ).Id(id).BodyString(body).Do()
 }
 
 func (ec *ElasticClient) InsertDocBodyJson(index, typ string, body interface{}) (*elastic.IndexResponse, error) {
-	return ec.client.Index().Index(index).Type(typ).BodyJson(body).Do(context.Background())
+	return ec.client.Index().Index(index).Type(typ).BodyJson(body).Do()
 }
 
 func (ec *ElasticClient) InsertDocBodyString(index, typ string, body string) (*elastic.IndexResponse, error) {
-	return ec.client.Index().Index(index).Type(typ).BodyString(body).Do(context.Background())
+	return ec.client.Index().Index(index).Type(typ).BodyString(body).Do()
 }
 
 func (ec *ElasticClient) GetDoc(index, typ, id string) (*elastic.GetResult, error) {
-	return ec.client.Get().Index(index).Type(typ).Id(id).Do(context.Background())
+	return ec.client.Get().Index(index).Type(typ).Id(id).Do()
 }
 
 func (ec *ElasticClient) BoolQuery(index, typ string, query map[string]interface{}, body interface{}, id *string) error {
@@ -206,7 +205,7 @@ func (ec *ElasticClient) BoolQuery(index, typ string, query map[string]interface
 		q = q.Must(elastic.NewTermQuery(k, v))
 	}
 
-	searchResult, err := ec.client.Search().Index(index).Type(typ).Query(q).Size(1).Do(context.Background())
+	searchResult, err := ec.client.Search().Index(index).Type(typ).Query(q).Size(1).Do()
 	if err != nil {
 		return err
 	}
@@ -229,7 +228,7 @@ func (ec *ElasticClient) BoolQuerys(index, typ string, query map[string]interfac
 		q = q.Must(elastic.NewTermQuery(k, v))
 	}
 
-	return ec.client.Search().Index(index).Type(typ).Query(q).Do(context.Background())
+	return ec.client.Search().Index(index).Type(typ).Query(q).Do()
 }
 
 func (ec *ElasticClient) WildcardQuery(index, typ string, key, value string) (*elastic.SearchResult, error) {
@@ -239,7 +238,7 @@ func (ec *ElasticClient) WildcardQuery(index, typ string, key, value string) (*e
 		Type(typ). // search in index "twitter"
 		Query(q).  // use wildcard query defined above
 		Size(100000000).
-		Do(context.Background()) // execute
+		Do() // execute
 	if err != nil {
 		return nil, err
 	}
@@ -261,7 +260,7 @@ func (ec *ElasticClient) RestoreByFilename(hc *hdfs.HdfsClient, filename string)
 			continue
 		}
 
-		_, err := ec.client.Index().Index(string(val[0])).Type(string(val[1])).Id(string(val[2])).BodyJson(string(val[3])).Do(context.Background())
+		_, err := ec.client.Index().Index(string(val[0])).Type(string(val[1])).Id(string(val[2])).BodyJson(string(val[3])).Do()
 		if err != nil {
 			return err
 		}
@@ -277,7 +276,7 @@ func (ec *ElasticClient) Backup(hc *hdfs.HdfsClient, backup_path, node_name stri
 		Type(_const.ELASTIC_INDEX). // search in index "twitter"
 		Query(q).                   // use wildcard query defined above
 		Size(100000000).
-		Do(context.Background()) // execute
+		Do() // execute
 	if err != nil {
 		return err
 	}
