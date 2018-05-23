@@ -237,7 +237,7 @@ func (ec *ElasticClient) WildcardQuery(index, typ string, key, value string) (*e
 		Index(index).
 		Type(typ). // search in index "twitter"
 		Query(q).  // use wildcard query defined above
-		Size(100000000).
+		Size(1000).
 		Do() // execute
 	if err != nil {
 		return nil, err
