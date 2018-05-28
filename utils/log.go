@@ -9,7 +9,7 @@ type ErrLog struct {
 func NewErrlog() *ErrLog {
 
 	logger := log.NewLogger(10000)
-	logger.SetLogFuncCallDepth(3)
+	logger.SetLogFuncCallDepth(4)
 	return &ErrLog{
 		logger: logger,
 	}
@@ -25,7 +25,7 @@ type InfoLog struct {
 
 func NewInfoLog() *InfoLog {
 	logger := log.NewLogger(10000)
-	logger.SetLogFuncCallDepth(3)
+	logger.SetLogFuncCallDepth(4)
 	return &InfoLog{
 		logger: logger,
 	}
