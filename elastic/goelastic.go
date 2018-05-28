@@ -12,6 +12,8 @@ import (
 	"strconv"
 )
 
+// curl -XPUT http://127.0.0.1:9200/asv_voiceprint_info/_settings -d '{ "index" : { "max_result_window" : 100000000}}'
+
 var ASV_VPR_INFO_INDEX string = `{
 	  "settings": {
 		"analysis": {
