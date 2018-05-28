@@ -10,6 +10,8 @@ func NewErrlog() *ErrLog {
 
 	logger := log.NewLogger(100000)
 	logger.SetLogFuncCallWithDepth(true, 3)
+	logger.SetLogger("console", `{"color":true}`)
+	logger.SetLevel(log.LevelDebug)
 	return &ErrLog{
 		logger: logger,
 	}
@@ -26,6 +28,8 @@ type InfoLog struct {
 func NewInfoLog() *InfoLog {
 	logger := log.NewLogger(100000)
 	logger.SetLogFuncCallWithDepth(true, 3)
+	logger.SetLogger("console", `{"color":true}`)
+	logger.SetLevel(log.LevelDebug)
 	return &InfoLog{
 		logger: logger,
 	}
