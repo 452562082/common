@@ -2,6 +2,7 @@ package pamodels
 
 import (
 	"fmt"
+	"strings"
 	"sync"
 )
 
@@ -218,6 +219,11 @@ type PaTaskParam struct {
 	Task_Param_HasTone bool  `json:"task_param_has_tone"` // 布尔型，是否有tone音
 }
 
+func (p *PaTaskParam) String() string {
+	return fmt.Sprintf("task_type: %s, task_nodes: %v, task_topn: %d",
+		p.Task_Param_Type, p.Task_Param_Nodes, p.Task_Param_TopN)
+}
+
 func (p *PaTaskParam) Copy() *PaTaskParam {
 	newTaskParam := new(PaTaskParam)
 
@@ -284,12 +290,18 @@ type PaTaskRes struct {
 func (p PaTaskRes) String() string {
 	results := ""
 	for _, res := range p.Task_Res_Results {
-		results += fmt.Sprintf("proc_errcode: %d, proc_errmsg: %s, proc_spkid: %s, proc_confidence: %.02f, proc_candidates： %v",
+		candidates := "["
+		for _, c := range res.Task_Proc_Candidates {
+			candidates += fmt.Sprintf("spkid: %s, node: %s, score: %.02f |", c.Identify_SpkId, c.Identify_Node, c.Identify_Confidence)
+		}
+		candidates = strings.TrimRight(candidates, " |") + "]"
+
+		results += fmt.Sprintf("proc_errcode: %d, proc_errmsg: %s, proc_spkid: %s, proc_confidence: %.02f, proc_candidates： %s",
 			res.Task_Proc_ErrCode, res.Task_Proc_ErrMsg, res.Task_Proc_SpkId,
-			res.Task_Proc_Confidence, res.Task_Proc_Candidates)
+			res.Task_Proc_Confidence, candidates)
 	}
 
-	return fmt.Sprintf("subid: %s, type: %s, taskParam: %v, code: %d, msg: %s, results: [%s]",
+	return fmt.Sprintf("subid: %s, type: %s, taskParam: %s, code: %d, msg: %s, results: [%s]",
 		p.Task_Res_SubTaskId, p.Task_Res_Type, p.Task_Res_ParamObj, p.Task_Res_ErrCode,
 		p.Task_Res_ErrMsg, results,
 	)
