@@ -220,8 +220,8 @@ type PaTaskParam struct {
 }
 
 func (p *PaTaskParam) String() string {
-	return fmt.Sprintf("task_type: %s, task_nodes: %v, task_topn: %d",
-		p.Task_Param_Type, p.Task_Param_Nodes, p.Task_Param_TopN)
+	return fmt.Sprintf("task_nodes: %v, task_topn: %d",
+		p.Task_Param_Nodes, p.Task_Param_TopN)
 }
 
 func (p *PaTaskParam) Copy() *PaTaskParam {
@@ -296,7 +296,7 @@ func (p PaTaskRes) String() string {
 		}
 		candidates = strings.TrimRight(candidates, " |") + "]"
 
-		results += fmt.Sprintf("proc_errcode: %d, proc_errmsg: %s, proc_spkid: %s, proc_confidence: %.02f, proc_candidates： %s",
+		results += fmt.Sprintf("proc_errcode: %d, proc_errmsg: %s, proc_spkid: %s, proc_confidence: %.02f, proc_candidates: %s",
 			res.Task_Proc_ErrCode, res.Task_Proc_ErrMsg, res.Task_Proc_SpkId,
 			res.Task_Proc_Confidence, candidates)
 	}
