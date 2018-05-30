@@ -128,7 +128,7 @@ func NewElasticClient(hosts []string) (*ElasticClient, error) {
 		urls = append(urls, _url)
 	}
 
-	client, err := elastic.NewClient(elastic.SetURL(urls...), elastic.SetErrorLog(new(utils.ErrLog)), elastic.SetInfoLog(new(utils.InfoLog)))
+	client, err := elastic.NewClient(elastic.SetURL(urls...), elastic.SetErrorLog(utils.NewErrlog()), elastic.SetInfoLog(utils.NewInfoLog()))
 	if err != nil {
 		return nil, err
 	}
