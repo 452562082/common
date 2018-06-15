@@ -13,7 +13,7 @@ import (
 )
 
 type Cache interface {
-	Length() int
+	Length() int64
 	Add(key Key, value interface{}) error
 	Modify(key Key, value interface{}) (bool, error)
 	Get(key Key) (interface{}, bool, error)
@@ -24,15 +24,15 @@ type Cache interface {
 	RemoveAll() error
 	RemoveOldest() error
 	SetTimeout(timeout int64)
-	UpdateTimestamp(Key, int64) (bool, error)
+	UpdateTimestamp(Key, int64) error
 	SetRemoveCallback(removeCallback func(Key, interface{}))
 	SetRemoveOldestCallback(removeOldestCallback func(Key, interface{}))
 	ClearExpireKeys() error
 
 	// multi operations
-	MultiAdd([]Key, []interface{}) error
-	MultiModify([]Key, []interface{}) error
-	MultiGet(keys []Key) ([]interface{}, error)
+	//MultiAdd([]Key, []interface{}) error
+	//MultiModify([]Key, []interface{}) error
+	//MultiGet(keys []Key) ([]interface{}, error)
 }
 
 type CacheMem struct {
@@ -95,13 +95,13 @@ func (c *CacheMem) recycle(entry *entry) {
 	c.pool.Put(entry)
 }
 
-func (c *CacheMem) Length() int {
+func (c *CacheMem) Length() int64 {
 	c.Lock()
 	defer c.Unlock()
 	if c.cache == nil {
 		return 0
 	}
-	return c.lru.Len()
+	return int64(c.lru.Len())
 }
 func (c *CacheMem) SetTimeout(timeout int64) {
 	c.Timeout = timeout
@@ -243,16 +243,17 @@ func (c *CacheMem) CheckTimeStamp(key Key) (bool, error) {
 	return false, nil
 }
 
-func (c *CacheMem) UpdateTimestamp(key Key, timestamp int64) (bool, error) {
+func (c *CacheMem) UpdateTimestamp(key Key, timestamp int64) error {
 	c.Lock()
 	defer c.Unlock()
 
 	if e, hit := c.cacheSearch(key); hit {
 		c.lru.MoveToFront(e)
 		e.Value.(*entry).timestamp = timestamp
-		return true, nil
+		//return true, nil
 	}
-	return false, nil
+	//return false, nil
+	return nil
 }
 
 func (c *CacheMem) GetAll(getAliveFunc func(Key, interface{})) error {
