@@ -140,9 +140,6 @@ func (c *CacheMem) cacheDel(key Key) {
 func (c *CacheMem) Add(key Key, value interface{}) (err error) {
 	c.Lock()
 	defer c.Unlock()
-	if log.MinSeverity <= log.DEBUG {
-		log.Debug("lru Add:", c.Name, key, value)
-	}
 
 	var e *list.Element
 
@@ -165,9 +162,6 @@ func (c *CacheMem) Add(key Key, value interface{}) (err error) {
 func (c *CacheMem) Modify(key Key, value interface{}) (exist bool, err error) {
 	c.Lock()
 	defer c.Unlock()
-	if log.MinSeverity <= log.DEBUG {
-		log.Debug("lru Modify:", c.Name, key, value)
-	}
 
 	var e *list.Element
 
