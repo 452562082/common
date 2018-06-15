@@ -4,12 +4,11 @@ import (
 	"container/list"
 	"encoding/binary"
 	"fmt"
-	"goal/log"
+	"goal/github.com/coocood/freecache"
+	"kuaishangtong/common/utils/log"
 	"sync"
 	"time"
 	"unsafe"
-
-	"goal/github.com/coocood/freecache"
 )
 
 type Cache interface {

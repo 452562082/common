@@ -3,7 +3,6 @@ package lru
 import (
 	"bytes"
 	"fmt"
-	//"github.com/gomodule/redigo/redis"
 	"github.com/go-redis/redis"
 	"kuaishangtong/common/utils/log"
 	"strconv"
