@@ -4,7 +4,7 @@ import (
 	"container/list"
 	"encoding/binary"
 	"fmt"
-	"goal/github.com/coocood/freecache"
+	"github.com/coocood/freecache"
 	"kuaishangtong/common/utils/log"
 	"sync"
 	"time"
@@ -109,8 +109,7 @@ func (c *CacheMem) SetTimeout(timeout int64) {
 func (c *CacheMem) cacheSearch(key Key) (e *list.Element, ok bool) {
 	keybytes := []byte(key.(string))
 
-	var valueBuf []byte = make([]byte, 64)
-	valuebytes, _ := c.cache.GetToBuf(keybytes, valueBuf)
+	valuebytes, _ := c.cache.Get(keybytes)
 	if valuebytes != nil {
 		e = (*list.Element)(unsafe.Pointer(uintptr(binary.LittleEndian.Uint64(valuebytes))))
 		ok = true
