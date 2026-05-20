@@ -1,33 +1,39 @@
 package kafka
 
 import (
+	"context"
+	"strings"
 	"testing"
 
-	"kuaishangtong/common/utils/log"
-	"time"
+	"github.com/IBM/sarama"
 )
 
-var zkHosts []string = []string{"103.27.5.136:2181"}
-var zkKafkaHosts []string = []string{"103.27.5.136:9092"}
-var topics []string = []string{"result"}
-
-func TestKafkaConsumer(t *testing.T) {
-	consumer, err := NewKafkaConsumer(zkHosts, topics, "go_topic_group")
-	if err != nil {
-		t.Fatal(err)
+func TestGroupHandler_RecoversFromPanic(t *testing.T) {
+	h := &groupHandler{
+		handler: func(_ context.Context, _ *sarama.ConsumerMessage) error {
+			panic("user bug")
+		},
 	}
-	log.Infof("start")
-	ticker := time.NewTimer(1 * (time.Second))
-	for {
-		select {
-		case <-ticker.C:
-			log.Debug(time.Now())
+	err := h.invoke(context.Background(), &sarama.ConsumerMessage{
+		Topic:     "demo",
+		Partition: 0,
+		Offset:    1,
+	})
+	if err == nil {
+		t.Fatal("expected error from panicking handler")
+	}
+	if !strings.Contains(err.Error(), "panic") {
+		t.Errorf("error should mention panic, got %q", err)
+	}
+}
 
-		case err := <-consumer.Errors():
-			t.Error(err)
-		case msg := <-consumer.Messages():
-			log.Infof("key:%s, value:%s", string(msg.Key), string(msg.Value))
-
-		}
+func TestGroupHandler_PassesThroughNormalError(t *testing.T) {
+	want := context.Canceled
+	h := &groupHandler{
+		handler: func(_ context.Context, _ *sarama.ConsumerMessage) error { return want },
+	}
+	err := h.invoke(context.Background(), &sarama.ConsumerMessage{})
+	if err != want {
+		t.Errorf("got %v, want %v", err, want)
 	}
 }

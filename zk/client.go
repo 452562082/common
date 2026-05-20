@@ -1,136 +1,213 @@
 package zk
 
 import (
+	"context"
+	"errors"
 	"fmt"
+	"log/slog"
 	"strings"
+	"sync"
 	"time"
 
-	"kuaishangtong/common/utils/log"
-	"github.com/samuel/go-zookeeper/zk"
+	"github.com/go-zookeeper/zk"
 )
 
-type GozkClient struct {
+const (
+	clientDefaultSessionTimeout = 2 * time.Second
+	clientChannelBuffer         = 1
+	clientWatchBackoff          = time.Second
+)
+
+// Client watches a single ZooKeeper node for data and children changes.
+//
+// Both watcher goroutines push the latest value onto buffered channels each
+// time it changes. If a consumer is slow, the latest value is conflated
+// (older buffered values are dropped) rather than blocking the watcher.
+type Client struct {
 	path     string
 	conn     *zk.Conn
 	data     chan []byte
 	children chan []string
+
+	ctx    context.Context
+	cancel context.CancelFunc
+	wg     sync.WaitGroup
 }
 
-func NewGozkClient(zkhosts []string, nodepath string, _default []byte, writeDefault bool) (*GozkClient, error) {
-	nodepath = strings.Trim(nodepath, "/")
-	nodepath = "/" + nodepath
+// NewClient connects to zkHosts, ensures nodePath exists (creating it with
+// defaultData when writeDefault is true), and starts watcher goroutines.
+func NewClient(zkHosts []string, nodePath string, defaultData []byte, writeDefault bool) (*Client, error) {
+	nodePath = "/" + strings.Trim(nodePath, "/")
 
-	client := &GozkClient{
-		path:     nodepath,
-		data:     make(chan []byte),
-		children: make(chan []string),
-	}
-
-	c, _, err := zk.Connect(zkhosts, 2*time.Second)
+	conn, _, err := zk.Connect(zkHosts, clientDefaultSessionTimeout)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("zk: connect: %w", err)
 	}
 
-	client.conn = c
-	exist, _, err := client.conn.Exists(nodepath)
+	exist, _, err := conn.Exists(nodePath)
+	if err != nil {
+		conn.Close()
+		return nil, fmt.Errorf("zk: exists %s: %w", nodePath, err)
+	}
 	if !exist {
 		if !writeDefault {
-			return nil, fmt.Errorf("zookeeper node %s is not existed", nodepath)
+			conn.Close()
+			return nil, fmt.Errorf("zk: node %s does not exist", nodePath)
 		}
-		_, err = client.conn.Create(nodepath, _default, 0, zk.WorldACL(zk.PermAll))
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	go client.watchNodeDataChanged()
-	go client.watchNodeChildrenChanged()
-
-	return client, nil
-}
-
-func (gzc *GozkClient) String() string {
-	return fmt.Sprintf("go-zk Client sid[%d] path[%s]", gzc.conn.SessionID(), gzc.path)
-}
-
-func (gzc *GozkClient) GetData() <-chan []byte {
-	return gzc.data
-}
-
-func (gzc *GozkClient) GetChildren() <-chan []string {
-	return gzc.children
-}
-
-func (gzc *GozkClient) GetChildrenOnce(node string) ([]string, *zk.Stat, error) {
-	return gzc.conn.Children(node)
-}
-
-func (gzc *GozkClient) Close() {
-	gzc.conn.Close()
-}
-
-func (gzc *GozkClient) watchNodeDataChanged() {
-	first := true
-	for {
-		data, _, events, err := gzc.conn.GetW(gzc.path)
-		if err != nil {
-			log.Error(err)
-			continue
-		}
-
-		if first {
-			gzc.data <- data
-			first = false
-			continue
-		}
-
-		evt := <-events
-		if evt.Err != nil {
-			log.Error(evt.Err)
-			continue
-		}
-
-		if evt.Type == zk.EventNodeDataChanged {
-			data, _, err := gzc.conn.Get(gzc.path)
-			if err != nil {
-				log.Error(err)
-				continue
-			}
-
-			gzc.data <- data
+		if _, err = conn.Create(nodePath, defaultData, 0, zk.WorldACL(zk.PermAll)); err != nil && !errors.Is(err, zk.ErrNodeExists) {
+			conn.Close()
+			return nil, fmt.Errorf("zk: create %s: %w", nodePath, err)
 		}
 	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	c := &Client{
+		path:     nodePath,
+		conn:     conn,
+		data:     make(chan []byte, clientChannelBuffer),
+		children: make(chan []string, clientChannelBuffer),
+		ctx:      ctx,
+		cancel:   cancel,
+	}
+
+	c.wg.Add(2)
+	go c.watchData()
+	go c.watchChildren()
+	return c, nil
 }
 
-func (gzc *GozkClient) watchNodeChildrenChanged() {
-	first := true
+func (c *Client) String() string {
+	return fmt.Sprintf("zk.Client sid=%d path=%s", c.conn.SessionID(), c.path)
+}
+
+// Data returns a channel that receives the node's data on every change.
+// Old values are dropped if the consumer cannot keep up.
+func (c *Client) Data() <-chan []byte { return c.data }
+
+// Children returns a channel that receives the node's children on every change.
+// Old values are dropped if the consumer cannot keep up.
+func (c *Client) Children() <-chan []string { return c.children }
+
+// ChildrenOnce reads the current children list without setting a watch.
+func (c *Client) ChildrenOnce(node string) ([]string, *zk.Stat, error) {
+	return c.conn.Children(node)
+}
+
+// Close stops the watcher goroutines and tears down the ZK connection.
+// It is safe to call multiple times.
+func (c *Client) Close() {
+	c.cancel()
+	c.conn.Close()
+	c.wg.Wait()
+}
+
+// publishData pushes v onto the data channel, dropping a stale buffered value
+// rather than blocking. Returns false if the client is shutting down.
+func (c *Client) publishData(v []byte) bool {
 	for {
-		children, _, events, err := gzc.conn.ChildrenW(gzc.path)
+		select {
+		case <-c.ctx.Done():
+			return false
+		case c.data <- v:
+			return true
+		default:
+			// channel full; drop the oldest buffered value and retry.
+			select {
+			case <-c.data:
+			default:
+			}
+		}
+	}
+}
+
+func (c *Client) publishChildren(v []string) bool {
+	for {
+		select {
+		case <-c.ctx.Done():
+			return false
+		case c.children <- v:
+			return true
+		default:
+			select {
+			case <-c.children:
+			default:
+			}
+		}
+	}
+}
+
+func (c *Client) watchData() {
+	defer c.wg.Done()
+	for {
+		if c.ctx.Err() != nil {
+			return
+		}
+		data, _, events, err := c.conn.GetW(c.path)
 		if err != nil {
-			log.Error(err)
+			slog.Error("zk: watch data", "path", c.path, "err", err)
+			if !c.sleep(clientWatchBackoff) {
+				return
+			}
 			continue
 		}
-
-		if first {
-			gzc.children <- children
-			first = false
-			continue
+		if !c.publishData(data) {
+			return
 		}
 
-		evt := <-events
-		if evt.Err != nil {
-			log.Error(evt.Err)
-			continue
-		}
-
-		if evt.Type == zk.EventNodeChildrenChanged {
-			children, _, err := gzc.conn.Children(gzc.path)
-			if err != nil {
-				log.Error(err)
+		select {
+		case <-c.ctx.Done():
+			return
+		case evt := <-events:
+			if evt.Err != nil {
+				slog.Error("zk: data watch event", "path", c.path, "err", evt.Err)
 				continue
 			}
-
-			gzc.children <- children
+			// Any node-data change reaches here; the next GetW re-arms the watch
+			// and re-fetches the value, so non-data events fall through to the
+			// next iteration safely.
+			_ = evt
 		}
+	}
+}
+
+func (c *Client) watchChildren() {
+	defer c.wg.Done()
+	for {
+		if c.ctx.Err() != nil {
+			return
+		}
+		children, _, events, err := c.conn.ChildrenW(c.path)
+		if err != nil {
+			slog.Error("zk: watch children", "path", c.path, "err", err)
+			if !c.sleep(clientWatchBackoff) {
+				return
+			}
+			continue
+		}
+		if !c.publishChildren(children) {
+			return
+		}
+
+		select {
+		case <-c.ctx.Done():
+			return
+		case evt := <-events:
+			if evt.Err != nil {
+				slog.Error("zk: children watch event", "path", c.path, "err", evt.Err)
+				continue
+			}
+			_ = evt
+		}
+	}
+}
+
+func (c *Client) sleep(d time.Duration) bool {
+	t := time.NewTimer(d)
+	defer t.Stop()
+	select {
+	case <-c.ctx.Done():
+		return false
+	case <-t.C:
+		return true
 	}
 }

@@ -1,651 +1,282 @@
 package lru
 
 import (
-	"bytes"
+	"context"
+	"errors"
 	"fmt"
-	"github.com/go-redis/redis"
-	"kuaishangtong/common/utils/log"
 	"strconv"
-	"sync"
 	"time"
+
+	"github.com/redis/go-redis/v9"
 )
 
-type CacheRedis struct {
-	sync.RWMutex
-	Name             string
-	Limits           int // 0 means unlimits
-	Timeout          int64
-	client           *redis.Client
-	ValueMarshaler   func(interface{}) ([]byte, error)
-	ValueUnmarshaler func([]byte) (interface{}, error)
-	KeyMarshaler     func(interface{}) (string, error)
-	KeyUnmarshaler   func(string) (interface{}, error)
+// Marshaler turns a value of type V into bytes for Redis storage.
+type Marshaler[V any] func(V) ([]byte, error)
 
-	removeCallback       func(Key, interface{})
-	removeOldestCallback func(Key, interface{})
+// Unmarshaler reconstitutes a value of type V from its Redis-stored bytes.
+type Unmarshaler[V any] func([]byte) (V, error)
 
-	memcacheEnable bool
-	memcache       map[Key]interface{}
+// KeyEncoder turns a typed key into the Redis field/member string.
+type KeyEncoder[K comparable] func(K) (string, error)
 
-	cmdbuf  *bytes.Buffer
-	cmdbuf2 *bytes.Buffer
+// KeyDecoder reconstitutes a typed key from the Redis field/member string.
+type KeyDecoder[K comparable] func(string) (K, error)
+
+// RedisOptions configures NewRedisCache.
+type RedisOptions[K comparable, V any] struct {
+	// Client is a pre-built *redis.Client. If nil, RedisOptions.Addr et al. are used.
+	Client *redis.Client
+
+	// Name is used as the prefix for the underlying Redis keys
+	// ("<name>:lru" and "<name>:map"). Required.
+	Name string
+
+	// Addr is the "host:port" of the Redis server. Used only when Client is nil.
+	Addr     string
+	Password string
+	DB       int
+	PoolSize int
+
+	// Capacity is the maximum number of entries kept in the cache. 0 means unbounded.
+	Capacity int
+
+	// TTL is the maximum age of an entry. 0 means entries never expire.
+	TTL time.Duration
+
+	EncodeKey   KeyEncoder[K]
+	DecodeKey   KeyDecoder[K]
+	EncodeValue Marshaler[V]
+	DecodeValue Unmarshaler[V]
 }
 
-func NewCacheRedis(limits int, timeout int, name string, redis_ip string, redis_port int, redis_pass string, redis_db int,
-	valueMarshaler func(interface{}) ([]byte, error),
-	valueUnmarshaler func([]byte) (interface{}, error),
-	keyMarshaler func(interface{}) (string, error),
-	keyUnmarshaler func(string) (interface{}, error),
-	memcacheEnable bool) Cache {
-
-	c := &CacheRedis{
-		Limits:  limits,
-		Name:    name,
-		Timeout: int64(timeout),
-		client: redis.NewClient(&redis.Options{Addr: fmt.Sprintf("%s:%d", redis_ip, redis_port),
-			Password: redis_pass, // no password set
-			DB:       redis_db,   // use default DB
-			PoolSize: 10,
-		}),
-		ValueMarshaler:   valueMarshaler,
-		ValueUnmarshaler: valueUnmarshaler,
-		KeyMarshaler:     keyMarshaler,
-		KeyUnmarshaler:   keyUnmarshaler,
-		memcacheEnable:   memcacheEnable,
-	}
-
-	c.memcacheReInit()
-	c.cmdbuf = new(bytes.Buffer)
-	c.cmdbuf2 = new(bytes.Buffer)
-
-	return c
+// RedisCache is a Cache implementation backed by a Redis sorted-set (LRU order)
+// and a hash (key → value).
+type RedisCache[K comparable, V any] struct {
+	opts   RedisOptions[K, V]
+	client *redis.Client
+	owned  bool // true if we created the client and must Close() it
 }
 
-func (c *CacheRedis) Length() int64 {
-	c.RLock()
-	defer c.RUnlock()
-
-	length, err := c.client.HLen(c.mapName()).Result()
-	if err != nil {
-		log.Warnf("CacheRedis.Length: redis.Hlen: %s", err.Error())
-		return -1
+// NewRedisCache returns a Cache backed by Redis.
+func NewRedisCache[K comparable, V any](opts RedisOptions[K, V]) (*RedisCache[K, V], error) {
+	if opts.Name == "" {
+		return nil, errors.New("lru: RedisOptions.Name is required")
 	}
-	return length
-}
-func (c *CacheRedis) SetTimeout(timeout int64) {
-	c.Timeout = timeout
-}
-
-func (c *CacheRedis) lruName() string {
-	return c.Name + ":lru"
-}
-
-func (c *CacheRedis) mapName() string {
-	return c.Name + ":map"
-}
-
-func (c *CacheRedis) Add(key Key, value interface{}) error {
-	c.Lock()
-	defer c.Unlock()
-
-	keyString, err := c.KeyMarshaler(key)
-	if err != nil {
-		return err
+	if opts.EncodeKey == nil || opts.DecodeKey == nil {
+		return nil, errors.New("lru: RedisOptions key codec is required")
 	}
-	b, err := c.ValueMarshaler(value)
-	if err != nil {
-		return err
+	if opts.EncodeValue == nil || opts.DecodeValue == nil {
+		return nil, errors.New("lru: RedisOptions value codec is required")
 	}
 
-	valueString := string(b)
-	currentTime := strconv.FormatInt(time.Now().Unix(), 10)
-	limits := strconv.FormatInt(int64(c.Limits), 10)
-	script := `local keyString = KEYS[3];
-		local valueString = KEYS[4];
-		local currentTime = KEYS[5];
-		local limits = tonumber(KEYS[6]);
-		redis.call('HSET',KEYS[1],keyString,valueString);
-		redis.call('ZADD',KEYS[2],currentTime,keyString);
-		local size=redis.call('ZCARD',KEYS[2]);
-		if limits == 0 or size<=limits then return 0; end;
-		local delIndex=size-limits-1;
-		local delkeys=redis.call('ZRANGE',KEYS[2],0,delIndex);
-		redis.call('ZREMRANGEBYRANK',KEYS[2],0,delIndex);
-		for i=1,table.getn(delkeys) do redis.call('HDEL',KEYS[1],delkeys[i]) end;
-		return 0`
-	_, err = c.client.Eval(script, []string{}, c.mapName(), c.lruName(), keyString, valueString, currentTime, limits).Result()
-	if err != nil {
-		return err
-	}
-
-	c.memcacheSet(key, value)
-
-	return nil
-}
-
-// modify value, without changing the LRU queue
-func (c *CacheRedis) Modify(key Key, value interface{}) (bool, error) {
-	c.Lock()
-	defer c.Unlock()
-
-	keyString, err := c.KeyMarshaler(key)
-	if err != nil {
-		return false, err
-	}
-	b, err := c.ValueMarshaler(value)
-	if err != nil {
-		return false, err
-	}
-
-	script := `local target = KEYS[2];
-		local value = KEYS[3];
-		local ex=redis.call('HEXISTS',KEYS[1],target);
-		if ex == 0 then return 0 end;
-		redis.call('HSET',KEYS[1],target,value);
-		return 1`
-	ret, err := c.client.Eval(script, []string{}, c.mapName(), keyString, string(b)).Result()
-	if err != nil {
-		return false, err
-	}
-	if ret != nil {
-		if i, ok := ret.(int64); ok && i == 0 {
-			return false, nil
+	c := &RedisCache[K, V]{opts: opts}
+	if opts.Client != nil {
+		c.client = opts.Client
+	} else {
+		if opts.PoolSize == 0 {
+			opts.PoolSize = 10
 		}
+		c.client = redis.NewClient(&redis.Options{
+			Addr:     opts.Addr,
+			Password: opts.Password,
+			DB:       opts.DB,
+			PoolSize: opts.PoolSize,
+		})
+		c.owned = true
 	}
-
-	c.memcacheSet(key, value)
-
-	return true, nil
+	return c, nil
 }
 
-// looks up a key's value from the cache, move item to the front of LRU queue
-func (c *CacheRedis) Get(key Key) (interface{}, bool, error) {
-	c.RLock()
-	val, ok := c.memcacheGet(key)
-	c.RUnlock()
-	if ok {
-		return val, true, nil
-	}
+// Compile-time assertion that *RedisCache satisfies Cache.
+var _ Cache[string, string] = (*RedisCache[string, string])(nil)
 
-	c.Lock()
-	defer c.Unlock()
+func (c *RedisCache[K, V]) lruKey() string { return c.opts.Name + ":lru" }
+func (c *RedisCache[K, V]) mapKey() string { return c.opts.Name + ":map" }
 
-	keyString, err := c.KeyMarshaler(key)
+func (c *RedisCache[K, V]) Get(ctx context.Context, key K) (V, bool, error) {
+	var zero V
+	field, err := c.opts.EncodeKey(key)
 	if err != nil {
-		return nil, false, err
+		return zero, false, fmt.Errorf("lru: encode key: %w", err)
 	}
 
-	currentTime := strconv.FormatInt(time.Now().Unix(), 10)
-	script := `local keyString = KEYS[3];
-		local currentTime = KEYS[4];
-		local value=redis.call('HGET',KEYS[1],keyString);
-		redis.call('ZADD',KEYS[2],currentTime,keyString);
-		return value`
-	ret, err := c.client.Eval(script, []string{}, c.mapName(), c.lruName(), keyString, currentTime).Result()
-	if ret == nil {
-		c.memcacheSet(key, nil)
-		return nil, false, nil
+	script := redis.NewScript(`
+		local mapKey, lruKey = KEYS[1], KEYS[2]
+		local field, ts = ARGV[1], ARGV[2]
+		local v = redis.call('HGET', mapKey, field)
+		if v == false then return nil end
+		redis.call('ZADD', lruKey, ts, field)
+		return v
+	`)
+	res, err := script.Run(ctx, c.client,
+		[]string{c.mapKey(), c.lruKey()},
+		field, strconv.FormatInt(time.Now().Unix(), 10),
+	).Result()
+	if errors.Is(err, redis.Nil) {
+		return zero, false, nil
 	}
-	b := ret.([]byte)
-	value, err := c.ValueUnmarshaler(b)
 	if err != nil {
-		return nil, false, err
+		return zero, false, fmt.Errorf("lru: redis eval get: %w", err)
 	}
-	// log.Debug("lru_cache_redis Get:", c.Name, key, value)
-
-	c.memcacheSet(key, value)
-
+	if res == nil {
+		return zero, false, nil
+	}
+	bs, _ := res.(string)
+	value, err := c.opts.DecodeValue([]byte(bs))
+	if err != nil {
+		return zero, false, fmt.Errorf("lru: decode value: %w", err)
+	}
 	return value, true, nil
 }
 
-// looks up a key's value from the cache, without changing the LRU queue
-func (c *CacheRedis) Peek(key Key) (interface{}, bool, error) {
-	c.RLock()
-	val, ok := c.memcacheGet(key)
-	c.RUnlock()
-	if ok {
-		return val, true, nil
-	}
-
-	c.Lock()
-	defer c.Unlock()
-
-	keyString, err := c.KeyMarshaler(key)
+func (c *RedisCache[K, V]) Peek(ctx context.Context, key K) (V, bool, error) {
+	var zero V
+	field, err := c.opts.EncodeKey(key)
 	if err != nil {
-		return nil, false, err
+		return zero, false, fmt.Errorf("lru: encode key: %w", err)
 	}
-	b, _ := c.client.HGet(c.mapName(), keyString).Bytes()
-	if b == nil {
-		c.memcacheSet(key, nil)
-		return nil, false, nil
+	b, err := c.client.HGet(ctx, c.mapKey(), field).Bytes()
+	if errors.Is(err, redis.Nil) {
+		return zero, false, nil
 	}
-
-	value, err := c.ValueUnmarshaler(b)
 	if err != nil {
-		return nil, false, err
+		return zero, false, fmt.Errorf("lru: redis hget: %w", err)
 	}
-	// log.Debug("lru_cache_redis Peek:", c.Name, key, value)
-
-	c.memcacheSet(key, value)
-
+	value, err := c.opts.DecodeValue(b)
+	if err != nil {
+		return zero, false, fmt.Errorf("lru: decode value: %w", err)
+	}
 	return value, true, nil
 }
 
-func (c *CacheRedis) UpdateTimestamp(key Key, timestamp int64) error {
-	c.Lock()
-	defer c.Unlock()
-
-	keyString, err := c.KeyMarshaler(key)
+func (c *RedisCache[K, V]) Set(ctx context.Context, key K, value V) error {
+	field, err := c.opts.EncodeKey(key)
 	if err != nil {
-		return err
+		return fmt.Errorf("lru: encode key: %w", err)
 	}
-	_, err = c.client.ZAdd(c.lruName(), redis.Z{
-		Score:  float64(time.Now().Unix()),
-		Member: keyString,
-	}).Result()
-	return err
-}
-
-func (c *CacheRedis) GetAll(getAliveFunc func(Key, interface{})) error {
-	c.RLock()
-	defer c.RUnlock()
-
-	script := `return redis.call('HGETALL',KEYS[1]);`
-	// log.Debug("lru_cache_redis Purge: send command start", time.Now())
-	res, err := c.client.Eval(script, []string{}, c.mapName()).Result()
-	// log.Debug("lru_cache_redis Purge: send command finish", time.Now())
+	b, err := c.opts.EncodeValue(value)
 	if err != nil {
-		return err
+		return fmt.Errorf("lru: encode value: %w", err)
 	}
-	if getAliveFunc != nil {
-		bs := res.([][]byte)
-		// log.Debug("lru_cache_redis Purge: for cycle start", time.Now())
-		for i := 0; i < len(bs)/2; i++ {
-			b := bs[2*i]
-			vb := bs[2*i+1]
-			keyString := string(b)
 
-			var value interface{}
-			if string(vb) == "" {
-				// log.Warn("lru_cache_redis Purge:", c.Name, "key do not exist", keyString)
-				value = nil
-			} else {
-				value, err = c.ValueUnmarshaler(vb)
-				if err != nil {
-					log.Warn("lru_cache_redis GetAll:", c.Name, "c.ValueUnmarshaler", err)
-					continue
-				}
-			}
-
-			key, err := c.KeyUnmarshaler(keyString)
-			if err != nil {
-				log.Warn("lru_cache_redis GetAll:", c.Name, "c.KeyUnmarshaler", err)
-				continue
-			}
-			getAliveFunc(key, value)
-		}
-		// log.Debug("lru_cache_redis Purge: for cycle finish", time.Now())
+	script := redis.NewScript(`
+		local mapKey, lruKey = KEYS[1], KEYS[2]
+		local field, value, ts, cap = ARGV[1], ARGV[2], ARGV[3], tonumber(ARGV[4])
+		redis.call('HSET', mapKey, field, value)
+		redis.call('ZADD', lruKey, ts, field)
+		if cap == 0 then return 0 end
+		local size = redis.call('ZCARD', lruKey)
+		if size <= cap then return 0 end
+		local delTo = size - cap - 1
+		local del = redis.call('ZRANGE', lruKey, 0, delTo)
+		redis.call('ZREMRANGEBYRANK', lruKey, 0, delTo)
+		for i = 1, #del do redis.call('HDEL', mapKey, del[i]) end
+		return 0
+	`)
+	if _, err := script.Run(ctx, c.client,
+		[]string{c.mapKey(), c.lruKey()},
+		field, string(b),
+		strconv.FormatInt(time.Now().Unix(), 10),
+		strconv.Itoa(c.opts.Capacity),
+	).Result(); err != nil {
+		return fmt.Errorf("lru: redis eval set: %w", err)
 	}
 	return nil
 }
 
-//TODO(K'): getExpiredFunc() was not called in this function
-func (c *CacheRedis) Purge(getAliveFunc, getExpiredFunc func(Key, interface{})) error {
-	c.Lock()
-	defer c.Unlock()
-
-	c.memcacheReInit()
-
-	cacheTimeout := strconv.FormatInt(c.Timeout, 10)
-	timeoutTime := strconv.FormatInt(time.Now().Unix()-c.Timeout, 10)
-	script := `local cacheTimeout = tonumber(KEYS[3]);
-		local timeoutTime = KEYS[4];
-		if cacheTimeout ~= 0 then 
-		local delKeys=redis.call('ZRANGEBYSCORE',KEYS[2],0,timeoutTime);
-		for i=1,table.getn(delKeys) do redis.call('HDEL',KEYS[1],delKeys[i]) end;
-		redis.call('ZREMRANGEBYSCORE',KEYS[2],0,timeoutTime);
-		end;
-		local keys=redis.call('ZREVRANGE',KEYS[2],0,-1);
-		local returnArray = {};
-		for i=1,table.getn(keys)
-		do
-		returnArray[2*i-1]=keys[i];
-		returnArray[2*i]=redis.call('HGET',KEYS[1],keys[i]);
-		end;
-		return returnArray`
-	// log.Debug("lru_cache_redis Purge: send command start", time.Now())
-	res, err := c.client.Eval(script, []string{}, c.mapName(), c.lruName(), cacheTimeout, timeoutTime).Result()
-	// log.Debug("lru_cache_redis Purge: send command finish", time.Now())
-	if err != nil {
-		return err
+func (c *RedisCache[K, V]) Delete(ctx context.Context, keys ...K) error {
+	if len(keys) == 0 {
+		return nil
 	}
-
-	bs := res.([][]byte)
-	// log.Debug("lru_cache_redis Purge: for cycle start", time.Now())
-	for i := 0; i < len(bs)/2; i++ {
-		b := bs[2*i]
-		vb := bs[2*i+1]
-		keyString := string(b)
-
-		var value interface{}
-		if string(vb) == "" {
-			// log.Warn("lru_cache_redis Purge:", c.Name, "key do not exist", keyString)
-			value = nil
-		} else {
-			value, err = c.ValueUnmarshaler(vb)
-			if err != nil {
-				log.Warn("lru_cache_redis Purge:", c.Name, "c.ValueUnmarshaler", err)
-				continue
-			}
-		}
-
-		key, err := c.KeyUnmarshaler(keyString)
+	fields := make([]string, len(keys))
+	members := make([]any, len(keys))
+	for i, k := range keys {
+		s, err := c.opts.EncodeKey(k)
 		if err != nil {
-			log.Warn("lru_cache_redis Purge:", c.Name, "c.KeyUnmarshaler", err)
-			continue
+			return fmt.Errorf("lru: encode key: %w", err)
 		}
-
-		c.memcacheSet(key, value)
-
-		if getAliveFunc != nil {
-			getAliveFunc(key, value)
-		}
+		fields[i] = s
+		members[i] = s
 	}
-
-	return nil
-}
-
-// Remove removes the provided key from the cache.
-func (c *CacheRedis) Remove(keys ...Key) error {
-	c.Lock()
-	defer c.Unlock()
-	// log.Debug("lru_cache_redis Remove:", c.Name, key)
-
-	var err error
-	keyStrings := make([]string, len(keys))
-	for i, key := range keys {
-		if keyString, err := c.KeyMarshaler(key); err != nil {
-			return err
-		} else {
-			keyStrings[i] = keyString
-		}
+	if _, err := c.client.HDel(ctx, c.mapKey(), fields...).Result(); err != nil {
+		return fmt.Errorf("lru: redis hdel: %w", err)
 	}
-
-	_, err = c.client.HDel(c.mapName(), keyStrings...).Result()
-	if err != nil {
-		return err
-	}
-
-	keyInterface := make([]interface{}, len(keys))
-	for i, key := range keyStrings {
-		keyInterface[i] = key
-	}
-
-	_, err = c.client.ZRem(c.lruName(), keyInterface...).Result()
-	if err != nil {
-		return err
-	}
-
-	c.memcacheRemove(keys...)
-
-	return nil
-}
-
-func (c *CacheRedis) RemoveAll() error {
-	c.Lock()
-	defer c.Unlock()
-
-	_, err := c.client.Del(c.mapName(), c.lruName()).Result()
-	log.Debug("lru_cache_redis RemoveAll:", c.Name)
-	if err != nil {
-		return err
+	if _, err := c.client.ZRem(ctx, c.lruKey(), members...).Result(); err != nil {
+		return fmt.Errorf("lru: redis zrem: %w", err)
 	}
 	return nil
 }
 
-func (c *CacheRedis) SetRemoveCallback(removeCallback func(Key, interface{})) {
-	c.removeCallback = removeCallback
-}
-
-func (c *CacheRedis) SetRemoveOldestCallback(removeOldestCallback func(Key, interface{})) {
-	c.removeOldestCallback = removeOldestCallback
-}
-
-// RemoveOldest removes the oldest item from the lru.
-func (c *CacheRedis) RemoveOldest() error {
-	c.Lock()
-	defer c.Unlock()
-
-	return c.removeOldest()
-}
-
-func (c *CacheRedis) removeOldest() error {
-	// log.Debug("lru_cache_redis removeOldest:", c.Name)
-	limits := strconv.FormatInt(int64(c.Limits), 10)
-	script := `local limits=tonumber(KEY[3]);
-		local size=redis.call('ZCARD',KEYS[2]);
-		if size<=limits then return 0; end;
-		local delIndex=size-limits-1;
-		local delKeys=redis.call('ZRANGE',KEYS[2],0,delIndex);
-		redis.call('ZREMRANGEBYRANK',KEYS[2],0,delIndex);
-		for i=1,table.getn(delKeys) do redis.call('HDEL',KEYS[1],delKeys[i]) end;
-		return 0`
-	_, err := c.client.Eval(script, []string{}, c.mapName(), c.lruName(), limits).Result()
-	return err
-}
-
-func (c *CacheRedis) ClearExpireKeys() error {
-	c.Lock()
-	defer c.Unlock()
-
-	cacheTimeout := strconv.FormatInt(c.Timeout, 10)
-	timeoutTime := strconv.FormatInt(time.Now().Unix()-c.Timeout, 10)
-	script := `local cacheTimeout = tonumber(KEYS[3]);
-		local timeoutTime = KEYS[4];
-		if cacheTimeout ~= 0 then 
-			local delKeys=redis.call('ZRANGEBYSCORE',KEYS[2],0,timeoutTime);
-			for i=1,table.getn(delKeys) do 
-				redis.call('HDEL',KEYS[1],delKeys[i]) 
-			end;
-			redis.call('ZREMRANGEBYSCORE',KEYS[2],0,timeoutTime);
-		end;
-		return 0`
-	_, err := c.client.Eval(script, []string{}, c.mapName(), c.lruName(), cacheTimeout, timeoutTime).Result()
+func (c *RedisCache[K, V]) Len(ctx context.Context) (int, error) {
+	n, err := c.client.HLen(ctx, c.mapKey()).Result()
 	if err != nil {
-		return err
+		return 0, fmt.Errorf("lru: redis hlen: %w", err)
 	}
+	return int(n), nil
+}
 
+func (c *RedisCache[K, V]) Range(ctx context.Context, fn func(K, V) bool) error {
+	pairs, err := c.client.HGetAll(ctx, c.mapKey()).Result()
+	if err != nil {
+		return fmt.Errorf("lru: redis hgetall: %w", err)
+	}
+	for fieldStr, valStr := range pairs {
+		key, err := c.opts.DecodeKey(fieldStr)
+		if err != nil {
+			return fmt.Errorf("lru: decode key: %w", err)
+		}
+		value, err := c.opts.DecodeValue([]byte(valStr))
+		if err != nil {
+			return fmt.Errorf("lru: decode value: %w", err)
+		}
+		if !fn(key, value) {
+			return nil
+		}
+	}
 	return nil
 }
 
-// func (c *CacheRedis) Keys() []Key {
-// 	c.Lock()
-// 	defer c.Unlock()
-
-// 	keys := make([]Key, 0, c.ll.Len())
-// 	for e := c.ll.Front(); e != nil; e = e.Next() {
-// 		keys = append(keys, e.Value.(*entry).key)
-// 	}
-// 	return keys
-// }
-
-//func (c *CacheRedis) MultiAdd(keys []Key, values []interface{}) error {
-//	c.Lock()
-//	defer c.Unlock()
-//
-//	if len(keys) != len(values) {
-//		return fmt.Errorf("MultiAdd: keys' length not equal to values' length")
-//	}
-//
-//	if len(keys) == 0 {
-//		return nil
-//	}
-//
-//	score := strconv.FormatFloat(float64(time.Now().Unix()), 'f', -1, 64)
-//	argc := 1 + 2*len(keys)
-//
-//
-//	c.client.ResetCommandBuffer(c.cmdbuf, "HMSET", argc)
-//	c.client.AppendCommandBufferWithString(c.cmdbuf, c.mapName())
-//
-//	c.client.ResetCommandBuffer(c.cmdbuf2, "ZADD", argc)
-//	c.client.AppendCommandBufferWithString(c.cmdbuf2, c.lruName())
-//
-//	var value interface{}
-//	for i, key := range keys {
-//		value = values[i]
-//		keyString, err := c.KeyMarshaler(key)
-//		if err != nil {
-//			return err
-//		}
-//		b, err := c.ValueMarshaler(value) //xxxxx: 818MB
-//		if err != nil {
-//			return err
-//		}
-//
-//		c.client.AppendCommandBufferWithString(c.cmdbuf, keyString)
-//		c.client.AppendCommandBufferWithBytes(c.cmdbuf, b)
-//
-//		c.client.AppendCommandBufferWithString(c.cmdbuf2, score)
-//		c.client.AppendCommandBufferWithString(c.cmdbuf2, keyString)
-//	}
-//
-//	if err := c.client.SendCommandBuffer(c.cmdbuf); err != nil {
-//		return err
-//	}
-//	if err := c.client.SendCommandBuffer(c.cmdbuf2); err != nil {
-//		return err
-//	}
-//
-//	script := `local limits = tonumber(KEYS[3]);
-//		local size = redis.call('ZCARD',KEYS[2]);
-//		if limits > 0 and size > limits then
-//			local delIndex=size-limits-1;
-//			local delkeys=redis.call('ZRANGE',KEYS[2], 0, delIndex);
-//			redis.call('ZREMRANGEBYRANK', KEYS[2], 0, delIndex);
-//			for i=1,table.getn(delkeys) do redis.call('HDEL',KEYS[1],delkeys[i]) end;
-//		end;
-//		return 0;`
-//	if _, err := c.client.Eval(script, 3, c.mapName(), c.lruName(), strconv.FormatInt(int64(c.Limits), 10)); err != nil {
-//		return err
-//	}
-//
-//	return nil
-//}
-//
-//func (c *CacheRedis) MultiModify(keys []Key, values []interface{}) error {
-//	c.Lock()
-//	defer c.Unlock()
-//
-//	if len(keys) != len(values) {
-//		return fmt.Errorf("MultiModify: keys' length not equal to values' length")
-//	}
-//
-//	if len(keys) == 0 {
-//		return nil
-//	}
-//
-//	args := make([]string, 1+2*len(keys))
-//	args[0] = c.mapName()
-//	var value interface{}
-//	for i, key := range keys {
-//		value = values[i]
-//		keyString, err := c.KeyMarshaler(key)
-//		if err != nil {
-//			return err
-//		}
-//		b, err := c.ValueMarshaler(value)
-//		if err != nil {
-//			return err
-//		}
-//		args[2*i+1] = keyString
-//		args[2*i+2] = string(b)
-//	}
-//
-//	if err := c.client.("HMSET", args...); err != nil {
-//		return err
-//	}
-//
-//	return nil
-//}
-//
-//func (c *CacheRedis) MultiGet(keys []Key) ([]interface{}, error) {
-//	c.Lock()
-//	defer c.Unlock()
-//
-//	if len(keys) == 0 {
-//		return nil, nil
-//	}
-//
-//	fields := make([]string, len(keys))
-//	for i, key := range keys {
-//		keyString, err := c.KeyMarshaler(key)
-//		if err != nil {
-//			return nil, err
-//		}
-//		fields[i] = keyString
-//	}
-//
-//	if datas, err := c.client.Hmget(c.mapName(), fields...); err != nil {
-//		return nil, err
-//	} else {
-//		values := make([]interface{}, len(datas))
-//		args2 := make([]string, 1+2*len(keys))
-//		args2[0] = c.lruName()
-//		score := strconv.FormatFloat(float64(time.Now().Unix()), 'f', -1, 64)
-//
-//		for i, data := range datas {
-//			if data == nil {
-//				values[i] = nil
-//				continue
-//			}
-//			if value, err := c.ValueUnmarshaler(data); err != nil {
-//				log.Warnf("MultiGet: ValueUnmarshaler: %s", err.Error())
-//				values[i] = nil
-//				continue
-//			} else {
-//				values[i] = value
-//				args2[2*i+1] = score
-//				args2[2*i+2] = fields[i]
-//			}
-//		}
-//		if len(args2) > 0 {
-//			if err := c.client.SendCommand("ZADD", args2...); err != nil {
-//				return nil, err
-//			}
-//		}
-//
-//		return values, nil
-//	}
-//}
-
-func (c *CacheRedis) memcacheReInit() {
-	if c.memcacheEnable {
-		c.memcache = make(map[Key]interface{})
+func (c *RedisCache[K, V]) Clear(ctx context.Context) error {
+	if _, err := c.client.Del(ctx, c.mapKey(), c.lruKey()).Result(); err != nil {
+		return fmt.Errorf("lru: redis del: %w", err)
 	}
+	return nil
 }
 
-func (c *CacheRedis) memcacheGet(key Key) (interface{}, bool) {
-	if c.memcacheEnable && c.memcache != nil {
-		if value, ok := c.memcache[key]; ok {
-			// log.Debug("lru_cache_redis memcacheGet:", key, updateTimestamp)
-			return value, true
-		}
+func (c *RedisCache[K, V]) PurgeExpired(ctx context.Context) error {
+	if c.opts.TTL <= 0 {
+		return nil
 	}
-
-	return nil, false
+	cutoff := strconv.FormatInt(time.Now().Add(-c.opts.TTL).Unix(), 10)
+	script := redis.NewScript(`
+		local mapKey, lruKey, cutoff = KEYS[1], KEYS[2], ARGV[1]
+		local del = redis.call('ZRANGEBYSCORE', lruKey, 0, cutoff)
+		for i = 1, #del do redis.call('HDEL', mapKey, del[i]) end
+		redis.call('ZREMRANGEBYSCORE', lruKey, 0, cutoff)
+		return #del
+	`)
+	if _, err := script.Run(ctx, c.client,
+		[]string{c.mapKey(), c.lruKey()},
+		cutoff,
+	).Result(); err != nil {
+		return fmt.Errorf("lru: redis eval purgeExpired: %w", err)
+	}
+	return nil
 }
 
-func (c *CacheRedis) memcacheSet(key Key, value interface{}) {
-	if c.memcacheEnable && c.memcache != nil {
-		c.memcache[key] = value
+// Close releases the Redis client (only when we created it).
+func (c *RedisCache[K, V]) Close() error {
+	if !c.owned {
+		return nil
 	}
+	if err := c.client.Close(); err != nil {
+		return fmt.Errorf("lru: redis close: %w", err)
+	}
+	return nil
 }
 
-func (c *CacheRedis) memcacheRemove(keys ...Key) {
-	if c.memcacheEnable && c.memcache != nil {
-		for _, key := range keys {
-			delete(c.memcache, key)
-		}
-	}
+// StringKeyCodec is a convenience encoder/decoder pair for string keys.
+func StringKeyCodec() (KeyEncoder[string], KeyDecoder[string]) {
+	return func(s string) (string, error) { return s, nil },
+		func(s string) (string, error) { return s, nil }
 }

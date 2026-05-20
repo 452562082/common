@@ -1,94 +1,65 @@
 package kafka
 
 import (
-	"sync"
+	"fmt"
+	"log/slog"
 	"time"
 
-	"kuaishangtong/common/utils/log"
-	"github.com/Shopify/sarama"
+	"github.com/IBM/sarama"
 )
 
-var ProducerTimeout int = 5000
-
-var producerMessagePool *sync.Pool
-
-func init() {
-	producerMessagePool = &sync.Pool{
-		New: func() interface{} {
-			return &sarama.ProducerMessage{}
-		},
-	}
-}
-
-func init() {
-	sarama.PanicHandler = func(x interface{}) {
-		log.Alertf("PanicHandler recover: %v", x)
-	}
-}
-
-type KafkaAsyncProducer struct {
+type AsyncProducer struct {
 	producer sarama.AsyncProducer
 	topic    string
 }
 
-func NewKafkaAsyncProducer(kahosts []string, topic string) (*KafkaAsyncProducer, error) {
+func NewAsyncProducer(brokers []string, topic string) (*AsyncProducer, error) {
 	config := sarama.NewConfig()
-	config.Producer.Return.Successes = true //必须有这个选项
-	config.Producer.Timeout = time.Duration(ProducerTimeout) * time.Millisecond
-	config.Producer.Flush.Frequency = 500 * time.Millisecond // Flush batches every 500ms
+	config.Producer.Return.Successes = true
+	config.Producer.Return.Errors = true
+	config.Producer.Timeout = defaultProducerTimeout
+	config.Producer.Flush.Frequency = 500 * time.Millisecond
+	config.Producer.Retry.Max = 3
 
-	p, err := sarama.NewAsyncProducer(kahosts, config)
+	p, err := sarama.NewAsyncProducer(brokers, config)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("kafka: new async producer: %w", err)
 	}
-	producer := &KafkaAsyncProducer{
-		producer: p,
-		topic:    topic,
+	return &AsyncProducer{producer: p, topic: topic}, nil
+}
+
+func (p *AsyncProducer) Successes() <-chan *sarama.ProducerMessage {
+	return p.producer.Successes()
+}
+
+func (p *AsyncProducer) Errors() <-chan *sarama.ProducerError {
+	return p.producer.Errors()
+}
+
+func (p *AsyncProducer) Topic() string { return p.topic }
+
+func (p *AsyncProducer) Close() error {
+	if err := p.producer.Close(); err != nil {
+		return fmt.Errorf("kafka: close async producer: %w", err)
 	}
-
-	//go producer.loop()
-
-	return producer, nil
+	return nil
 }
 
-func (asp *KafkaAsyncProducer) Successes() <-chan *sarama.ProducerMessage {
-	return asp.producer.Successes()
+func (p *AsyncProducer) Send(msg *sarama.ProducerMessage) {
+	p.producer.Input() <- msg
 }
 
-func (asp *KafkaAsyncProducer) Errors() <-chan *sarama.ProducerError {
-	return asp.producer.Errors()
-}
-
-func (asp *KafkaAsyncProducer) Topic() string {
-	return asp.topic
-}
-
-func (asp *KafkaAsyncProducer) loop() {
-	for {
-		select {
-		case err, ok := <-asp.producer.Errors():
-			if ok && err != nil {
-				log.Error(err)
-			}
-		case <-asp.producer.Successes():
-		}
+func (p *AsyncProducer) SendBytes(key, value []byte) {
+	p.producer.Input() <- &sarama.ProducerMessage{
+		Topic: p.topic,
+		Key:   sarama.ByteEncoder(key),
+		Value: sarama.ByteEncoder(value),
 	}
 }
 
-func (asp *KafkaAsyncProducer) Close() error {
-	return asp.producer.Close()
-}
-
-func (asp *KafkaAsyncProducer) SendMessage(msg *sarama.ProducerMessage) {
-	asp.producer.Input() <- msg
-}
-
-func (asp *KafkaAsyncProducer) SendByteMessage(key, value []byte) {
-
-	msg := &sarama.ProducerMessage{}
-	msg.Topic = asp.topic
-	msg.Key = sarama.ByteEncoder(key)
-	msg.Value = sarama.ByteEncoder(value)
-
-	asp.producer.Input() <- msg
+// DrainErrors logs producer errors. Call in a goroutine if you don't consume Errors() yourself.
+func (p *AsyncProducer) DrainErrors() {
+	for err := range p.producer.Errors() {
+		slog.Error("kafka async producer error", "err", err)
+	}
 }

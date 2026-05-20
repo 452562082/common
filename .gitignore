@@ -1,25 +1,37 @@
-# Compiled Object files, Static and Dynamic libs (Shared Objects)
-*.o
-*.a
-*.so
-
-# Folders
-_obj
-_test
-.idea
-
-# Architecture specific extensions/prefixes
-*.[568vq]
-[568vq].out
-
-*.cgo1.go
-*.cgo2.c
-_cgo_defun.c
-_cgo_gotypes.go
-_cgo_export.*
-
-_testmain.go
-
+# Binaries
 *.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binaries and coverage
 *.test
+*.out
+coverage.txt
+coverage.html
+
+# Profile output
 *.prof
+*.pprof
+
+# Build / vendor
+/bin/
+/dist/
+/vendor/
+
+# Editor / OS
+.idea/
+.vscode/
+.claude/
+*.swp
+*.swo
+.DS_Store
+
+# Env files
+.env
+.env.local
+
+# Go workspace (local-only, do not commit)
+go.work
+go.work.sum

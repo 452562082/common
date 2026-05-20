@@ -1,20 +1,29 @@
 package zk
 
 import (
+	"reflect"
 	"testing"
-	"time"
 )
 
-func TestGozkServer_ServiceRegistry(t *testing.T) {
-	server, err := NewGozkServer([]string{"test.shengwenyun.cn:2181"})
-	if err != nil {
-		t.Fatal(err)
+func TestParentPaths(t *testing.T) {
+	tests := []struct {
+		in   string
+		want []string
+	}{
+		{"/", nil},
+		{"/a", nil},
+		{"/a/b", []string{"/a"}},
+		{"/a/b/c", []string{"/a", "/a/b"}},
+		{"a/b/c", []string{"/a", "/a/b"}},
+		{"/a/b/c/d", []string{"/a", "/a/b", "/a/b/c"}},
 	}
-	
-	err = server.ServiceRegistry("/asv_servers", "test.shengwenyun.cn:8082", nil, true)
-	if err != nil {
-		t.Fatal(err)
+	for _, tt := range tests {
+		got := parentPaths(tt.in)
+		if len(got) == 0 && len(tt.want) == 0 {
+			continue
+		}
+		if !reflect.DeepEqual(got, tt.want) {
+			t.Errorf("parentPaths(%q) = %v, want %v", tt.in, got, tt.want)
+		}
 	}
-	
-	time.Sleep(5 * time.Hour)
 }

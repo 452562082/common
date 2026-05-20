@@ -1,100 +1,67 @@
+// Package env reads infrastructure endpoints from delimited env vars.
+//
+// Host lists accept both comma- and semicolon-separated values. All getters
+// return ErrUnset (wrapped) when the variable is missing or empty, so callers
+// can distinguish "use a default" from "configured but blank".
 package env
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"strings"
 )
 
 const (
-	__ZK_HOSTS    = "ZK_HOSTS"
-	__KAFKA_HOSTS = "KAFKA_HOSTS"
-	__HDFS_HOSTS  = "HDFS_HOSTS"
-	__ES_HOSTS    = "ES_HOSTS"
-	__HOST_IP     = "HOST_IP"
-	__SERVER_HOST = "SERVER_HOST"
+	envZKHosts    = "ZK_HOSTS"
+	envKafkaHosts = "KAFKA_HOSTS"
+	envHDFSHosts  = "HDFS_HOSTS"
+	envESHosts    = "ES_HOSTS"
+	envRedisHosts = "REDIS_HOSTS"
+	envHostIP     = "HOST_IP"
+	envServerHost = "SERVER_HOST"
 )
 
-var zk_hosts string
-var kafka_hosts string
-var hdfs_hosts string
-var es_hosts string
-var host_ip string
-var server_host string
+// ErrUnset is returned (wrapped) when an env var is missing or empty.
+var ErrUnset = errors.New("env var is unset")
 
-//func init() {
-//	zk_hosts = os.Getenv(__ZK_HOSTS)
-//	kafka_hosts = os.Getenv(__KAFKA_HOSTS)
-//	hdfs_hosts = os.Getenv(__HDFS_HOSTS)
-//	es_hosts = os.Getenv(__ES_HOSTS)
-//}
-
-func GetServerHost() (string, error) {
-	var isSet bool
-	server_host, isSet = os.LookupEnv(__SERVER_HOST)
-	if !isSet {
-		return "", fmt.Errorf("env %s is an unset value", __SERVER_HOST)
+// splitHosts splits on comma or semicolon and trims each element.
+// Empty elements are dropped.
+func splitHosts(v string) []string {
+	fields := strings.FieldsFunc(v, func(r rune) bool { return r == ',' || r == ';' })
+	out := fields[:0]
+	for _, f := range fields {
+		if s := strings.TrimSpace(f); s != "" {
+			out = append(out, s)
+		}
 	}
-	return host_ip, nil
+	return out
 }
 
-func GetHostIp() (string, error) {
-	var isSet bool
-	host_ip, isSet = os.LookupEnv(__HOST_IP)
-	if !isSet {
-		return "", fmt.Errorf("env %s is an unset value", __HOST_IP)
+func getHosts(name string) ([]string, error) {
+	v, ok := os.LookupEnv(name)
+	if !ok || strings.TrimSpace(v) == "" {
+		return nil, fmt.Errorf("%s: %w", name, ErrUnset)
 	}
-	return host_ip, nil
+	hosts := splitHosts(v)
+	if len(hosts) == 0 {
+		return nil, fmt.Errorf("%s: %w", name, ErrUnset)
+	}
+	return hosts, nil
 }
 
-func GetZookeeperHosts() ([]string, error) {
-	var isSet bool
-	zk_hosts, isSet = os.LookupEnv(__ZK_HOSTS)
-	if !isSet {
-		return nil, fmt.Errorf("env %s is an unset value", __ZK_HOSTS)
+func getString(name string) (string, error) {
+	v, ok := os.LookupEnv(name)
+	if !ok || strings.TrimSpace(v) == "" {
+		return "", fmt.Errorf("%s: %w", name, ErrUnset)
 	}
-
-	if len(zk_hosts) > 0 {
-		return strings.Split(zk_hosts, ";"), nil
-	}
-	return nil, fmt.Errorf("value of env %s is \"\"", __ZK_HOSTS)
+	return v, nil
 }
 
-func GetKafkaHosts() ([]string, error) {
-	var isSet bool
-	kafka_hosts, isSet = os.LookupEnv(__KAFKA_HOSTS)
-	if !isSet {
-		return nil, fmt.Errorf("env %s is an unset value", __KAFKA_HOSTS)
-	}
-
-	if len(kafka_hosts) > 0 {
-		return strings.Split(kafka_hosts, ";"), nil
-	}
-	return nil, fmt.Errorf("value of env %s is \"\"", __KAFKA_HOSTS)
-}
-
-func GetHDFSHosts() ([]string, error) {
-	var isSet bool
-	hdfs_hosts, isSet = os.LookupEnv(__HDFS_HOSTS)
-	if !isSet {
-		return nil, fmt.Errorf("env %s is an unset value", __HDFS_HOSTS)
-	}
-
-	if len(hdfs_hosts) > 0 {
-		return strings.Split(hdfs_hosts, ";"), nil
-	}
-
-	return nil, fmt.Errorf("value of env %s is \"\"", __HDFS_HOSTS)
-}
-
-func GetElasticSearchHosts() ([]string, error) {
-	var isSet bool
-	es_hosts, isSet = os.LookupEnv(__ES_HOSTS)
-	if !isSet {
-		return nil, fmt.Errorf("env %s is an unset value", __ES_HOSTS)
-	}
-	if len(es_hosts) > 0 {
-		return strings.Split(es_hosts, ";"), nil
-	}
-	return nil, fmt.Errorf("value of env %s is \"\"", __ES_HOSTS)
-}
+func ServerHost() (string, error)       { return getString(envServerHost) }
+func HostIP() (string, error)           { return getString(envHostIP) }
+func ZooKeeperHosts() ([]string, error) { return getHosts(envZKHosts) }
+func KafkaHosts() ([]string, error)     { return getHosts(envKafkaHosts) }
+func HDFSHosts() ([]string, error)      { return getHosts(envHDFSHosts) }
+func ElasticHosts() ([]string, error)   { return getHosts(envESHosts) }
+func RedisHosts() ([]string, error)     { return getHosts(envRedisHosts) }

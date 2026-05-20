@@ -1,68 +1,80 @@
 package kafka
 
 import (
+	"context"
+	"fmt"
 	"time"
 
-	"github.com/Shopify/sarama"
+	"github.com/IBM/sarama"
 )
 
-type KafkaSyncProducer struct {
+const defaultProducerTimeout = 5 * time.Second
+
+// SyncProducer is a thin, sync wrapper over sarama.SyncProducer.
+//
+// Every send method accepts a context. sarama's underlying API is blocking
+// and not ctx-aware, so cancellation is implemented as a soft timeout —
+// the message may still complete asynchronously after ctx is done, but the
+// caller is unblocked immediately.
+type SyncProducer struct {
 	producer sarama.SyncProducer
 	topic    string
 }
 
-func NewKafkaSyncProducer(kahosts []string, topic string) (*KafkaSyncProducer, error) {
+// NewSyncProducer connects to brokers and returns a sync producer bound to topic.
+func NewSyncProducer(brokers []string, topic string) (*SyncProducer, error) {
 	config := sarama.NewConfig()
-	config.Producer.Return.Successes = true //必须有这个选项
-	config.Producer.Timeout = time.Duration(ProducerTimeout) * time.Millisecond
+	config.Producer.Return.Successes = true
+	config.Producer.Timeout = defaultProducerTimeout
+	config.Producer.RequiredAcks = sarama.WaitForAll
+	config.Producer.Retry.Max = 3
 
-	p, err := sarama.NewSyncProducer(kahosts, config)
+	p, err := sarama.NewSyncProducer(brokers, config)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("kafka: new sync producer: %w", err)
 	}
-
-	producer := &KafkaSyncProducer{
-		producer: p,
-		topic:    topic,
-	}
-
-	return producer, nil
+	return &SyncProducer{producer: p, topic: topic}, nil
 }
 
-func (asp *KafkaSyncProducer) Close() error {
-	return asp.producer.Close()
-}
-
-func (asp *KafkaSyncProducer) SendMessage(msg *sarama.ProducerMessage) error {
-	if _, _, err := asp.producer.SendMessage(msg); err != nil {
-		return err
+func (p *SyncProducer) Close() error {
+	if err := p.producer.Close(); err != nil {
+		return fmt.Errorf("kafka: close sync producer: %w", err)
 	}
 	return nil
 }
 
-func (asp *KafkaSyncProducer) SendStringMessage(key, value string) error {
-	msg := &sarama.ProducerMessage{}
-
-	msg.Topic = asp.topic
-	msg.Key = sarama.StringEncoder(key)
-	msg.Value = sarama.StringEncoder(value)
-
-	if _, _, err := asp.producer.SendMessage(msg); err != nil {
-		return err
+// Send sends a fully-built message with ctx soft-cancellation.
+func (p *SyncProducer) Send(ctx context.Context, msg *sarama.ProducerMessage) error {
+	done := make(chan error, 1)
+	go func() {
+		_, _, err := p.producer.SendMessage(msg)
+		done <- err
+	}()
+	select {
+	case <-ctx.Done():
+		return fmt.Errorf("kafka: send: %w", ctx.Err())
+	case err := <-done:
+		if err != nil {
+			return fmt.Errorf("kafka: send message: %w", err)
+		}
+		return nil
 	}
-
-	return nil
 }
 
-func (asp *KafkaSyncProducer) SendByteMessage(key, value []byte) error {
-	msg := &sarama.ProducerMessage{}
+// SendString sends a string key+value pair to the producer's topic.
+func (p *SyncProducer) SendString(ctx context.Context, key, value string) error {
+	return p.Send(ctx, &sarama.ProducerMessage{
+		Topic: p.topic,
+		Key:   sarama.StringEncoder(key),
+		Value: sarama.StringEncoder(value),
+	})
+}
 
-	msg.Topic = asp.topic
-	msg.Key = sarama.ByteEncoder(key)
-	msg.Value = sarama.ByteEncoder(value)
-
-	if _, _, err := asp.producer.SendMessage(msg); err != nil {
-		return err
-	}
-	return nil
+// SendBytes sends a []byte key+value pair to the producer's topic.
+func (p *SyncProducer) SendBytes(ctx context.Context, key, value []byte) error {
+	return p.Send(ctx, &sarama.ProducerMessage{
+		Topic: p.topic,
+		Key:   sarama.ByteEncoder(key),
+		Value: sarama.ByteEncoder(value),
+	})
 }

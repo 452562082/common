@@ -1,260 +1,221 @@
 package zk
 
 import (
+	"errors"
 	"fmt"
+	"log/slog"
 	"path"
 	"strings"
 	"sync"
 	"time"
 
-	"kuaishangtong/common/utils"
-	"kuaishangtong/common/utils/log"
-	"github.com/samuel/go-zookeeper/zk"
+	"github.com/go-zookeeper/zk"
 )
 
-var SessionTimeout int = 2000
+const defaultSessionTimeout = 2 * time.Second
 
 type createType int32
 
-func (t createType) String() string {
-	if name := createTypeName[t]; name != "" {
-		return name
-	}
-	return "Unknown"
-}
-
 const (
-	_ZK_CREATE_NODE_DATA     createType = 0
-	_ZK_CREATE_NODE_CHILDREN createType = 1
+	createNodeData     createType = 0
+	createNodeChildren createType = 1
 )
 
-var (
-	createTypeName = map[createType]string{
-		_ZK_CREATE_NODE_DATA:     "ZK_CREATE_NODE_DATA",
-		_ZK_CREATE_NODE_CHILDREN: "ZK_CREATE_NODE_CHILDREN",
-	}
-)
-
-type zknode struct {
-	typ    createType // 0: for data, 1: for children
+type znode struct {
+	typ    createType
 	path   string
 	data   []byte
 	active bool
 }
 
-type GozkServer struct {
+// Server manages ZooKeeper service-registration and config-publishing nodes,
+// re-creating them automatically after session loss.
+type Server struct {
 	conn        *zk.Conn
-	connEvent   <-chan zk.Event
-	registryMap map[string]*zknode
-	lock        *sync.RWMutex
-	closed      bool
+	events      <-chan zk.Event
+	registryMap map[string]*znode
+	mu          sync.RWMutex
+	done        chan struct{}
 }
 
-func NewGozkServer(zkhosts []string) (*GozkServer, error) {
-	conn, event, err := zk.Connect(zkhosts, time.Duration(SessionTimeout)*time.Millisecond)
+func NewServer(zkHosts []string) (*Server, error) {
+	conn, ev, err := zk.Connect(zkHosts, defaultSessionTimeout)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("zk: connect: %w", err)
 	}
-
-	gzs := &GozkServer{
+	s := &Server{
 		conn:        conn,
-		connEvent:   event,
-		registryMap: make(map[string]*zknode),
-		lock:        &sync.RWMutex{},
-		closed:      false,
+		events:      ev,
+		registryMap: make(map[string]*znode),
+		done:        make(chan struct{}),
 	}
-	go gzs.loop()
-
-	return gzs, nil
+	go s.loop()
+	return s, nil
 }
 
-func (gzs *GozkServer) String() string {
-	return fmt.Sprintf("go-zk Server sid[%d]", gzs.conn.SessionID())
+func (s *Server) String() string {
+	return fmt.Sprintf("zk.Server sid=%d", s.conn.SessionID())
 }
 
-func (gzs *GozkServer) Close() {
-	gzs.conn.Close()
-	gzs.closed = true
+func (s *Server) Close() {
+	close(s.done)
+	s.conn.Close()
 }
 
-func (gzs *GozkServer) loop() {
-	for !gzs.closed {
+func (s *Server) loop() {
+	for {
 		select {
-		case evt, ok := <-gzs.connEvent:
-			if ok && evt.Type == zk.EventSession {
-				switch evt.State {
-				case zk.StateHasSession:
-					log.Infof("zk conn %s has session", gzs.conn.Server())
-					gzs.lock.Lock()
-					for path, node := range gzs.registryMap {
-						if !node.active {
-							switch node.typ {
-							case _ZK_CREATE_NODE_DATA:
-								err := gzs.serviceConfig(path, node.data, true)
-								if err != nil {
-									log.Error(err)
-									continue
-								}
-								log.Infof("zk conn %s recreate node in path %s", gzs.conn.Server(), path)
-							case _ZK_CREATE_NODE_CHILDREN:
-								parts := strings.Split(path, "/")
-								err := gzs.serviceRegistry(strings.Join(parts[:len(parts)-1], "/"), parts[len(parts)-1], node.data, true)
-								if err != nil {
-									log.Error(err)
-									continue
-								}
-								log.Infof("zk conn %s recreate node in path %s", gzs.conn.Server(), path)
-							}
-						}
-					}
-					gzs.lock.Unlock()
+		case <-s.done:
+			return
+		case evt, ok := <-s.events:
+			if !ok {
+				return
+			}
+			if evt.Type != zk.EventSession {
+				continue
+			}
+			s.handleSessionEvent(evt)
+		}
+	}
+}
 
-				case zk.StateDisconnected:
-					log.Warnf("zk conn %s disconnect", gzs.conn.Server())
-					gzs.lock.Lock()
-					for _, node := range gzs.registryMap {
-						node.active = false
-					}
-					gzs.lock.Unlock()
-
-				case zk.StateConnected:
-					log.Infof("zk conn %s connected", gzs.conn.Server())
-
-				case zk.StateExpired:
-					log.Warnf("zk conn %s expired", gzs.conn.Server())
+func (s *Server) handleSessionEvent(evt zk.Event) {
+	switch evt.State {
+	case zk.StateHasSession:
+		slog.Info("zk: session ready", "server", s.conn.Server())
+		s.mu.Lock()
+		defer s.mu.Unlock()
+		for p, node := range s.registryMap {
+			if node.active {
+				continue
+			}
+			switch node.typ {
+			case createNodeData:
+				if err := s.serviceConfig(p, node.data, true); err != nil {
+					slog.Error("zk: recreate config node", "path", p, "err", err)
+					continue
+				}
+			case createNodeChildren:
+				parts := strings.Split(p, "/")
+				root := strings.Join(parts[:len(parts)-1], "/")
+				if err := s.serviceRegistry(root, parts[len(parts)-1], node.data, true); err != nil {
+					slog.Error("zk: recreate ephemeral node", "path", p, "err", err)
+					continue
 				}
 			}
+			slog.Info("zk: recreated node", "path", p)
 		}
+	case zk.StateDisconnected:
+		slog.Warn("zk: disconnected", "server", s.conn.Server())
+		s.mu.Lock()
+		for _, node := range s.registryMap {
+			node.active = false
+		}
+		s.mu.Unlock()
+	case zk.StateConnected:
+		slog.Info("zk: connected", "server", s.conn.Server())
+	case zk.StateExpired:
+		slog.Warn("zk: session expired", "server", s.conn.Server())
 	}
 }
 
-// 该方法用于集群服务的配置项统一管理，client监听该节点的Data数据的变化
-// servicepath 要创建的临时节点路径
-// data 为该节点数据(配置数据)
-// createFatherNodePaths 表示如果rootPath这个路径上存在还未建立的一层父节点，是否默认创建该父节点
-func (gzs *GozkServer) ServiceConfig(servicepath string, data []byte, createFatherNodePaths bool) error {
-	gzs.lock.Lock()
-	defer gzs.lock.Unlock()
-	return gzs.serviceConfig(servicepath, data, createFatherNodePaths)
+// PublishConfig creates a persistent node holding configuration data.
+// Clients can watch this path to receive config updates.
+// If createParents is true, missing parent nodes are created automatically.
+func (s *Server) PublishConfig(servicePath string, data []byte, createParents bool) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.serviceConfig(servicePath, data, createParents)
 }
 
-func (gzs *GozkServer) serviceConfig(servicepath string, data []byte, createFatherNodePaths bool) error {
-	servicepath = path.Clean(servicepath)
-	err := gzs.checkRoot(servicepath, createFatherNodePaths)
-	if err != nil {
+func (s *Server) serviceConfig(servicePath string, data []byte, createParents bool) error {
+	servicePath = path.Clean(servicePath)
+	if err := s.ensureParents(servicePath, createParents); err != nil {
 		return err
 	}
 
-	node, ok := gzs.registryMap[servicepath]
-	if ok {
-		if node.active {
-			return nil
-		}
-	} else {
-		node = &zknode{
-			typ:    _ZK_CREATE_NODE_DATA,
-			path:   servicepath,
-			data:   data,
-			active: false,
-		}
-		gzs.registryMap[servicepath] = node
+	if existing, ok := s.registryMap[servicePath]; ok && existing.active {
+		return nil
+	}
+	s.registryMap[servicePath] = &znode{
+		typ:  createNodeData,
+		path: servicePath,
+		data: data,
 	}
 
-	_, err = gzs.conn.Create(servicepath, data, 0, zk.WorldACL(zk.PermAll))
+	_, err := s.conn.Create(servicePath, data, 0, zk.WorldACL(zk.PermAll))
 	if err != nil {
-		if err == zk.ErrNodeExists { // 如果要创建的节点已经存在，直接修改该节点的数据
-			_, err = gzs.conn.Set(servicepath, data, -1)
-			if err != nil {
-				return err
+		if errors.Is(err, zk.ErrNodeExists) {
+			if _, err = s.conn.Set(servicePath, data, -1); err != nil {
+				return fmt.Errorf("zk: set %s: %w", servicePath, err)
 			}
 		} else {
-			return err
+			return fmt.Errorf("zk: create %s: %w", servicePath, err)
 		}
 	}
-	gzs.registryMap[servicepath].active = true
-
+	s.registryMap[servicePath].active = true
 	return nil
 }
 
-// 该方法用于服务注册和发现的场景，服务器端注册zookeeper服务节点
-// rootPath 为父节点，client监听该节点下Children节点的变化
-// serviceHost 要创建的临时节点(建议以该服务的IP:port来命名该节点)
-// data 为该节点数据
-// createFatherNodePaths 表示如果rootPath这个路径上存在还未建立的一层父节点，是否默认创建该父节点
-func (gzs *GozkServer) ServiceRegistry(rootPath, serviceHost string, data []byte, createFatherNodePaths bool) error {
-	gzs.lock.Lock()
-	defer gzs.lock.Unlock()
-	return gzs.serviceRegistry(rootPath, serviceHost, data, createFatherNodePaths)
+// Register creates an ephemeral child node under rootPath, typically used for
+// service discovery (the node disappears when the session ends).
+// If createParents is true, missing parent nodes are created automatically.
+func (s *Server) Register(rootPath, serviceHost string, data []byte, createParents bool) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.serviceRegistry(rootPath, serviceHost, data, createParents)
 }
 
-func (gzs *GozkServer) serviceRegistry(rootPath, serviceHost string, data []byte, createFatherNodePaths bool) error {
-	abpath := path.Join(rootPath, serviceHost)
-	err := gzs.checkRoot(abpath, createFatherNodePaths)
-	if err != nil {
+func (s *Server) serviceRegistry(rootPath, serviceHost string, data []byte, createParents bool) error {
+	abs := path.Join(rootPath, serviceHost)
+	if err := s.ensureParents(abs, createParents); err != nil {
 		return err
 	}
 
-	node, ok := gzs.registryMap[abpath]
-	if ok {
-		if node.active {
-			return nil
-		}
-	} else {
-		node = &zknode{
-			typ:    _ZK_CREATE_NODE_CHILDREN,
-			path:   abpath,
-			data:   data,
-			active: false,
-		}
-		gzs.registryMap[abpath] = node
+	if existing, ok := s.registryMap[abs]; ok && existing.active {
+		return nil
+	}
+	s.registryMap[abs] = &znode{
+		typ:  createNodeChildren,
+		path: abs,
+		data: data,
 	}
 
-	_, err = gzs.conn.Create(abpath, data, zk.FlagEphemeral, zk.WorldACL(zk.PermAll))
-	if err != nil {
-		return err
+	if _, err := s.conn.Create(abs, data, zk.FlagEphemeral, zk.WorldACL(zk.PermAll)); err != nil {
+		return fmt.Errorf("zk: create ephemeral %s: %w", abs, err)
 	}
-
-	gzs.registryMap[abpath].active = true
-
+	s.registryMap[abs].active = true
 	return nil
 }
 
-// 检测父节点是否存在，如不存在，且createRoots == true 则创建各级父节点
-func (gzs *GozkServer) checkRoot(path string, createFatherNodePaths bool) error {
-	rootPaths := getFatherNodePaths(path)
-	for _, v := range rootPaths {
-		exist, _, err := gzs.conn.Exists(v)
+func (s *Server) ensureParents(p string, create bool) error {
+	for _, parent := range parentPaths(p) {
+		exist, _, err := s.conn.Exists(parent)
 		if err != nil {
-			return err
+			return fmt.Errorf("zk: exists %s: %w", parent, err)
 		}
-
-		if !exist {
-			if !createFatherNodePaths {
-				return fmt.Errorf("%s can not find father node %s", gzs, v)
-			}
-
-			log.Debug("create father:", v)
-			_, err = gzs.conn.Create(v, utils.S2B(v), 0, zk.WorldACL(zk.PermAll))
-			if err != nil {
-				return err
-			}
+		if exist {
+			continue
 		}
-
-		log.Debugf("rootPath %s is ready", v)
+		if !create {
+			return fmt.Errorf("zk: missing parent node %s", parent)
+		}
+		if _, err = s.conn.Create(parent, []byte(parent), 0, zk.WorldACL(zk.PermAll)); err != nil && !errors.Is(err, zk.ErrNodeExists) {
+			return fmt.Errorf("zk: create parent %s: %w", parent, err)
+		}
 	}
 	return nil
 }
 
-func getFatherNodePaths(path string) []string {
-	path = strings.Trim(path, "/")
-	path = "/" + path
-
-	ab_paths := strings.Split(path, "/")
-	count := len(ab_paths)
-
-	for i := 0; i < count-1; i++ {
-		ab_paths[i+1] = strings.Join(ab_paths[i:i+2], "/")
+func parentPaths(p string) []string {
+	p = "/" + strings.Trim(p, "/")
+	parts := strings.Split(p, "/")
+	if len(parts) <= 2 {
+		return nil
 	}
-
-	return ab_paths[1 : count-1]
+	out := make([]string, 0, len(parts)-2)
+	for i := 1; i < len(parts)-1; i++ {
+		out = append(out, "/"+strings.Join(parts[1:i+1], "/"))
+	}
+	return out
 }
