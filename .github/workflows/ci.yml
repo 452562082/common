@@ -10,8 +10,13 @@ jobs:
   build:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        go: ['1.24', '1.25']
+        # go.mod declares `go 1.25`. We only test against that one version —
+        # we use features that require it (math/rand/v2 + range-over-int +
+        # maps.Copy etc). Lowering the matrix lets us drop GOTOOLCHAIN
+        # gymnastics for older runners.
+        go: ['1.25']
     steps:
       - uses: actions/checkout@v4
 
@@ -36,7 +41,6 @@ jobs:
         run: go test -race -count=1 -coverprofile=coverage.txt -covermode=atomic ./...
 
       - name: Upload coverage
-        if: matrix.go == '1.25'
         uses: actions/upload-artifact@v4
         with:
           name: coverage
@@ -50,6 +54,8 @@ jobs:
         with:
           go-version: '1.25'
           cache: true
-      - uses: golangci/golangci-lint-action@v6
+      # golangci-lint v2.x is the first major series compiled with Go 1.24+,
+      # so it can lint a project whose go.mod targets go 1.25. v1.x cannot.
+      - uses: golangci/golangci-lint-action@v8
         with:
-          version: latest
+          version: v2.5.0
