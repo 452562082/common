@@ -17,6 +17,17 @@ linters:
     - bodyclose
 
   settings:
+    errcheck:
+      # These are "fire and forget" call sites where Go idioms accept the
+      # discarded return value. Listing them here is cleaner than scattering
+      # `_ =` prefixes everywhere.
+      exclude-functions:
+        - (io.Closer).Close
+        - (net/http.ResponseWriter).Write
+        - fmt.Fprint
+        - fmt.Fprintf
+        - fmt.Fprintln
+
     revive:
       rules:
         - name: var-naming
@@ -32,3 +43,9 @@ linters:
         linters:
           - errcheck
           - gosec
+      # `utils` is a deliberately generic name for the buffer-pool /
+      # unsafe-string helpers; revive's "meaningless package name" check
+      # is too strict here.
+      - path: ^utils/
+        linters:
+          - revive

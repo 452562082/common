@@ -27,7 +27,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("new consumer group: %v", err)
 	}
-	defer g.Close()
+	defer func() { _ = g.Close() }()
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()

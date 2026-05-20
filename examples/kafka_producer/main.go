@@ -22,7 +22,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("new producer: %v", err)
 	}
-	defer p.Close()
+	defer func() { _ = p.Close() }()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()

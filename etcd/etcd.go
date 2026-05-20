@@ -311,7 +311,7 @@ func (c *Client) TryLock(ctx context.Context, key string, ttl time.Duration) (*M
 
 // Unlock releases the lock and closes the session.
 func (m *Mutex) Unlock(ctx context.Context) error {
-	defer m.session.Close()
+	defer func() { _ = m.session.Close() }()
 	if err := m.mu.Unlock(ctx); err != nil {
 		return fmt.Errorf("etcd: unlock %s: %w", m.key, err)
 	}

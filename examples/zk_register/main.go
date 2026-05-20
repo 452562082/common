@@ -24,7 +24,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("new zk server: %v", err)
 	}
-	defer srv.Close()
+	defer func() { _ = srv.Close() }()
 
 	host, _ := os.Hostname()
 	if err := srv.Register("/services/demo", host, []byte("ready"), true); err != nil {

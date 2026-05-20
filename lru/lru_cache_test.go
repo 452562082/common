@@ -81,8 +81,7 @@ func TestMemCache_Peek(t *testing.T) {
 	_ = c.Set(ctx, "b", 2)
 
 	// Peek must NOT promote.
-	if _, _, _ = c.Peek(ctx, "a"); false {
-	}
+	_, _, _ = c.Peek(ctx, "a")
 	_ = c.Set(ctx, "c", 3) // evicts LRU; with Peek not touching, "a" is LRU and should go
 
 	if _, ok, _ := c.Get(ctx, "a"); ok {

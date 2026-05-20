@@ -230,7 +230,7 @@ func (s *Sender) send(from string, to []string, body []byte) error {
 	if err != nil {
 		return fmt.Errorf("dial: %w", err)
 	}
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	if err := client.Hello(localName(s.opts.From)); err != nil {
 		return fmt.Errorf("hello: %w", err)

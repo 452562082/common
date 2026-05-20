@@ -40,7 +40,10 @@ func TestConn_EchoRoundTrip(t *testing.T) {
 	defer srv.Close()
 
 	url := "ws" + strings.TrimPrefix(srv.URL, "http") + "/"
-	c, _, err := gws.DefaultDialer.Dial(url, nil)
+	c, resp, err := gws.DefaultDialer.Dial(url, nil)
+	if resp != nil {
+		_ = resp.Body.Close()
+	}
 	if err != nil {
 		t.Fatalf("dial: %v", err)
 	}
@@ -76,7 +79,10 @@ func TestConn_CloseIdempotent(t *testing.T) {
 	defer srv.Close()
 
 	url := "ws" + strings.TrimPrefix(srv.URL, "http") + "/"
-	c, _, err := gws.DefaultDialer.Dial(url, nil)
+	c, resp, err := gws.DefaultDialer.Dial(url, nil)
+	if resp != nil {
+		_ = resp.Body.Close()
+	}
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -97,7 +103,10 @@ func TestConn_SendAfterClose(t *testing.T) {
 	defer srv.Close()
 
 	url := "ws" + strings.TrimPrefix(srv.URL, "http") + "/"
-	c, _, err := gws.DefaultDialer.Dial(url, nil)
+	c, resp, err := gws.DefaultDialer.Dial(url, nil)
+	if resp != nil {
+		_ = resp.Body.Close()
+	}
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -167,7 +176,10 @@ func TestUpgrade_BrowserCrossSiteRejected(t *testing.T) {
 	url := "ws" + strings.TrimPrefix(srv.URL, "http") + "/"
 	header := http.Header{}
 	header.Set("Origin", "https://evil.example")
-	_, _, err := gws.DefaultDialer.Dial(url, header)
+	_, resp, err := gws.DefaultDialer.Dial(url, header)
+	if resp != nil {
+		_ = resp.Body.Close()
+	}
 	if err == nil {
 		t.Error("dial with foreign Origin should fail")
 	}
@@ -190,7 +202,10 @@ func TestHub_BroadcastAndRemove(t *testing.T) {
 
 	url := "ws" + strings.TrimPrefix(srv.URL, "http") + "/"
 	dial := func(name string) *gws.Conn {
-		c, _, err := gws.DefaultDialer.Dial(url, nil)
+		c, resp, err := gws.DefaultDialer.Dial(url, nil)
+	if resp != nil {
+		_ = resp.Body.Close()
+	}
 		if err != nil {
 			t.Fatalf("dial %s: %v", name, err)
 		}

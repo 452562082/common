@@ -64,7 +64,7 @@ func MemProf(w io.Writer) error {
 	if err != nil {
 		return fmt.Errorf("toolbox: create %s: %w", filename, err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	runtime.GC()
 	if err := pprof.WriteHeapProfile(f); err != nil {
@@ -87,7 +87,7 @@ func GetCPUProfile(ctx context.Context, w io.Writer, duration time.Duration) err
 	if err != nil {
 		return fmt.Errorf("toolbox: create %s: %w", filename, err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	if err := pprof.StartCPUProfile(f); err != nil {
 		return fmt.Errorf("toolbox: start cpu profile: %w", err)
