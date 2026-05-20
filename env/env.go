@@ -58,10 +58,23 @@ func getString(name string) (string, error) {
 	return v, nil
 }
 
-func ServerHost() (string, error)       { return getString(envServerHost) }
-func HostIP() (string, error)           { return getString(envHostIP) }
+// ServerHost reads SERVER_HOST.
+func ServerHost() (string, error) { return getString(envServerHost) }
+
+// HostIP reads HOST_IP.
+func HostIP() (string, error) { return getString(envHostIP) }
+
+// ZooKeeperHosts reads ZK_HOSTS, split on `,` or `;`.
 func ZooKeeperHosts() ([]string, error) { return getHosts(envZKHosts) }
-func KafkaHosts() ([]string, error)     { return getHosts(envKafkaHosts) }
-func HDFSHosts() ([]string, error)      { return getHosts(envHDFSHosts) }
-func ElasticHosts() ([]string, error)   { return getHosts(envESHosts) }
-func RedisHosts() ([]string, error)     { return getHosts(envRedisHosts) }
+
+// KafkaHosts reads KAFKA_HOSTS, split on `,` or `;`.
+func KafkaHosts() ([]string, error) { return getHosts(envKafkaHosts) }
+
+// HDFSHosts reads HDFS_HOSTS, split on `,` or `;`.
+func HDFSHosts() ([]string, error) { return getHosts(envHDFSHosts) }
+
+// ElasticHosts reads ES_HOSTS, split on `,` or `;`.
+func ElasticHosts() ([]string, error) { return getHosts(envESHosts) }
+
+// RedisHosts reads REDIS_HOSTS, split on `,` or `;`.
+func RedisHosts() ([]string, error) { return getHosts(envRedisHosts) }

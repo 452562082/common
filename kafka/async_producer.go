@@ -8,11 +8,17 @@ import (
 	"github.com/IBM/sarama"
 )
 
+// AsyncProducer is a thin wrapper over sarama.AsyncProducer. It accepts
+// messages on Input() and reports successes / errors on the corresponding
+// channels — call DrainErrors in a goroutine if you don't consume them yourself.
 type AsyncProducer struct {
 	producer sarama.AsyncProducer
 	topic    string
 }
 
+// NewAsyncProducer connects to brokers and returns a producer bound to topic.
+// Acks are required (Return.Successes / Return.Errors); use Successes() /
+// Errors() to observe delivery results.
 func NewAsyncProducer(brokers []string, topic string) (*AsyncProducer, error) {
 	config := sarama.NewConfig()
 	config.Producer.Return.Successes = true

@@ -9,7 +9,7 @@
 //
 // Both use the same *Client and share the same connection.
 //
-//	c, err := natsx.Open(natsx.Options{URL: "nats://localhost:4222"})
+//	c, err := natsx.Open(ctx, natsx.Options{URL: "nats://localhost:4222"})
 //	if err != nil { ... }
 //	defer c.Close()
 //
@@ -68,7 +68,15 @@ type Client struct {
 }
 
 // Open dials the NATS server and returns a Client.
-func Open(opts Options) (*Client, error) {
+//
+// ctx bounds the initial connect attempt: when ctx is cancelled before the
+// underlying nats.Connect returns, Open aborts with the ctx error. nats.go
+// itself doesn't accept a context for connect, so the bound is enforced via
+// a select around a connect goroutine.
+//
+// The signature matches the other infrastructure-client Open functions
+// (db, mongo, redis, etcd, objstore) for API consistency.
+func Open(ctx context.Context, opts Options) (*Client, error) {
 	if opts.URL == "" {
 		return nil, errors.New("nats: URL is required")
 	}
@@ -98,11 +106,33 @@ func Open(opts Options) (*Client, error) {
 	}
 	natsOpts = append(natsOpts, opts.ExtraOpts...)
 
-	conn, err := nats.Connect(opts.URL, natsOpts...)
-	if err != nil {
-		return nil, fmt.Errorf("nats: connect: %w", err)
+	type result struct {
+		conn *nats.Conn
+		err  error
 	}
-	return &Client{conn: conn}, nil
+	done := make(chan result, 1)
+	go func() {
+		c, err := nats.Connect(opts.URL, natsOpts...)
+		done <- result{conn: c, err: err}
+	}()
+
+	select {
+	case <-ctx.Done():
+		// The connect goroutine keeps running; it'll close the resulting
+		// connection (if any) when the done channel is drained below.
+		go func() {
+			r := <-done
+			if r.conn != nil {
+				r.conn.Close()
+			}
+		}()
+		return nil, fmt.Errorf("nats: connect: %w", ctx.Err())
+	case r := <-done:
+		if r.err != nil {
+			return nil, fmt.Errorf("nats: connect: %w", r.err)
+		}
+		return &Client{conn: r.conn}, nil
+	}
 }
 
 // Raw exposes the underlying *nats.Conn for any feature not surfaced here.

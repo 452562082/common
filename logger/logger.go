@@ -30,12 +30,12 @@ package logger
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"log/slog"
 	"os"
 	"strings"
 	"sync"
+	"sync/atomic"
 
 	"gopkg.in/natefinch/lumberjack.v2"
 )
@@ -157,14 +157,14 @@ func ParseLevel(s string) slog.Level {
 // --- Default logger -----------------------------------------------------------
 
 var (
-	defaultLogger atomic[*slog.Logger]
-	once          sync.Once
+	defaultLogger atomic.Pointer[slog.Logger]
+	defaultOnce   sync.Once
 )
 
 // Default returns the package-level logger. The first call lazily initialises
 // it with sensible defaults (Info / JSON / stderr).
 func Default() *slog.Logger {
-	once.Do(func() {
+	defaultOnce.Do(func() {
 		defaultLogger.Store(New(Options{}))
 	})
 	return defaultLogger.Load()
@@ -250,26 +250,5 @@ func (h *contextHandler) WithGroup(name string) slog.Handler {
 	return &contextHandler{Handler: h.Handler.WithGroup(name)}
 }
 
-// --- tiny generic atomic so we don't pull in atomic.Pointer noise ------------
-
-type atomic[T any] struct {
-	mu  sync.RWMutex
-	val T
-}
-
-func (a *atomic[T]) Store(v T) {
-	a.mu.Lock()
-	a.val = v
-	a.mu.Unlock()
-}
-
-func (a *atomic[T]) Load() T {
-	a.mu.RLock()
-	defer a.mu.RUnlock()
-	return a.val
-}
-
 // String allows %v formatting of Format.
 func (f Format) String() string { return string(f) }
-
-var _ fmt.Stringer = FormatJSON

@@ -38,6 +38,9 @@ type Server struct {
 	done        chan struct{}
 }
 
+// NewServer connects to the given ZK ensemble and returns a Server ready to
+// publish config / register ephemeral nodes. A background goroutine watches
+// for session events and re-creates registered nodes on reconnect.
 func NewServer(zkHosts []string) (*Server, error) {
 	conn, ev, err := zk.Connect(zkHosts, defaultSessionTimeout)
 	if err != nil {
