@@ -241,7 +241,10 @@ func (sw *SlidingWindow) Allow(key string) bool {
 		if sw.maxKeys > 0 && len(sw.buckets) >= sw.maxKeys {
 			sw.evictLRULocked()
 		}
-		b = &swBucket{stamps: make([]time.Time, 0, sw.limit+1)}
+		// Cap the initial slice capacity. For a "1M req/min" limiter, we don't
+		// want to pre-allocate 1M *time.Time per key — that's ~24 MB per key.
+		// Most keys see only a handful of requests; let the slice grow as needed.
+		b = &swBucket{stamps: make([]time.Time, 0, min(sw.limit+1, 64))}
 		sw.buckets[key] = b
 	}
 	// Drop everything older than cutoff.

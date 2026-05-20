@@ -1,0 +1,39 @@
+version: 2
+updates:
+  # Go module updates — weekly minor / patch bumps for direct & indirect deps.
+  - package-ecosystem: gomod
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "03:00"
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: "deps"
+    groups:
+      # Roll non-major upgrades into one PR per ecosystem cluster so the
+      # backlog stays sane.
+      aws:
+        patterns:
+          - "github.com/aws/*"
+      otel:
+        patterns:
+          - "go.opentelemetry.io/*"
+      grpc-protobuf:
+        patterns:
+          - "google.golang.org/grpc"
+          - "google.golang.org/protobuf"
+          - "google.golang.org/genproto/*"
+      etcd:
+        patterns:
+          - "go.etcd.io/*"
+
+  # GitHub Actions versions in workflow files.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "ci"
