@@ -122,6 +122,28 @@ func TestMulti_IsTraversesJoined(t *testing.T) {
 	}
 }
 
+func TestSetStackDepth(t *testing.T) {
+	orig := StackDepth()
+	defer SetStackDepth(orig)
+
+	SetStackDepth(0)
+	e := New("X", 0, "msg")
+	if e.Stack() != "" {
+		t.Errorf("depth=0 should disable stack capture, got:\n%s", e.Stack())
+	}
+
+	SetStackDepth(64)
+	e = New("X", 0, "msg")
+	if e.Stack() == "" {
+		t.Error("depth=64 should produce a non-empty stack")
+	}
+
+	SetStackDepth(-1) // clamped to 0
+	if StackDepth() != 0 {
+		t.Errorf("negative depth should clamp to 0, got %d", StackDepth())
+	}
+}
+
 func TestAppendErr(t *testing.T) {
 	e := AppendErr(nil, errors.New("a"))
 	if e == nil || e.Error() != "a" {

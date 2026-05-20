@@ -94,11 +94,14 @@ func (c *Client) ChildrenOnce(node string) ([]string, *zk.Stat, error) {
 }
 
 // Close stops the watcher goroutines and tears down the ZK connection.
-// It is safe to call multiple times.
-func (c *Client) Close() {
+// It is safe to call multiple times. The error return is reserved for future
+// drivers that report close failures; the current implementation always
+// returns nil.
+func (c *Client) Close() error {
 	c.cancel()
 	c.conn.Close()
 	c.wg.Wait()
+	return nil
 }
 
 // publishData pushes v onto the data channel, dropping a stale buffered value

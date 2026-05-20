@@ -119,14 +119,16 @@ func (tb *TokenBucket) Reset(key string) {
 	tb.mu.Unlock()
 }
 
-// Close stops the background eviction goroutine.
-func (tb *TokenBucket) Close() {
+// Close stops the background eviction goroutine. Safe to call multiple times.
+// Returns nil; the error return mirrors io.Closer for stack symmetry.
+func (tb *TokenBucket) Close() error {
 	select {
 	case <-tb.stop:
-		return
+		return nil
 	default:
 		close(tb.stop)
 		<-tb.done
+		return nil
 	}
 }
 
@@ -292,14 +294,16 @@ func (sw *SlidingWindow) Wait(ctx context.Context, key string) error {
 	}
 }
 
-// Close stops the eviction goroutine.
-func (sw *SlidingWindow) Close() {
+// Close stops the eviction goroutine. Safe to call multiple times.
+// Returns nil; the error return mirrors io.Closer.
+func (sw *SlidingWindow) Close() error {
 	select {
 	case <-sw.stop:
-		return
+		return nil
 	default:
 		close(sw.stop)
 		<-sw.done
+		return nil
 	}
 }
 

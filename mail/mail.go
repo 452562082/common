@@ -103,12 +103,7 @@ func NewSender(opts Options) (*Sender, error) {
 // containsCRLF reports whether s contains a CR or LF byte. We use this to
 // reject header injection attempts before we serialise the MIME message.
 func containsCRLF(s string) bool {
-	for i := 0; i < len(s); i++ {
-		if s[i] == '\r' || s[i] == '\n' {
-			return true
-		}
-	}
-	return false
+	return strings.ContainsAny(s, "\r\n")
 }
 
 // Attachment is a single file attached to a Message.
@@ -377,10 +372,7 @@ func writeAttachment(buf *bytes.Buffer, a Attachment) {
 	buf.WriteString("Content-Transfer-Encoding: base64\r\n\r\n")
 	encoded := base64.StdEncoding.EncodeToString(a.Content)
 	for i := 0; i < len(encoded); i += 76 {
-		end := i + 76
-		if end > len(encoded) {
-			end = len(encoded)
-		}
+		end := min(i+76, len(encoded))
 		buf.WriteString(encoded[i:end])
 		buf.WriteString("\r\n")
 	}

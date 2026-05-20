@@ -16,7 +16,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"math/rand"
+	"math/rand/v2"
 	"net"
 	"net/http"
 	"net/url"
@@ -148,10 +148,11 @@ func DefaultRetryOn(resp *http.Response, err error) bool {
 }
 
 // Client is a configured HTTP client with retry semantics.
+//
+// Safe for concurrent use by multiple goroutines.
 type Client struct {
 	*http.Client
 	opts Options
-	rng  *rand.Rand
 }
 
 // New returns a Client built from opts. Zero values fall back to defaults.
@@ -178,7 +179,6 @@ func New(opts Options) *Client {
 			CheckRedirect: buildCheckRedirect(opts),
 		},
 		opts: opts,
-		rng:  rand.New(rand.NewSource(time.Now().UnixNano())),
 	}
 	return c
 }
@@ -309,15 +309,17 @@ func (c *Client) sleep(ctx context.Context, attempt int) error {
 
 func (c *Client) backoff(attempt int) time.Duration {
 	// Exponential with full jitter: random in [min, min*2^(attempt-1)], capped at max.
-	min := c.opts.RetryWaitMin
-	cap := c.opts.RetryWaitMax
+	// math/rand/v2 package-level functions are goroutine-safe, so this is
+	// callable from many in-flight retries at once without a mutex.
+	lo := c.opts.RetryWaitMin
+	hi := c.opts.RetryWaitMax
 	mult := time.Duration(1) << (attempt - 1)
-	if mult <= 0 || min*mult > cap {
-		return cap
+	if mult <= 0 || lo*mult > hi {
+		return hi
 	}
-	upper := min * mult
-	jitter := time.Duration(c.rng.Int63n(int64(upper-min) + 1))
-	return min + jitter
+	upper := lo * mult
+	jitter := time.Duration(rand.Int64N(int64(upper-lo) + 1))
+	return lo + jitter
 }
 
 // GetJSON issues GET url and decodes the body into out (JSON).

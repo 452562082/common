@@ -49,7 +49,7 @@ func NewPool(workers, bufferSize int) *Pool {
 		tasks:   make(chan Task, bufferSize),
 	}
 	p.wg.Add(workers)
-	for i := 0; i < workers; i++ {
+	for range workers {
 		go p.run()
 	}
 	return p
@@ -105,8 +105,9 @@ func (p *Pool) TrySubmit(t Task) error {
 }
 
 // Close stops accepting new tasks, waits for the queue to drain, then waits
-// for all workers to exit.
-func (p *Pool) Close() {
+// for all workers to exit. Safe to call multiple times. Returns nil; the
+// error return mirrors io.Closer for stack symmetry.
+func (p *Pool) Close() error {
 	p.closeOnce.Do(func() {
 		p.mu.Lock()
 		p.closed = true
@@ -114,6 +115,7 @@ func (p *Pool) Close() {
 		p.mu.Unlock()
 		p.wg.Wait()
 	})
+	return nil
 }
 
 // ErrPoolClosed is returned by Submit / TrySubmit after Close.
@@ -215,7 +217,7 @@ func backoff(rng *rand.Rand, opts RetryOptions, attempt int) time.Duration {
 
 func pow(base float64, exp int) float64 {
 	r := 1.0
-	for i := 0; i < exp; i++ {
+	for range exp {
 		r *= base
 	}
 	return r

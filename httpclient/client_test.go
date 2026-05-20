@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -229,6 +230,33 @@ func mustReq(t *testing.T, url string) *http.Request {
 		t.Fatal(err)
 	}
 	return r
+}
+
+// TestRetry_ConcurrentBackoffIsRaceFree triggers many in-flight retries on a
+// shared Client so the race detector fires if backoff ever touches shared
+// mutable state again.
+func TestRetry_ConcurrentBackoffIsRaceFree(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, "boom", http.StatusInternalServerError)
+	}))
+	defer srv.Close()
+
+	c := New(Options{
+		MaxRetries:   3,
+		RetryWaitMin: 100 * time.Microsecond,
+		RetryWaitMax: 1 * time.Millisecond,
+	})
+
+	const N = 64
+	var wg sync.WaitGroup
+	for i := 0; i < N; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			_ = c.GetJSON(context.Background(), srv.URL, nil)
+		}()
+	}
+	wg.Wait()
 }
 
 func TestUserAgent(t *testing.T) {

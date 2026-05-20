@@ -42,6 +42,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `GetCPUProfile` takes a context and a duration.
 - Go toolchain bumped to 1.25; CI matrix is 1.24 / 1.25.
 
+### Fixed (tenth pass — code review polish)
+
+- **httpclient**: replaced per-Client `*rand.Rand` with `math/rand/v2`
+  package-level functions. The previous code had a latent data race on the
+  retry backoff jitter when one Client was shared across goroutines.
+  Added a concurrent retry stress test under `-race`.
+- **graceful**: `App.Run` `drained` counter no longer starts at 1 when the
+  signal / ctx branch fires — it only counts results actually consumed,
+  so the first-error bookkeeping is now correct.
+- **errpkg**: default captured stack depth raised from 16 to 32, with
+  `SetStackDepth` / `StackDepth` to tune or disable at runtime.
+- **API consistency**: `Close()` on `zk.Client`, `zk.Server`,
+  `limiter.TokenBucket`, `limiter.SlidingWindow`, and `async.Pool` now
+  returns `error` (returns nil) to match `io.Closer`. Existing
+  `defer x.Close()` call sites continue to compile.
+- **Go 1.22+ idioms** applied across the tree:
+  - `for i := 0; i < n; i++` → `for range n`
+  - `if a > b { a = b }` → `min` / `max`
+  - manual map-merge loops → `maps.Copy`
+  - `reflect.TypeOf(time.Duration(0))` → `reflect.TypeFor[time.Duration]()`
+  - dropped redundant `c := c` inside `for _, c := range comps`.
+
 ### Security (ninth pass — second-round audit)
 
 #### Fixed

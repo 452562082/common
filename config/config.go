@@ -101,7 +101,7 @@ func applyFile(dst any, opts Options) error {
 // tag and are still at their zero value.
 func applyDefaults(v reflect.Value) error {
 	t := v.Type()
-	for i := 0; i < t.NumField(); i++ {
+	for i := range t.NumField() {
 		f := t.Field(i)
 		if !f.IsExported() {
 			continue
@@ -140,7 +140,7 @@ func applyDefaults(v reflect.Value) error {
 // set in the process environment.
 func applyEnv(v reflect.Value, prefix string) error {
 	t := v.Type()
-	for i := 0; i < t.NumField(); i++ {
+	for i := range t.NumField() {
 		f := t.Field(i)
 		if !f.IsExported() {
 			continue
@@ -218,7 +218,7 @@ func setField(fv reflect.Value, raw string) error {
 		fv.SetBool(b)
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		// time.Duration is an Int64 under the hood; handle it specially.
-		if fv.Type() == reflect.TypeOf(time.Duration(0)) {
+		if fv.Type() == reflect.TypeFor[time.Duration]() {
 			d, err := time.ParseDuration(raw)
 			if err != nil {
 				return fmt.Errorf("parse duration %q: %w", raw, err)

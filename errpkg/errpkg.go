@@ -25,6 +25,7 @@ import (
 	"fmt"
 	"runtime"
 	"strings"
+	"sync/atomic"
 )
 
 // Code is an opaque application error code, conventionally upper-snake-case.
@@ -59,16 +60,39 @@ func NewSentinel(code Code, status int, message string) *Error {
 	return &Error{code: code, status: status, message: message}
 }
 
+// stackDepth controls the maximum number of frames captured by build.
+// Atomic to permit lock-free reads (called on every New / Wrap).
+var stackDepth atomic.Int32
+
+func init() { stackDepth.Store(32) }
+
+// SetStackDepth changes the maximum number of frames captured on subsequent
+// New / Wrap calls. Pass 0 to disable stack capture entirely (useful in
+// hot paths that wrap and immediately log).
+func SetStackDepth(n int) {
+	if n < 0 {
+		n = 0
+	}
+	stackDepth.Store(int32(n))
+}
+
+// StackDepth returns the current limit.
+func StackDepth() int { return int(stackDepth.Load()) }
+
 func build(cause error, code Code, status int, message string) *Error {
-	pcs := make([]uintptr, 16)
-	n := runtime.Callers(3, pcs)
-	return &Error{
+	e := &Error{
 		code:    code,
 		status:  status,
 		message: message,
 		cause:   cause,
-		stack:   pcs[:n],
 	}
+	depth := int(stackDepth.Load())
+	if depth > 0 {
+		pcs := make([]uintptr, depth)
+		n := runtime.Callers(3, pcs)
+		e.stack = pcs[:n]
+	}
+	return e
 }
 
 // Error implements the error interface. It includes the cause for log/debug

@@ -197,18 +197,15 @@ func (c *Captcha) draw(answer string) image.Image {
 	draw.Draw(img, img.Bounds(), &image.Uniform{C: color.RGBA{R: 240, G: 240, B: 240, A: 255}}, image.Point{}, draw.Src)
 
 	// Noise dots.
-	for i := 0; i < (w*h)/20; i++ {
+	for range (w * h) / 20 {
 		img.Set(mrand.Intn(w), mrand.Intn(h), randomDarkColor())
 	}
 	// Distractor curves.
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		drawSineCurve(img, randomDarkColor())
 	}
 	// Letters: a 5x7 raster font, scaled and slightly rotated/offset per glyph.
-	x0 := (w - len(answer)*charBoxW) / 2
-	if x0 < 4 {
-		x0 = 4
-	}
+	x0 := max(4, (w-len(answer)*charBoxW)/2)
 	for i, r := range answer {
 		drawChar(img, x0+i*charBoxW, (h-charBoxH)/2+mrand.Intn(6)-3, byte(r))
 	}
@@ -235,7 +232,7 @@ func drawSineCurve(img *image.RGBA, c color.RGBA) {
 	amp := float64(h) / 4
 	period := float64(w) / (2 + mrand.Float64()*2)
 	yOff := float64(h)/2 + (mrand.Float64()*float64(h)/3 - float64(h)/6)
-	for x := 0; x < w; x++ {
+	for x := range w {
 		y := int(amp*math.Sin(float64(x)/period) + yOff)
 		if y >= 0 && y < h {
 			img.Set(x, y, c)

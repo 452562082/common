@@ -115,7 +115,7 @@ func (a *App) Run(ctx context.Context) error {
 	results := make(chan result, len(comps))
 
 	for _, c := range comps {
-		c := c
+		// Go 1.22+ each loop iteration has its own scope; no `c := c` needed.
 		go func() {
 			a.log.Info("graceful: component starting", "name", c.name)
 			err := safeRun(runCtx, c.run)
@@ -129,12 +129,14 @@ func (a *App) Run(ctx context.Context) error {
 	defer signal.Stop(sigCh)
 
 	var firstErr error
+	drained := 0
 	select {
 	case sig := <-sigCh:
 		a.log.Info("graceful: signal received, shutting down", "signal", sig.String())
 	case <-ctx.Done():
 		a.log.Info("graceful: context cancelled, shutting down")
 	case r := <-results:
+		drained = 1 // consumed one result via this branch
 		if r.err != nil {
 			a.log.Error("graceful: component crashed", "name", r.name, "err", r.err)
 			firstErr = fmt.Errorf("graceful: component %s: %w", r.name, r.err)
@@ -150,10 +152,6 @@ func (a *App) Run(ctx context.Context) error {
 	closeErrs := a.closeAll(shutdownCtx, comps)
 
 	// Drain any remaining run-goroutines (best effort, bounded by ShutdownTimeout).
-	drained := 1 // we already received one result above
-	if firstErr == nil {
-		// We consumed one; expect len-1 more.
-	}
 	for drained < len(comps) {
 		select {
 		case r := <-results:

@@ -57,9 +57,12 @@ func (s *Server) String() string {
 	return fmt.Sprintf("zk.Server sid=%d", s.conn.SessionID())
 }
 
-func (s *Server) Close() {
+// Close terminates the watcher loop and tears down the ZK connection.
+// Returns nil; the error return exists for io.Closer-style symmetry.
+func (s *Server) Close() error {
 	close(s.done)
 	s.conn.Close()
+	return nil
 }
 
 func (s *Server) loop() {

@@ -28,9 +28,9 @@ func drawChar(img *image.RGBA, x, y int, ch byte) {
 		return
 	}
 	c := randomDarkColor()
-	for row := 0; row < glyphRows; row++ {
+	for row := range glyphRows {
 		bits := g[row]
-		for col := 0; col < glyphCols; col++ {
+		for col := range glyphCols {
 			if bits&(1<<(glyphCols-1-col)) == 0 {
 				continue
 			}
@@ -40,8 +40,8 @@ func drawChar(img *image.RGBA, x, y int, ch byte) {
 }
 
 func fillCell(img *image.RGBA, x0, y0 int, c color.RGBA) {
-	for dy := 0; dy < glyphScale; dy++ {
-		for dx := 0; dx < glyphScale; dx++ {
+	for dy := range glyphScale {
+		for dx := range glyphScale {
 			img.Set(x0+dx, y0+dy, c)
 		}
 	}

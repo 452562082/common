@@ -26,6 +26,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"net/http"
 	"os"
 	"strings"
@@ -76,9 +77,7 @@ func (b *Bundle) AddMessages(lang language.Tag, messages map[string]string) {
 	if _, ok := b.catalogs[lang]; !ok {
 		b.catalogs[lang] = make(map[string]string, len(messages))
 	}
-	for k, v := range messages {
-		b.catalogs[lang][k] = v
-	}
+	maps.Copy(b.catalogs[lang], messages)
 	b.rebuildMatcher()
 }
 
