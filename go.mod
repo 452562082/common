@@ -21,7 +21,7 @@ require (
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/nats-io/nats.go v1.52.0
 	github.com/prometheus/client_golang v1.23.2
-	github.com/redis/go-redis/v9 v9.19.0
+	github.com/redis/go-redis/v9 v9.20.1
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/sony/gobreaker/v2 v2.4.0
 	go.etcd.io/etcd/client/v3 v3.6.11
